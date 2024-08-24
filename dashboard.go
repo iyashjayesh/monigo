@@ -2,6 +2,7 @@
 package monigo
 
 import (
+	"embed"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,7 +10,11 @@ import (
 	"time"
 )
 
-var serviceStartTime time.Time = time.Now()
+var (
+	//go:embed static/*
+	staticFiles      embed.FS
+	serviceStartTime time.Time = time.Now()
+)
 
 func ServeDashboard(addr, serviceName string) {
 	http.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
@@ -98,8 +103,10 @@ func ServeDashboard(addr, serviceName string) {
 	http.HandleFunc("/cpu-metrics", profileHandler)
 	http.HandleFunc("/mem-metrics", profileHandler)
 
-	fs := http.FileServer(http.Dir("./static"))
+	fs := http.FileServer(http.Dir("static"))
+	fs2 := http.FileServer(http.FS(staticFiles))
 	http.Handle("/", fs)
+	http.Handle("/dashboard", fs2)
 
 	fmt.Printf("Starting dashboard on %s\n", addr)
 	if err := http.ListenAndServe(addr, nil); err != nil {
