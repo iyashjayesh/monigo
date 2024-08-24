@@ -103,10 +103,9 @@ func ServeDashboard(addr, serviceName string) {
 	http.HandleFunc("/cpu-metrics", profileHandler)
 	http.HandleFunc("/mem-metrics", profileHandler)
 
-	fs := http.FileServer(http.Dir("static"))
-	fs2 := http.FileServer(http.FS(staticFiles))
+	// Serve embedded static files
+	fs := http.FileServer(http.FS(staticFiles))
 	http.Handle("/", fs)
-	http.Handle("/dashboard", fs2)
 
 	fmt.Printf("Starting dashboard on %s\n", addr)
 	if err := http.ListenAndServe(addr, nil); err != nil {
