@@ -17,6 +17,34 @@ var (
 )
 
 func ServeDashboard(addr, serviceName string) {
+	// http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	// 	// Serve the HTML page at the root URL
+	// 	html, err := staticFiles.ReadFile("static/index.html") // Replace "index.html" with your main HTML file name
+	// 	if err != nil {
+	// 		http.Error(w, "Could not load index.html", http.StatusInternalServerError)
+	// 		return
+	// 	}
+	// 	w.Header().Set("Content-Type", "text/html")
+	// 	w.Write(html)
+	// })
+
+	// Serve the index.html at the root path
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			file, err := staticFiles.ReadFile("static/index.html")
+			if err != nil {
+				http.Error(w, "Could not load index.html", http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "text/html")
+			w.Write(file)
+			return
+		}
+
+		// Serve other static files (CSS, JS, etc.) correctly
+		http.StripPrefix("/static/", http.FileServer(http.FS(staticFiles))).ServeHTTP(w, r)
+	})
+
 	http.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
 		unit := r.URL.Query().Get("unit")
 		if unit == "" {
@@ -81,8 +109,6 @@ func ServeDashboard(addr, serviceName string) {
 		var results string
 		mu.Lock()
 		for name, metrics := range functionMetrics {
-			fmt.Printf("Processing function: %s\n", name)
-			fmt.Printf("Memory Usage (raw): %d bytes\n", metrics.MemoryUsage)
 			results += fmt.Sprintf(
 				"Function: %s\nFunction Ran At: %s\nCPU Profile: %s\nExecution Time: %s\nMemory Usage: %.2f %s\nGoroutines: %d\n\n",
 				name,
@@ -103,9 +129,8 @@ func ServeDashboard(addr, serviceName string) {
 	http.HandleFunc("/cpu-metrics", profileHandler)
 	http.HandleFunc("/mem-metrics", profileHandler)
 
-	// Serve embedded static files
 	fs := http.FileServer(http.FS(staticFiles))
-	http.Handle("/", fs)
+	http.Handle("/static/", http.StripPrefix("/static/", fs)) // Serve all other static files
 
 	fmt.Printf("Starting dashboard on %s\n", addr)
 	if err := http.ListenAndServe(addr, nil); err != nil {
@@ -117,12 +142,9 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Generating profile\n")
 	name := r.URL.Query().Get("name")
 	if name == "" {
-		log.Printf("Name ")
 		http.Error(w, "Name parameter is required", http.StatusBadRequest)
 		return
 	}
-
-	log.Printf("Generating profile for %s\n", name)
 
 	cmd := exec.Command("go", "tool", "pprof", "-svg", "profiles/"+name+".prof")
 	output, err := cmd.Output()
@@ -131,7 +153,6 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Serve the SVG content
 	w.Header().Set("Content-Type", "image/svg+xml")
 	if _, err := w.Write(output); err != nil {
 		http.Error(w, "Failed to write response", http.StatusInternalServerError)

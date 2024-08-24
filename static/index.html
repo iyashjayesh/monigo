@@ -5,13 +5,465 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Performance Dashboard</title>
-    <link rel="stylesheet" href="/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.2/jspdf.debug.js"></script>
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
 
-    <script src="/script.js" defer></script>
+        header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        #header-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 1200px;
+            margin-top: 10px;
+        }
+
+        #unit-selection {
+            display: flex;
+            align-items: center;
+        }
+
+        #unit-selection h2 {
+            margin: 0;
+            margin-right: 20px;
+            font-size: 18px;
+        }
+
+        .switch-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+            margin-right: 10px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 15px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            border-radius: 50%;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+
+        input:checked+.slider {
+            background-color: #007bff;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(30px);
+        }
+
+        #refresh-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            font-size: 24px;
+        }
+
+        #refresh-btn i {
+            font-size: inherit;
+        }
+
+        #refresh-btn img {
+            width: 24px;
+            height: 24px;
+        }
+
+        #countdown {
+            margin-left: 20px;
+            color: white;
+            font-size: 16px;
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .metrics-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .section-title {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #007bff;
+        }
+
+        #function-metrics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-between;
+        }
+
+        #view-canvas {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .canvas-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 400px;
+        }
+
+        .canvas-wrapper svg {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .box {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 48%;
+            min-width: 250px;
+        }
+
+        .box h2 {
+            margin-top: 0;
+        }
+
+        .metric-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .metric-item p {
+            margin: 0;
+            margin-right: 10px;
+        }
+
+        .info-icon {
+            display: inline-block;
+            margin-left: 5px;
+            padding: 2px 6px;
+            border-radius: 50%;
+            background-color: #007bff;
+            color: #fff;
+            text-align: center;
+            cursor: pointer;
+            font-size: 12px;
+            line-height: 1;
+            position: relative;
+        }
+
+        .info-icon::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: #fff;
+            padding: 5px;
+            border-radius: 4px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            font-size: 12px;
+            margin-bottom: 5px;
+            z-index: 10;
+        }
+
+        .info-icon:hover::after {
+            opacity: 1;
+        }
+
+        #canvas-controls {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+            width: 100%;
+            max-width: 600px;
+            /* Match the width of the canvas container */
+        }
+
+        #download-pdf-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #download-pdf-btn:hover {
+            background-color: #218838;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const serviceNameElement = document.getElementById('servicename');
+            const serviceStartTimeElement = document.getElementById('servicestarttime');
+            const gcountElement = document.getElementById('gcount');
+            const rcountElement = document.getElementById('rcount');
+            const tdurElement = document.getElementById('tdur');
+            const allocElement = document.getElementById('alloc');
+            const totalallocElement = document.getElementById('totalalloc');
+            const sysElement = document.getElementById('sys');
+            const heapallocElement = document.getElementById('heapalloc');
+            const heapsysElement = document.getElementById('heapsys');
+            const unitInputs = document.querySelectorAll('input[name="unit"]');
+            const countdownElement = document.getElementById('countdown');
+            const refreshBtn = document.getElementById('refresh-btn');
+            const functionsContainer = document.getElementById('functions-container');
+
+            let refreshInterval = 60000; // 60 seconds
+            let refreshTimeout;
+
+            function fetchMetrics(unit) {
+                fetch(`/metrics?unit=${unit}`)
+                    .then(response => response.text())
+                    .then(data => {
+                        const lines = data.split('\n');
+                        serviceNameElement.textContent = 'Service Name: ' + lines[0].split(': ')[1];
+                        serviceStartTimeElement.textContent = 'Service Start Time: ' + lines[1].split(': ')[1];
+                        gcountElement.textContent = 'Goroutines: ' + lines[2].split(': ')[1];
+                        rcountElement.textContent = 'Requests: ' + lines[3].split(': ')[1];
+                        tdurElement.textContent = 'Total Duration: ' + lines[4].split(': ')[1];
+                        allocElement.textContent = 'Alloc: ' + lines[6].split(': ')[1];
+                        totalallocElement.textContent = 'TotalAlloc: ' + lines[7].split(': ')[1];
+                        sysElement.textContent = 'Sys: ' + lines[8].split(': ')[1];
+                        heapallocElement.textContent = 'HeapAlloc: ' + lines[9].split(': ')[1];
+                        heapsysElement.textContent = 'HeapSys: ' + lines[10].split(': ')[1];
+                    });
+            }
+
+            function fetchFunctionMetrics(unit) {
+                fetch(`/function-metrics?unit=${unit}`)
+                    .then(response => response.text())
+                    .then(data => {
+                        // Clear the previous function metrics
+                        functionsContainer.innerHTML = '';
+
+                        // Split the response into blocks of function metrics
+                        const functionBlocks = data.trim().split('\n\n');
+
+                        functionBlocks.forEach(block => {
+                            const lines = block.split('\n');
+                            if (lines.length > 1) {
+                                const functionName = lines[0].split(': ')[1];
+                                const functionLastRanAT = lines[1].split(': ')[1];
+                                const cpuProfile = lines[2].split(': ')[1];
+                                const execTime = lines[3].split(': ')[1];
+                                const memoryUsage = lines[4].split(': ')[1];
+                                const goroutineCount = lines[5].split(': ')[1];
+
+                                const functionMetricHtml = `
+                                 <div class="function-metric">
+                                     <h3>Function: ${functionName}</h3>
+                                     <p>Function Last Ran At: ${functionLastRanAT}</p>
+                                     <p>CPU Profile: ${cpuProfile}</p>
+                                     <p>Execution Time: ${execTime}</p>
+                                     <p>Memory Usage: ${memoryUsage} bytes</p>
+                                     <p>Goroutines: ${goroutineCount}</p>
+         
+                                     <button class="download-btn-cpu" data-function-name="${functionName}">View CPU Metrics</button>
+                                     <button class="download-btn-mem" data-function-name="${functionName}">View MEM Metrics</button>
+                                 </div>
+                             `;
+
+                                // Append the function metric to the container
+                                functionsContainer.innerHTML += functionMetricHtml;
+                            }
+                        });
+
+                        // Add event listeners to the download buttons
+                        document.querySelectorAll('.download-btn-cpu').forEach(button => {
+                            button.addEventListener('click', function () {
+                                const functionName = button.getAttribute('data-function-name');
+                                const functionBlock = [...document.querySelectorAll('.function-metric')]
+                                    .find(metric => metric.querySelector('h3').textContent.includes(functionName));
+
+                                console.log(functionBlock);
+                                viewCPUMetrics(functionBlock, 'cpu');
+                            });
+                        });
+
+                        // Add event listeners to the download buttons
+                        document.querySelectorAll('.download-btn-mem').forEach(button => {
+                            button.addEventListener('click', function () {
+                                const functionName = button.getAttribute('data-function-name');
+                                const functionBlock = [...document.querySelectorAll('.function-metric')]
+                                    .find(metric => metric.querySelector('h3').textContent.includes(functionName));
+
+                                console.log(functionBlock);
+                                viewMEMmetrics(functionBlock, 'mem');
+                            });
+                        });
+                    });
+            }
+
+            function viewCPUMetrics(functionBlock, metricType) {
+                const functionName = functionBlock.querySelector('h3').textContent.replace('Function: ', '') + '_' + metricType;
+                const profileCanvas = document.getElementById('profile-canvas');
+                profileCanvas.src = `/cpu-metrics?name=${encodeURIComponent(functionName)}`;
+            }
+
+            function viewMEMmetrics(functionBlock, metricType) {
+                const functionName = functionBlock.querySelector('h3').textContent.replace('Function: ', '') + '_' + metricType;
+                const profileCanvas = document.getElementById('profile-canvas');
+                profileCanvas.src = `/mem-metrics?name=${encodeURIComponent(functionName)}`;
+            }
+
+
+
+
+
+            //    function viewCPUMetrics(functionBlock, metricType) {
+            //         const functionName = functionBlock.querySelector('h3').textContent.replace('Function: ', '') + '_'+metricType;
+            //         fetch(`/cpu-metrics?name=${encodeURIComponent(functionName)}`, {
+            //             method: 'GET',
+            //         })
+            //         .then(response => {
+            //             console.log(response);
+            //         })
+            //         .catch(err => {
+            //             console.error('Failed to fetch profile:', err);
+            //         });
+            //     }
+
+            //     function viewMEMmetrics(functionBlock, metricType) {
+            //         const functionName = functionBlock.querySelector('h3').textContent.replace('Function: ', '') + '_'+metricType;
+            //         fetch(`/mem-metrics?name=${encodeURIComponent(functionName)}`, {
+            //             method: 'GET',
+            //         })
+            //         .then(response => {
+            //             console.log(response);
+            //         })
+            //         .catch(err => {
+            //             console.error('Failed to fetch profile:', err);
+            //         });
+            //     }
+
+            function fetchAllMetrics() {
+                const selectedUnit = Array.from(unitInputs).find(input => input.checked).value;
+                fetchMetrics(selectedUnit);
+                fetchFunctionMetrics(selectedUnit); // Fetch function metrics in parallel
+            }
+
+            function onUnitChange() {
+                const selectedUnit = Array.from(unitInputs).find(input => input.checked).value;
+                localStorage.setItem('selectedUnit', selectedUnit);
+                fetchAllMetrics();
+                resetRefreshTimer();
+            }
+
+            function startAutoRefresh() {
+                const savedUnit = localStorage.getItem('selectedUnit') || 'KB';
+                unitInputs.forEach(input => {
+                    if (input.value === savedUnit) {
+                        input.checked = true;
+                    }
+                });
+                fetchAllMetrics();
+                startRefreshTimer();
+            }
+
+            function startRefreshTimer() {
+                let timeLeft = refreshInterval / 1000; // Convert milliseconds to seconds
+
+                function updateCountdown() {
+                    countdownElement.textContent = `Refreshing in: ${timeLeft}s`;
+                    if (timeLeft > 0) {
+                        timeLeft -= 1;
+                        refreshTimeout = setTimeout(updateCountdown, 1000); // Update every second
+                    } else {
+                        fetchAllMetrics();
+                        startRefreshTimer(); // Restart the timer after fetching metrics
+                    }
+                }
+
+                updateCountdown();
+            }
+
+            function resetRefreshTimer() {
+                clearTimeout(refreshTimeout);
+                startRefreshTimer();
+            }
+
+            function refreshMetrics() {
+                fetchAllMetrics();
+                resetRefreshTimer();
+            }
+
+            unitInputs.forEach(input => {
+                input.addEventListener('change', onUnitChange);
+            });
+
+            refreshBtn.addEventListener('click', refreshMetrics);
+
+            startAutoRefresh();
+        });
+    </script>
 </head>
 
 <body>
@@ -36,15 +488,12 @@
                 </div>
             </div>
             <!-- <button id="refresh-btn" title="Refresh Metrics">
-                <img src="/refresh-icon.png" alt="Refresh Icon">
-            </button> -->
-
+               <img src="/refresh-icon.png" alt="Refresh Icon">
+               </button> -->
             <button id="refresh-btn" title="Refresh Metrics"><i class="fa fa-refresh"></i></button>
             <p id="countdown">Refreshing in: 60s</p>
         </div>
-
     </header>
-
     <main>
         <div class="metrics-container">
             <div id="metrics" class="box">
@@ -52,7 +501,6 @@
                 <p id="servicename">Service Name: </p>
                 <p id="servicestarttime">Service Start Time: </p>
             </div>
-
             <div id="service-metrics" class="box">
                 <h2>Runtime Service Metrics</h2>
                 <div class="metric-item">
@@ -69,7 +517,6 @@
                     <span class="info-icon" data-tooltip="The total time spent handling requests.">i</span>
                 </div>
             </div>
-
             <div id="memory-usage" class="box">
                 <h2>Runtime Memory Usage</h2>
                 <div class="metric-item">
@@ -94,32 +541,24 @@
                     <span class="info-icon" data-tooltip="Total memory obtained from the OS for the heap.">i</span>
                 </div>
             </div>
-
             <div id="function-metrics" class="lg-box">
                 <h2>Runtime Function Metrics</h2>
                 <div id="functions-container">
                     <!-- Function metrics will be dynamically inserted here -->
                 </div>
             </div>
-            
-        <div id="view-canvas-section" class="lg-box">
-            <h2>View Canvas</h2>
-            <!-- Download PDF Button -->
-            <div id="canvas-controls">
-                <i class="fa fa-download"></i>
-                <button id="download-pdf-btn">Download as PDF</button>
+            <div id="view-canvas-section" class="lg-box">
+                <h2>View Canvas</h2>
+                <!-- Download PDF Button -->
+                <div id="canvas-controls">
+                    <i class="fa fa-download"></i>
+                    <button id="download-pdf-btn">Download as PDF</button>
+                </div>
+                <!-- Profile Canvas Container -->
+                <div id="profile-canvas-container">
+                    <iframe id="profile-canvas" style="width: 100%; height: 400px; border: none;"></iframe>
+                </div>
             </div>
-            <!-- Profile Canvas Container -->
-            <div id="profile-canvas-container">
-                <iframe id="profile-canvas" style="width: 100%; height: 400px; border: none;"></iframe>
-            </div>
-        </div>
-
-
-            
-
-
-
         </div>
     </main>
 </body>
