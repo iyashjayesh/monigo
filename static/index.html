@@ -296,9 +296,10 @@
     background-color: white;
     width: 13%;
     text-align: center;
-    padding: 18px 0 18px 0;
+    padding: 20px;
     border-radius: 5px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    align-items: space-around;
 }
 
 .metric-title {
@@ -634,6 +635,35 @@
     <div>
         <div class="section-title">
             <h1>Runtime Metrics Overview:</h1>
+        </div>
+    
+        <div class="metrics-overview">
+            <div class="metric-box">
+                <div class="metric-title">Goroutines<span class="info-icon" data-tooltip="The number of goroutines currently running in the application.">i</span></div>
+                <p id="gcount" class="metric-value"></p>
+            </div>
+            <div class="metric-box">
+                <div class="metric-title">TotalAlloc <span class="info-icon" data-tooltip="Total memory allocated by the application since it started.">i</span>
+                </div>
+                <p id="totalalloc" class="metric-value"></p>
+            </div>
+            <div class="metric-box">
+                <div class="metric-title">Memory Allocated by System <span class="info-icon" data-tooltip="Total memory obtained from the OS.">i</span></div>
+                <p id="sys" class="metric-value"></p>
+            </div>
+            <div class="metric-box">
+                <div class="metric-title">HeapAlloc <span class="info-icon" data-tooltip="Memory allocated to the heap.">i</span></div>
+                <p id="heapalloc" class="metric-value"></p>
+            </div>
+            <div class="metric-box">
+                <div class="metric-title">HeapSys: <span class="info-icon" data-tooltip="Total memory obtained from the OS for the heap.">i</span></div>
+                <p id="heapsys" class="metric-value"></p>
+            </div>
+            <!-- <div class="metric-box">
+                <div class="metric-title">Total Duration <span class="info-icon"
+                        data-tooltip="The total time spent handling requests.">i</span></div>
+                <p id="tdur" class="metric-value"></p>
+            </div> -->
         </div>
     </div>
 
