@@ -98,7 +98,9 @@ func ServeDashboard(addr, serviceName string) {
 	http.HandleFunc("/cpu-metrics", profileHandler)
 	http.HandleFunc("/mem-metrics", profileHandler)
 
-	http.Handle("/", http.FileServer(http.Dir("static"))) // Serve static files/Users/yash/Documents/learning-projects/micro-check/performance/metrics.go /Users/yash/Documents/learning-projects/micro-check/performance/profile.go /Users/yash/Documents/learning-projects/micro-check/performance/utils.go
+	staticDirPath := "./static"
+
+	http.Handle("/", http.FileServer(http.Dir(staticDirPath)))
 
 	fmt.Printf("Starting dashboard on %s\n", addr)
 	if err := http.ListenAndServe(addr, nil); err != nil {
