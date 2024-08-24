@@ -80,3 +80,7 @@ If you find MoniGo useful, consider giving it a star! ⭐
 ## Contact
 
 For questions or feedback, please open an issue or contact me at iyashjayesh@gmail.com
+
+<!-- ## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=iyashjayesh/monigo&type=Date)](https://star-history.com/#iyashjayesh/monigo&Date) -->
