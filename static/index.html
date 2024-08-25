@@ -126,22 +126,6 @@
             font-size: 16px;
         }
 
-        main {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .metrics-container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            width: 100%;
-        }
-
         .section-title {
             font-size: 24px;
             margin-bottom: 10px;
@@ -179,19 +163,6 @@
         .canvas-wrapper svg {
             max-width: 100%;
             max-height: 100%;
-        }
-
-        .box {
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            width: 48%;
-            min-width: 250px;
-        }
-
-        .box h2 {
-            margin-top: 0;
         }
 
         .metric-item {
@@ -265,122 +236,119 @@
             background-color: #218838;
         }
 
-
         /* ----------------------- */
         .service-info {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 20px;
-    background-color: white;
-    margin: 10px 20px;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background-color: white;
+            margin: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
 
-.info-item {
-    display: flex;
-    flex-direction: column;
-}
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
 
-.label {
-    font-weight: bold;
-}
+        .label {
+            font-weight: bold;
+        }
 
-.metrics-overview {
-    display: flex;
-    justify-content: space-around;
-    margin: 20px;
-}
+        .metrics-overview {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px;
+        }
 
-.metric-box {
-    background-color: white;
-    width: 13%;
-    text-align: center;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    align-items: space-around;
-}
+        .metric-box {
+            background-color: white;
+            width: 13%;
+            text-align: center;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            align-items: space-around;
+        }
 
-.metric-title {
-    font-weight: bold;
-}
+        .metric-title {
+            font-weight: bold;
+        }
 
-.metric-value {
-    font-size: 1.5rem;
-    margin-top: 10px;
-}
+        .metric-value {
+            font-size: 1.5rem;
+            margin-top: 10px;
+        }
 
-.metrics-section {
-    display: flex;
-    justify-content: space-around;
-    margin: 20px;
-}
+        .metrics-section {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px;
+        }
 
-.section {
-    background-color: white;
-    padding: 20px;
-    width: 45%;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+        .section {
+            background-color: white;
+            padding: 20px;
+            width: 45%;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
 
-.section-title {
-    font-weight: bold;
-    margin-bottom: 20px;
-}
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
 
-.metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
-}
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
 
-.metrics-container-runtime{
-    justify-content: space-between;
-    padding: 10px 20px;
-    background-color: rgb(157 155 155 / 47%);
-    margin: 10px 20px;
-    border-radius: 5px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
+        .metrics-container-runtime {
+            justify-content: space-between;
+            padding: 10px 20px;
+            background-color: rgb(157 155 155 / 47%);
+            margin: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
 
-.metrics-container-runtime h2 {
-    font-size: 22px;
-    font-weight: 900;
-    margin-bottom: 20px;
-    color: #007bff;
-}
+        .metrics-container-runtime h2 {
+            font-size: 22px;
+            font-weight: 900;
+            margin-bottom: 20px;
+            color: #007bff;
+        }
 
-.metric-box-runtime {
-    background-color: white;
-    text-align: center;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        justify-content: space-between;
+        .metric-box-runtime {
+            background-color: white;
+            text-align: center;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            justify-content: space-between;
+        }
 
-}
+        .metric-title {
+            font-size: 20px;
+            color: #6b7280;
+            font-weight: 600;
+        }
 
-.metric-title {
-    font-size: 20px;
-    color: #6b7280;
-    font-weight: 600;
-}
+        .metrics-title {
+            text-align: center;
+            font-size: 22px;
+            font-weight: 900;
+            margin-bottom: 20px;
+        }
 
-.metrics-title {
-    text-align: center;
-    font-size: 22px;
-    font-weight: 900;
-    margin-bottom: 20px;
-}
-
-.metric-value {
-    font-size: 20px;
-    color: #111827;
-    font-weight: 700;
-    margin-top: 10px;
-}
-
+        .metric-value {
+            font-size: 20px;
+            color: #111827;
+            font-weight: 700;
+            margin-top: 10px;
+        }
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -389,15 +357,19 @@
             const gcountElement = document.getElementById('gcount');
             const rcountElement = document.getElementById('rcount');
             const tdurElement = document.getElementById('tdur');
-            const allocElement = document.getElementById('alloc');
-            const totalallocElement = document.getElementById('totalalloc');
-            const sysElement = document.getElementById('sys');
-            const heapallocElement = document.getElementById('heapalloc');
-            const heapsysElement = document.getElementById('heapsys');
+            // const allocElement = document.getElementById('alloc');
+            // const totalallocElement = document.getElementById('totalalloc');
+            // const sysElement = document.getElementById('sys');
+            // const heapallocElement = document.getElementById('heapalloc');
+            // const heapsysElement = document.getElementById('heapsys');
+
+
             const unitInputs = document.querySelectorAll('input[name="unit"]');
             const countdownElement = document.getElementById('countdown');
             const refreshBtn = document.getElementById('refresh-btn');
             const functionsContainer = document.getElementById('functions-container');
+
+            const memoryContainer = document.getElementById('memory-metrics-container');
 
             let refreshInterval = 60000; // 60 seconds
             let refreshTimeout;
@@ -409,14 +381,72 @@
                         const lines = data.split('\n');
                         serviceNameElement.textContent = 'Service Name: ' + lines[0].split(': ')[1];
                         serviceStartTimeElement.textContent = 'Service Start Time: ' + lines[1].split(': ')[1];
-                        gcountElement.textContent = lines[2].split(': ')[1];
+                        // gcountElement.textContent = lines[2].split(': ')[1];
                         rcountElement.textContent = lines[3].split(': ')[1];
-                        tdurElement.textContent = lines[4].split(': ')[1];
-                        allocElement.textContent = lines[6].split(': ')[1];
-                        totalallocElement.textContent = lines[7].split(': ')[1];
-                        sysElement.textContent = lines[8].split(': ')[1];
-                        heapallocElement.textContent =  lines[9].split(': ')[1];
-                        heapsysElement.textContent =  lines[10].split(': ')[1];
+                        // tdurElement.textContent = lines[4].split(': ')[1];
+                        // allocElement.textContent = lines[6].split(': ')[1];
+                        // totalallocElement.textContent = lines[7].split(': ')[1];
+                        // sysElement.textContent = lines[8].split(': ')[1];
+                        // heapallocElement.textContent =  lines[9].split(': ')[1];
+                        // heapsysElement.textContent =  lines[10].split(': ')[1];
+
+
+                        // const memoryAllocated = lines[6].split(': ')[1];
+                        const goroutiuneCount = lines[2].split(': ')[1];
+                        const totalAlloc = lines[7].split(': ')[1];
+                        const memoryAllocatedBySystem = lines[8].split(': ')[1];
+                        const heapAlloc = lines[9].split(': ')[1];
+                        const heapSys = lines[10].split(': ')[1];
+
+                        let reqCountStr = lines[3].split(': ')[1]; // Example: '2'
+                        let totalDurationStr = lines[4].split(': ')[1]; // Example: '610.628417ms'
+                        tdurElement.textContent = totalDurationStr;
+
+                        let reqCount = parseInt(reqCountStr, 10);
+                        let totalDuration = parseFloat(totalDurationStr.replace('ms', ''));
+
+                        let avgAPIResponseTime = reqCount > 0 ? (totalDuration / reqCount) : 0;
+                        let avgAPIResponseTimeStr;
+
+                        if (avgAPIResponseTime >= 3600000) { // More than or equal to 1 hour
+                            avgAPIResponseTimeStr = (avgAPIResponseTime / 3600000).toFixed(3) + 'h';
+                        } else if (avgAPIResponseTime >= 60000) { // More than or equal to 1 minute
+                            avgAPIResponseTimeStr = (avgAPIResponseTime / 60000).toFixed(3) + 'm';
+                        } else if (avgAPIResponseTime >= 1000) { // More than or equal to 1 second
+                            avgAPIResponseTimeStr = (avgAPIResponseTime / 1000).toFixed(3) + 's';
+                        } else { // Less than 1 second
+                            avgAPIResponseTimeStr = avgAPIResponseTime.toFixed(3) + 'ms';
+                        }
+
+                        memoryContainer.innerHTML = `
+                         <div class="metrics-overview">
+                             <div class="metric-box">
+                                 <div class="metric-title">Goroutines<span class="info-icon" data-tooltip="The number of goroutines currently running in the application.">i</span></div>
+                                 <p class="metric-value">${goroutiuneCount}</p>
+                             </div>
+                             <div class="metric-box">
+                                 <div class="metric-title">TotalAlloc <span class="info-icon" data-tooltip="Total memory allocated by the application since it started.">i</span>
+                                 </div>
+                                 <p class="metric-value">${totalAlloc}</p>
+                             </div>
+                             <div class="metric-box">
+                                 <div class="metric-title">Memory Allocated by System <span class="info-icon" data-tooltip="Total memory obtained from the OS.">i</span></div>
+                                 <p class="metric-value">${memoryAllocatedBySystem}</p>
+                             </div>
+                             <div class="metric-box">
+                                 <div class="metric-title">HeapAlloc <span class="info-icon" data-tooltip="Memory allocated to the heap.">i</span></div>
+                                 <p class="metric-value">${heapAlloc}</p>
+                             </div>
+                             <div class="metric-box">
+                                 <div class="metric-title">HeapSys: <span class="info-icon" data-tooltip="Total memory obtained from the OS for the heap.">i</span></div>
+                                 <p class="metric-value">${heapSys}</p>
+                             </div>
+                             <div class="metric-box">
+                                 <div class="metric-title">Average API Response Time <span class="info-icon" data-tooltip="The average time taken to respond to an API request.">i</span></div>
+                                 <p class="metric-value">${avgAPIResponseTimeStr}</p>
+                             </div>
+                         </div>
+                             `;
                     });
             }
 
@@ -441,18 +471,18 @@
                                 const goroutineCount = lines[5].split(': ')[1];
 
                                 const functionMetricHtml = `
-                                 <div class="function-metric">
-                                     <h3>Function: ${functionName}</h3>
-                                     <p>Function Last Ran At: ${functionLastRanAT}</p>
-                                     <p>CPU Profile: ${cpuProfile}</p>
-                                     <p>Execution Time: ${execTime}</p>
-                                     <p>Memory Usage: ${memoryUsage} bytes</p>
-                                     <p>Goroutines: ${goroutineCount}</p>
-         
-                                     <button class="download-btn-cpu" data-function-name="${functionName}">View CPU Metrics</button>
-                                     <button class="download-btn-mem" data-function-name="${functionName}">View MEM Metrics</button>
-                                 </div>
-                             `;
+                                  <div class="function-metric">
+                                      <h3>Function: ${functionName}</h3>
+                                      <p>Function Last Ran At: ${functionLastRanAT}</p>
+                                      <p>CPU Profile: ${cpuProfile}</p>
+                                      <p>Execution Time: ${execTime}</p>
+                                      <p>Memory Usage: ${memoryUsage} bytes</p>
+                                      <p>Goroutines: ${goroutineCount}</p>
+          
+                                      <button class="download-btn-cpu" data-function-name="${functionName}">View CPU Metrics</button>
+                                      <button class="download-btn-mem" data-function-name="${functionName}">View MEM Metrics</button>
+                                  </div>
+                              `;
 
                                 // Append the function metric to the container
                                 functionsContainer.innerHTML += functionMetricHtml;
@@ -583,12 +613,13 @@
             <!-- <button id="refresh-btn" title="Refresh Metrics">
                <img src="/refresh-icon.png" alt="Refresh Icon">
                </button> -->
-            <button id="refresh-btn" title="Refresh Metrics"><i class="fa fa-refresh"></i></button>
+            <!-- <button id="refresh-btn" title="Refresh Metrics"><i class="fa fa-refresh"></i></button> -->
+            <button id="refresh-btn" aria-label="Refresh metrics">
+                <i class="fa fa-refresh"></i>
+            </button>
             <p id="countdown">Refreshing in: 60s</p>
         </div>
     </header>
-    
-    
     <div class="service-info">
         <div class="info-item">
             <span id="servicename" class="label">Service Name:</span>
@@ -597,12 +628,10 @@
             <span id="servicestarttime" class="label">Service Started at:</span>
         </div>
     </div>
-
     <div>
         <div class="section-title">
             <h1>Metrics Overview:</h1>
         </div>
-
         <div class="metrics-overview">
             <div class="metric-box">
                 <div class="metric-title">Load</div>
@@ -632,88 +661,33 @@
             </div>
         </div>
     </div>
-
     <div>
         <div class="section-title">
             <h1>Runtime Metrics Overview:</h1>
         </div>
-    
-        <div id="memory-usage" class="metrics-overview">
-            <div class="metric-box">
-                <div class="metric-title">Goroutines<span class="info-icon" data-tooltip="The number of goroutines currently running in the application.">i</span></div>
-                <p id="gcount" class="metric-value"></p>
-            </div>
-            <div class="metric-box">
-                <div class="metric-title">TotalAlloc <span class="info-icon" data-tooltip="Total memory allocated by the application since it started.">i</span>
-                </div>
-                <p id="totalalloc" class="metric-value"></p>
-            </div>
-            <div class="metric-box">
-                <div class="metric-title">Memory Allocated by System <span class="info-icon" data-tooltip="Total memory obtained from the OS.">i</span></div>
-                <p id="sys" class="metric-value"></p>
-            </div>
-            <div class="metric-box">
-                <div class="metric-title">HeapAlloc <span class="info-icon" data-tooltip="Memory allocated to the heap.">i</span></div>
-                <p id="heapalloc" class="metric-value"></p>
-            </div>
-            <div class="metric-box">
-                <div class="metric-title">HeapSys: <span class="info-icon" data-tooltip="Total memory obtained from the OS for the heap.">i</span></div>
-                <p id="heapsys" class="metric-value"></p>
-            </div>
-            <!-- <div class="metric-box">
-                <div class="metric-title">Total Duration <span class="info-icon"
-                        data-tooltip="The total time spent handling requests.">i</span></div>
-                <p id="tdur" class="metric-value"></p>
-            </div> -->
+        <div id="memory-metrics-container">
+            <!--  -->
         </div>
     </div>
-    </div>
-    
-
-    <main>
-        <div class="metrics-container">
-            <div id="memory-usage" class="box">
-                <h2>Runtime Memory Usage</h2>
-                <div class="metric-item">
-                    <p id="alloc">Alloc:</p>
-                    <span class="info-icon" data-tooltip="Memory currently allocated by the application.">i</span>
-                </div>
-                <div class="metric-item">
-                    <p id="totalalloc">TotalAlloc:</p>
-                    <span class="info-icon"
-                        data-tooltip="Total memory allocated by the application since it started.">i</span>
-                </div>
-                <div class="metric-item">
-                    <p id="sys">Sys:</p>
-                    <span class="info-icon" data-tooltip="Total memory obtained from the OS.">i</span>
-                </div>
-                <div class="metric-item">
-                    <p id="heapalloc">HeapAlloc:</p>
-                    <span class="info-icon" data-tooltip="Memory allocated to the heap.">i</span>
-                </div>
-                <div class="metric-item">
-                    <p id="heapsys">HeapSys:</p>
-                    <span class="info-icon" data-tooltip="Total memory obtained from the OS for the heap.">i</span>
-                </div>
+    <div class="metrics-section">
+        <div class="section service-metrics">
+            <div class="section-title">Function Metrics Overview:</div>
+            <div id="functions-container">
             </div>
-            
-            <!-- <div id="function-metrics" class="lg-box">
-                <h2>Runtime Function Metrics</h2>
-                <div id="functions-container">
-                </div>
-            </div>
-            <div id="view-canvas-section" class="lg-box">
-                <h2>View Canvas</h2>
-                <div id="canvas-controls">
-                    <i class="fa fa-download"></i>
-                    <button id="download-pdf-btn">Download as PDF</button>
-                </div>
+        </div>
+        <div class="section service-metrics">
+            <div class="section-title">Runtime Charts</div>
+            <div id="view-canvas-section">
+                    <!-- <div id="canvas-controls">
+                        <i class="fa fa-download"></i>
+                        <button id="download-pdf-btn">Download as PDF</button>
+                    </div> -->
                 <div id="profile-canvas-container">
-                    <iframe id="profile-canvas" style="width: 100%; height: 400px; border: none;"></iframe>
+                    <iframe id="profile-canvas" style="width: 100%; height: 600px; border: solid 1px #007bff;"></iframe>
                 </div>
-            </div> -->
+            </div>
         </div>
-    </main>
+    </div>
 </body>
 
 </html>
