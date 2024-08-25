@@ -22,8 +22,13 @@ func MeasureExecutionTime(name string, f func()) {
 	log.Printf("memStatsBefore = %v\n", memStatsBefore.Alloc)
 
 	appPath, _ := os.Getwd()
+	var profilesPath string
+	if appPath == "/" {
+		profilesPath = fmt.Sprintf("%sprofiles", appPath)
+	} else {
+		profilesPath = fmt.Sprintf("%s/profiles", appPath)
+	}
 
-	profilesPath := fmt.Sprintf("%s/profiles", appPath)
 	log.Printf("profilesPath = %s\n", profilesPath)
 
 	if _, err := os.Stat(profilesPath); os.IsNotExist(err) {

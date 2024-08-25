@@ -148,7 +148,13 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	appPath, _ := os.Getwd()
-	profilesPath := fmt.Sprintf("%s/profiles", appPath)
+	var profilesPath string
+	if appPath == "/" {
+		profilesPath = fmt.Sprintf("%sprofiles", appPath)
+	} else {
+		profilesPath = fmt.Sprintf("%s/profiles", appPath)
+	}
+
 	filePath := fmt.Sprintf("%s/%s.prof", profilesPath, name)
 	log.Printf("filePath in profileHandler = %s\n", filePath)
 
