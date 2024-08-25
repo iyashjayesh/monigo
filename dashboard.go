@@ -147,7 +147,12 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cmd := exec.Command("go", "tool", "pprof", "-svg", "./profiles/"+name+".prof")
+	appPath, _ := os.Getwd()
+	profilesPath := fmt.Sprintf("%s/profiles", appPath)
+	filePath := fmt.Sprintf("%s/%s.prof", profilesPath, name)
+	log.Printf("filePath in profileHandler = %s\n", filePath)
+
+	cmd := exec.Command("go", "tool", "pprof", "-svg", filePath)
 	output, err := cmd.Output()
 	if err != nil {
 
@@ -159,7 +164,7 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("Path of the file: ", p)
 
 		// check file in the directory and print the files names
-		files, err := os.ReadDir("./profiles")
+		files, err := os.ReadDir(filePath)
 		if err != nil {
 			log.Println(err)
 		}
