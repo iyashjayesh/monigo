@@ -146,7 +146,7 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cmd := exec.Command("go", "tool", "pprof", "-svg", "/tmp/profiles/"+name+".prof")
+	cmd := exec.Command("go", "tool", "pprof", "-svg", "./profiles/"+name+".prof")
 	output, err := cmd.Output()
 	if err != nil {
 		http.Error(w, "Failed to generate profile", http.StatusInternalServerError)
