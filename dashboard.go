@@ -163,17 +163,16 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Println("Path of the file: ", p)
 
-		// check file in the directory and print the files names
-		files, err := os.ReadDir(filePath)
+		// check if any file exists in the profilesPath directory
+		files, err := os.ReadDir(profilesPath)
 		if err != nil {
 			log.Println(err)
 		}
-
 		for _, file := range files {
 			log.Println(file.Name())
 		}
 
-		errMsg := fmt.Sprintf("failed to generate profile, given path is ./profiles/%s.prof: %v", name, err)
+		errMsg := fmt.Sprintf("failed to generate profile, given path %s, error: %v", filePath, err)
 		http.Error(w, errMsg, http.StatusInternalServerError)
 		return
 	}
