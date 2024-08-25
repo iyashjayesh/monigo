@@ -366,139 +366,140 @@
             let refreshInterval = 60000; // 60 seconds
             let refreshTimeout;
 
-            function fetchMetrics(unit) {
-                fetch(`/metrics?unit=${unit}`)
-                    .then(response => response.text())
-                    .then(data => {
-                        const lines = data.split('\n');
+           async function fetchMetrics(unit) {
+                // Show the Fetching the data indicator
+                serviceInfoContainer.innerHTML = `<div class="service-info">Fetching the data...</div>`;
+                serviceMetricsContainer.innerHTML = `<div class="service-info">Fetching the data...</div>`;
+                memoryContainer.innerHTML = `<div class="service-info">Fetching the data...</div>`;
 
-                        // Service Info Metrics Container
-                        const serviceName = lines[0].split(': ')[1];
-                        const goVersion = lines[12].split(': ')[1];
-                        const serviceStartTime = lines[1].split(': ')[1];
-                        
-                        serviceInfoContainer.innerHTML = `
-                            <div class="service-info">
-                                <div class="info-item">
-                                    <span class="label">Service Name:</span> ${serviceName}
-                                </div>
-                                <div class="info-item">
-                                    <span class="label">Go Version:</span> ${goVersion}
-                                </div>
-                                <div class="info-item">
-                                    <span class="label">Service Started at:</span> ${serviceStartTime}
-                                </div>
+                try {
+                    const response = await fetch(`/metrics?unit=${unit}`);
+                    const data = await response.text();
+                    const lines = data.split('\n');
+
+                    // Service Info Metrics Container
+                    const serviceName = lines[0].split(': ')[1];
+                    const goVersion = lines[12].split(': ')[1];
+                    const serviceStartTime = lines[1].split(': ')[1];
+
+                    serviceInfoContainer.innerHTML = `
+                        <div class="service-info">
+                            <div class="info-item">
+                                <span class="label">Service Name:</span> ${serviceName}
                             </div>
-                        `;
+                            <div class="info-item">
+                                <span class="label">Go Version:</span> ${goVersion}
+                            </div>
+                            <div class="info-item">
+                                <span class="label">Service Started at:</span> ${serviceStartTime}
+                            </div>
+                        </div>
+                    `;
 
-                        // Metrics Overview Container
-                        const rcount = lines[3].split(': ')[1];
-                        let reqCountStr = lines[3].split(': ')[1]; // Example: '2'
-                        let totalDurationStr = lines[4].split(': ')[1]; // Example: '610.628417ms'
-                        const load = lines[13].split(': ')[1] + '%';
-                        const cores = lines[14].split(': ')[1];
-                        const memoryUsed = lines[15].split(': ')[1] + '%';
+                    // Metrics Overview Container
+                    const rcount = lines[3].split(': ')[1];
+                    const load = lines[13].split(': ')[1] + '%';
+                    const cores = lines[14].split(': ')[1];
+                    const memoryUsed = lines[15].split(': ')[1] + '%';
 
-                        let currentTime = new Date();
-                        let serviceStartTimeDate = new Date(serviceStartTime);
-                        let uptime = currentTime - serviceStartTimeDate;
+                    let currentTime = new Date();
+                    let serviceStartTimeDate = new Date(serviceStartTime);
+                    let uptime = currentTime - serviceStartTimeDate;
 
-                        // in "7h 22m 10s" format 
-                        let uptimeStr = '';
-                        let uptimeSeconds = Math.floor(uptime / 1000);
-                        let uptimeMinutes = Math.floor(uptimeSeconds / 60);
-                        let uptimeHours = Math.floor(uptimeMinutes / 60);
+                    let uptimeStr = '';
+                    let uptimeSeconds = Math.floor(uptime / 1000);
+                    let uptimeMinutes = Math.floor(uptimeSeconds / 60);
+                    let uptimeHours = Math.floor(uptimeMinutes / 60);
 
-                        uptimeStr += uptimeHours + 'h ';
-                        uptimeStr += uptimeMinutes % 60 + 'm ';
-                        uptimeStr += uptimeSeconds % 60 + 's';
+                    uptimeStr += uptimeHours + 'h ';
+                    uptimeStr += uptimeMinutes % 60 + 'm ';
+                    uptimeStr += uptimeSeconds % 60 + 's';
 
+                    serviceMetricsContainer.innerHTML = `
+                    <div class="metrics-overview">
+                        <div class="metric-box">
+                            <div class="metric-title">Load</div>
+                            <div class="metric-value">${load}</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Cores</div>
+                            <div class="metric-value">${cores}</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Memory</div>
+                            <div class="metric-value">${memoryUsed}</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Uptime</div>
+                            <div class="metric-value">${uptimeStr}</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Request Served <span class="info-icon"
+                                    data-tooltip="The total number of requests handled by the service.">i</span></div>
+                            <p class="metric-value">${rcount}</p>
+                        </div>
+                    </div>`;
 
-                        serviceMetricsContainer.innerHTML = `
-                            <div class="metrics-overview">
-                                <div class="metric-box">
-                                    <div class="metric-title">Load</div>
-                                    <div class="metric-value">${load}</div>
-                                </div>
-                                <div class="metric-box">
-                                    <div class="metric-title">Cores</div>
-                                    <div class="metric-value">${cores}</div>
-                                </div>
-                                <div class="metric-box">
-                                    <div class="metric-title">Memory</div>
-                                    <div class="metric-value">${memoryUsed}</div>
-                                </div>
-                                <div class="metric-box">
-                                    <div class="metric-title">Uptime</div>
-                                    <div class="metric-value">${uptimeStr}</div>
-                                </div>
-                                <div class="metric-box">
-                                    <div class="metric-title">Request Served <span class="info-icon"
-                                            data-tooltip="The total number of requests handled by the service.">i</span></div>
-                                    <p class="metric-value"> ${rcount}</p>
-                                </div>
-                                <div class="metric-box">
-                                    <div class="metric-title">Total Duration <span class="info-icon"
-                                            data-tooltip="The total time spent handling requests.">i</span></div>
-                                    <p class="metric-value">${totalDurationStr}</p>
-                                </div>
-                            </div>`;
+                    // Runtime Metrics Overview Container
+                    const goroutiuneCount = lines[2].split(': ')[1];
+                    const totalAlloc = lines[7].split(': ')[1];
+                    const memoryAllocatedBySystem = lines[8].split(': ')[1];
+                    const heapAlloc = lines[9].split(': ')[1];
+                    const heapSys = lines[10].split(': ')[1];
 
+                    let reqCount = parseInt(lines[3].split(': ')[1], 10);
+                    let totalDuration = parseFloat(lines[4].split(': ')[1].replace('ms', ''));
 
-                        // Runtime Metrics Overview Container
-                        const goroutiuneCount = lines[2].split(': ')[1];
-                        const totalAlloc = lines[7].split(': ')[1];
-                        const memoryAllocatedBySystem = lines[8].split(': ')[1];
-                        const heapAlloc = lines[9].split(': ')[1];
-                        const heapSys = lines[10].split(': ')[1];
+                    let avgAPIResponseTime = reqCount > 0 ? (totalDuration / reqCount) : 0;
+                    let avgAPIResponseTimeStr;
 
-                        let reqCount = parseInt(reqCountStr, 10);
-                        let totalDuration = parseFloat(totalDurationStr.replace('ms', ''));
+                    if (avgAPIResponseTime >= 3600000) {
+                        avgAPIResponseTimeStr = (avgAPIResponseTime / 3600000).toFixed(3) + 'h';
+                    } else if (avgAPIResponseTime >= 60000) {
+                        avgAPIResponseTimeStr = (avgAPIResponseTime / 60000).toFixed(3) + 'm';
+                    } else if (avgAPIResponseTime >= 1000) {
+                        avgAPIResponseTimeStr = (avgAPIResponseTime / 1000).toFixed(3) + 's';
+                    } else {
+                        avgAPIResponseTimeStr = avgAPIResponseTime.toFixed(3) + 'ms';
+                    }
 
-                        let avgAPIResponseTime = reqCount > 0 ? (totalDuration / reqCount) : 0;
-                        let avgAPIResponseTimeStr;
+                    memoryContainer.innerHTML = `
+                    <div class="metrics-overview">
+                        <div class="metric-box">
+                            <div class="metric-title">Goroutines<span class="info-icon" data-tooltip="The number of goroutines currently running in the application.">i</span></div>
+                            <p class="metric-value">${goroutiuneCount}</p>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">TotalAlloc <span class="info-icon" data-tooltip="Total memory allocated by the application since it started.">i</span>
+                            </div>
+                            <p class="metric-value">${totalAlloc}</p>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Memory Allocated by System <span class="info-icon" data-tooltip="Total memory obtained from the OS.">i</span></div>
+                            <p class="metric-value">${memoryAllocatedBySystem}</p>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">HeapAlloc <span class="info-icon" data-tooltip="Memory allocated to the heap.">i</span></div>
+                            <p class="metric-value">${heapAlloc}</p>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">HeapSys <span class="info-icon" data-tooltip="Total memory obtained from the OS for the heap.">i</span></div>
+                            <p class="metric-value">${heapSys}</p>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-title">Average API Response Time <span class="info-icon" data-tooltip="The average time taken to respond to an API request.">i</span></div>
+                            <p class="metric-value">${avgAPIResponseTimeStr}</p>
+                        </div>
+                    </div>`;
 
-                        if (avgAPIResponseTime >= 3600000) { // More than or equal to 1 hour
-                            avgAPIResponseTimeStr = (avgAPIResponseTime / 3600000).toFixed(3) + 'h';
-                        } else if (avgAPIResponseTime >= 60000) { // More than or equal to 1 minute
-                            avgAPIResponseTimeStr = (avgAPIResponseTime / 60000).toFixed(3) + 'm';
-                        } else if (avgAPIResponseTime >= 1000) { // More than or equal to 1 second
-                            avgAPIResponseTimeStr = (avgAPIResponseTime / 1000).toFixed(3) + 's';
-                        } else { // Less than 1 second
-                            avgAPIResponseTimeStr = avgAPIResponseTime.toFixed(3) + 'ms';
-                        }
-
-                        memoryContainer.innerHTML = `
-                         <div class="metrics-overview">
-                             <div class="metric-box">
-                                 <div class="metric-title">Goroutines<span class="info-icon" data-tooltip="The number of goroutines currently running in the application.">i</span></div>
-                                 <p class="metric-value">${goroutiuneCount}</p>
-                             </div>
-                             <div class="metric-box">
-                                 <div class="metric-title">TotalAlloc <span class="info-icon" data-tooltip="Total memory allocated by the application since it started.">i</span>
-                                 </div>
-                                 <p class="metric-value">${totalAlloc}</p>
-                             </div>
-                             <div class="metric-box">
-                                 <div class="metric-title">Memory Allocated by System <span class="info-icon" data-tooltip="Total memory obtained from the OS.">i</span></div>
-                                 <p class="metric-value">${memoryAllocatedBySystem}</p>
-                             </div>
-                             <div class="metric-box">
-                                 <div class="metric-title">HeapAlloc <span class="info-icon" data-tooltip="Memory allocated to the heap.">i</span></div>
-                                 <p class="metric-value">${heapAlloc}</p>
-                             </div>
-                             <div class="metric-box">
-                                 <div class="metric-title">HeapSys: <span class="info-icon" data-tooltip="Total memory obtained from the OS for the heap.">i</span></div>
-                                 <p class="metric-value">${heapSys}</p>
-                             </div>
-                             <div class="metric-box">
-                                 <div class="metric-title">Average API Response Time <span class="info-icon" data-tooltip="The average time taken to respond to an API request.">i</span></div>
-                                 <p class="metric-value">${avgAPIResponseTimeStr}</p>
-                             </div>
-                         </div>
-                             `;
-                    });
+                } catch (error) {
+                    console.error('Error fetching metrics:', error);
+                    serviceInfoContainer.innerHTML = `<div class="error">Failed to load service information.</div>`;
+                    serviceMetricsContainer.innerHTML = `<div class="error">Failed to load service metrics.</div>`;
+                    memoryContainer.innerHTML = `<div class="error">Failed to load memory metrics.</div>`;
+                }
             }
+
 
             function fetchFunctionMetrics(unit) {
                 fetch(`/function-metrics?unit=${unit}`)
