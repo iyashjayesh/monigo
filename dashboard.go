@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
 	"time"
 )
@@ -149,7 +150,26 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	cmd := exec.Command("go", "tool", "pprof", "-svg", "./profiles/"+name+".prof")
 	output, err := cmd.Output()
 	if err != nil {
-		http.Error(w, "Failed to generate profile", http.StatusInternalServerError)
+
+		// what is current path of the file
+		p, err := os.Getwd()
+		if err != nil {
+			log.Println(err)
+		}
+		log.Println("Path of the file: ", p)
+
+		// check file in the directory and print the files names
+		files, err := os.ReadDir("./profiles")
+		if err != nil {
+			log.Println(err)
+		}
+
+		for _, file := range files {
+			log.Println(file.Name())
+		}
+
+		errMsg := fmt.Sprintf("failed to generate profile, given path is ./profiles/%s.prof: %v", name, err)
+		http.Error(w, errMsg, http.StatusInternalServerError)
 		return
 	}
 
