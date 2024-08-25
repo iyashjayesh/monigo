@@ -9,6 +9,8 @@ import (
 	"os"
 	"os/exec"
 	"time"
+
+	_ "github.com/goccy/go-graphviz" // Required for pprof
 )
 
 var (
