@@ -26,6 +26,10 @@ func MeasureExecutionTime(name string, f func()) {
 	profilesPath := fmt.Sprintf("%s/profiles", appPath)
 	log.Printf("profilesPath = %s\n", profilesPath)
 
+	if _, err := os.Stat(profilesPath); os.IsNotExist(err) {
+		os.Mkdir(profilesPath, os.ModePerm)
+	}
+
 	cpuProfileName := fmt.Sprintf("%s_cpu.prof", name)
 	cpuProfFilePath := fmt.Sprintf("%s/%s", profilesPath, cpuProfileName)
 	log.Printf("cpuProfFilePath = %s\n", cpuProfFilePath)
