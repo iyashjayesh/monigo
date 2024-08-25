@@ -21,14 +21,23 @@ func MeasureExecutionTime(name string, f func()) {
 
 	log.Printf("memStatsBefore = %v\n", memStatsBefore.Alloc)
 
-	folder := "profiles"
-	if _, err := os.Stat(folder); os.IsNotExist(err) {
-		if err := os.Mkdir(folder, 0755); err != nil {
-			fmt.Printf("Error creating profiles folder: %v\n", err)
-		}
+	appPath, _ := os.Getwd()
+	var profilesPath string
+	if appPath == "/" {
+		profilesPath = fmt.Sprintf("%sprofiles", appPath)
+	} else {
+		profilesPath = fmt.Sprintf("%s/profiles", appPath)
 	}
+
+	log.Printf("profilesPath = %s\n", profilesPath)
+
+	if _, err := os.Stat(profilesPath); os.IsNotExist(err) {
+		os.Mkdir(profilesPath, os.ModePerm)
+	}
+
 	cpuProfileName := fmt.Sprintf("%s_cpu.prof", name)
-	cpuProfFilePath := fmt.Sprintf("%s/%s", folder, cpuProfileName)
+	cpuProfFilePath := fmt.Sprintf("%s/%s", profilesPath, cpuProfileName)
+	log.Printf("cpuProfFilePath = %s\n", cpuProfFilePath)
 
 	cpuProfileFile, err := StartCPUProfile(cpuProfFilePath)
 	if err != nil {
@@ -38,7 +47,8 @@ func MeasureExecutionTime(name string, f func()) {
 	defer StopCPUProfile(cpuProfileFile)
 
 	memProfName := fmt.Sprintf("%s_mem.prof", name)
-	memProfFilePath := fmt.Sprintf("%s/%s", folder, memProfName)
+	memProfFilePath := fmt.Sprintf("%s/%s", profilesPath, memProfName)
+	log.Printf("memProfFilePath = %s\n", memProfFilePath)
 
 	start := time.Now()
 	f()
