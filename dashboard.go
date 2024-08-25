@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
 	"time"
 )
@@ -146,10 +147,39 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cmd := exec.Command("go", "tool", "pprof", "-svg", "/tmp/profiles/"+name+".prof")
+	appPath, _ := os.Getwd()
+	var profilesPath string
+	if appPath == "/" {
+		profilesPath = fmt.Sprintf("%sprofiles", appPath)
+	} else {
+		profilesPath = fmt.Sprintf("%s/profiles", appPath)
+	}
+
+	filePath := fmt.Sprintf("%s/%s.prof", profilesPath, name)
+	log.Printf("filePath in profileHandler = %s\n", filePath)
+
+	cmd := exec.Command("go", "tool", "pprof", "-svg", filePath)
 	output, err := cmd.Output()
 	if err != nil {
-		http.Error(w, "Failed to generate profile", http.StatusInternalServerError)
+
+		// what is current path of the file
+		p, err := os.Getwd()
+		if err != nil {
+			log.Println(err)
+		}
+		log.Println("Path of the file: ", p)
+
+		// check if any file exists in the profilesPath directory
+		files, err := os.ReadDir(profilesPath)
+		if err != nil {
+			log.Println(err)
+		}
+		for _, file := range files {
+			log.Println(file.Name())
+		}
+
+		errMsg := fmt.Sprintf("failed to generate profile, given path %s, error: %v", filePath, err)
+		http.Error(w, errMsg, http.StatusInternalServerError)
 		return
 	}
 
