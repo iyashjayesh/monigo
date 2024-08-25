@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"runtime"
+	"strconv"
 	"time"
 )
 
@@ -53,6 +55,7 @@ func ServeDashboard(addr, serviceName string) {
 		}
 
 		requestCount, totalDuration, memStats := GetServiceMetrics()
+		serviceStat := GetProcessSats()
 
 		// Convert bytes to different units
 		bytesToUnit := func(bytes uint64) float64 {
@@ -66,8 +69,19 @@ func ServeDashboard(addr, serviceName string) {
 			}
 		}
 
+		SystemUsedCoresToString := fmt.Sprintf("%.2f", serviceStat.SystemUsedCores)
+		ProcessUsedCoresToString := fmt.Sprintf("%.2f", serviceStat.ProcessUsedCores)
+
+		core := ProcessUsedCoresToString + "PC / " +
+			SystemUsedCoresToString + "SC / " +
+			strconv.Itoa(serviceStat.TotalLogicalCores) + "LC / " +
+			strconv.Itoa(serviceStat.TotalCores) + "C"
+
+		// ProcMemPercent
+		memoryUsed := fmt.Sprintf("%.2f", serviceStat.ProcMemPercent)
+
 		metrics := fmt.Sprintf(
-			"Service Name: %s\nService Start Time: %s\nGoroutines: %d\nRequests: %d\nTotal Duration: %s\n\nMemory Usage (%s):\nAlloc: %.2f %s\nTotalAlloc: %.2f %s\nSys: %.2f %s\nHeapAlloc: %.2f %s\nHeapSys: %.2f %s\n",
+			"Service Name: %s\nService Start Time: %s\nGoroutines: %d\nRequests: %d\nTotal Duration: %s\n\nMemory Usage (%s):\nAlloc: %.2f %s\nTotalAlloc: %.2f %s\nSys: %.2f %s\nHeapAlloc: %.2f %s\nHeapSys: %.2f %s\nGo Version: %s\n Load: %s\nCores: %s\n Memory Used: %s\n",
 			serviceName,
 			serviceStartTime.Format(time.RFC3339),
 			GetGoroutineCount(),
@@ -84,6 +98,10 @@ func ServeDashboard(addr, serviceName string) {
 			unit,
 			bytesToUnit(memStats.HeapSys),
 			unit,
+			runtime.Version(),
+			fmt.Sprintf("%.2f", serviceStat.ProcCPUPercent),
+			core,
+			memoryUsed,
 		)
 		w.Header().Set("Content-Type", "text/plain")
 		w.Write([]byte(metrics))
