@@ -9,6 +9,25 @@ import (
 	"time"
 )
 
+const monigoFolder string = "monigo"
+
+func getBasePath() string {
+
+	var path string
+	appPath, _ := os.Getwd()
+	if appPath == "/" {
+		path = fmt.Sprintf("%s%s", appPath, monigoFolder)
+	} else {
+		path = fmt.Sprintf("%s/%s", appPath, monigoFolder)
+	}
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		os.Mkdir(path, os.ModePerm)
+	}
+
+	return path
+}
+
 func GetGoroutineCount() int {
 	return runtime.NumGoroutine()
 }
@@ -21,22 +40,14 @@ func MeasureExecutionTime(name string, f func()) {
 
 	log.Printf("memStatsBefore = %v\n", memStatsBefore.Alloc)
 
-	appPath, _ := os.Getwd()
-	var profilesPath string
-	if appPath == "/" {
-		profilesPath = fmt.Sprintf("%sprofiles", appPath)
-	} else {
-		profilesPath = fmt.Sprintf("%s/profiles", appPath)
-	}
+	profilesFolderPath := fmt.Sprintf("%s/profiles", basePath)
 
-	log.Printf("profilesPath = %s\n", profilesPath)
-
-	if _, err := os.Stat(profilesPath); os.IsNotExist(err) {
-		os.Mkdir(profilesPath, os.ModePerm)
+	if _, err := os.Stat(profilesFolderPath); os.IsNotExist(err) {
+		os.Mkdir(profilesFolderPath, os.ModePerm)
 	}
 
 	cpuProfileName := fmt.Sprintf("%s_cpu.prof", name)
-	cpuProfFilePath := fmt.Sprintf("%s/%s", profilesPath, cpuProfileName)
+	cpuProfFilePath := fmt.Sprintf("%s/%s", profilesFolderPath, cpuProfileName)
 	log.Printf("cpuProfFilePath = %s\n", cpuProfFilePath)
 
 	cpuProfileFile, err := StartCPUProfile(cpuProfFilePath)
@@ -47,7 +58,7 @@ func MeasureExecutionTime(name string, f func()) {
 	defer StopCPUProfile(cpuProfileFile)
 
 	memProfName := fmt.Sprintf("%s_mem.prof", name)
-	memProfFilePath := fmt.Sprintf("%s/%s", profilesPath, memProfName)
+	memProfFilePath := fmt.Sprintf("%s/%s", profilesFolderPath, memProfName)
 	log.Printf("memProfFilePath = %s\n", memProfFilePath)
 
 	start := time.Now()

@@ -6,30 +6,55 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"os/exec"
 	"runtime"
 	"strconv"
+	"sync"
 	"time"
+
+	bolt "go.etcd.io/bbolt"
 )
 
 var (
 	//go:embed static/*
 	staticFiles      embed.FS
 	serviceStartTime time.Time = time.Now()
+	Once             sync.Once = sync.Once{}
+	Db               *bolt.DB
+	basePath         string
+	serviceInfo      ServiceInfo
+	dbObj            *DBWrapper
 )
 
-func ServeDashboard(addr, serviceName string) {
-	// http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-	// 	// Serve the HTML page at the root URL
-	// 	html, err := staticFiles.ReadFile("static/index.html") // Replace "index.html" with your main HTML file name
-	// 	if err != nil {
-	// 		http.Error(w, "Could not load index.html", http.StatusInternalServerError)
-	// 		return
-	// 	}
-	// 	w.Header().Set("Content-Type", "text/html")
-	// 	w.Write(html)
-	// })
+func init() {
+
+	Once.Do(func() {
+		basePath = getBasePath()
+
+		// Connect to the database
+		var err error
+		dbObj, err = connectDb()
+		if err != nil {
+			log.Fatalf("Error connecting to database: %v\n", err)
+		}
+	})
+}
+
+func StartDashboard(addr, serviceName string) {
+
+	serviceInfo.ServiceName = serviceName
+	serviceInfo.ServiceStartTime = serviceStartTime
+	serviceInfo.GoVerison = runtime.Version()
+	serviceInfo.TimeStamp = serviceStartTime
+
+	dbObj.StoreServiceInfo(&serviceInfo)
+
+	serviceInfo, err := dbObj.GetServiceInfo(serviceInfo.ServiceName)
+	if err != nil {
+		log.Fatalf("Error getting service info: %v\n", err)
+	}
+
+	log.Printf("Service Name: %s\nService Start Time: %s\nGo Version: %s\nTime Stamp: %s\n", serviceInfo.ServiceName, serviceInfo.ServiceStartTime, serviceInfo.GoVerison, serviceInfo.TimeStamp)
 
 	// Serve the index.html at the root path
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -103,6 +128,7 @@ func ServeDashboard(addr, serviceName string) {
 			core,
 			memoryUsed,
 		)
+
 		w.Header().Set("Content-Type", "text/plain")
 		w.Write([]byte(metrics))
 	})
@@ -148,8 +174,8 @@ func ServeDashboard(addr, serviceName string) {
 	http.HandleFunc("/cpu-metrics", profileHandler)
 	http.HandleFunc("/mem-metrics", profileHandler)
 
-	fs := http.FileServer(http.FS(staticFiles))
-	http.Handle("/static/", http.StripPrefix("/static/", fs)) // Serve all other static files
+	// fs := http.FileServer(http.FS(staticFiles))
+	// http.Handle("/static/", http.StripPrefix("/static/", fs)) // Serve all other static files
 
 	fmt.Printf("Starting dashboard on %s\n", addr)
 	if err := http.ListenAndServe(addr, nil); err != nil {
@@ -165,38 +191,12 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	appPath, _ := os.Getwd()
-	var profilesPath string
-	if appPath == "/" {
-		profilesPath = fmt.Sprintf("%sprofiles", appPath)
-	} else {
-		profilesPath = fmt.Sprintf("%s/profiles", appPath)
-	}
+	profilesFolderPath := fmt.Sprintf("%s/profiles", basePath)
 
-	filePath := fmt.Sprintf("%s/%s.prof", profilesPath, name)
-	log.Printf("filePath in profileHandler = %s\n", filePath)
-
-	cmd := exec.Command("go", "tool", "pprof", "-svg", filePath)
+	cmd := exec.Command("go", "tool", "pprof", "-svg", profilesFolderPath)
 	output, err := cmd.Output()
 	if err != nil {
-
-		// what is current path of the file
-		p, err := os.Getwd()
-		if err != nil {
-			log.Println(err)
-		}
-		log.Println("Path of the file: ", p)
-
-		// check if any file exists in the profilesPath directory
-		files, err := os.ReadDir(profilesPath)
-		if err != nil {
-			log.Println(err)
-		}
-		for _, file := range files {
-			log.Println(file.Name())
-		}
-
-		errMsg := fmt.Sprintf("failed to generate profile, given path %s, error: %v", filePath, err)
+		errMsg := fmt.Sprintf("failed to generate profile, given path %s, error: %v", profilesFolderPath, err)
 		http.Error(w, errMsg, http.StatusInternalServerError)
 		return
 	}

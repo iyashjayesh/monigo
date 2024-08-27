@@ -1,6 +1,10 @@
 package monigo
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type ProcessStats struct {
 	ProcessId         int32
@@ -28,4 +32,33 @@ type FunctionMetrics struct {
 	MemoryUsage       uint64
 	GoroutineCount    int
 	ExecutionTime     time.Duration
+}
+
+// db struct
+type ServiceInfo struct {
+	ServiceName      string
+	ServiceStartTime time.Time
+	GoVerison        string
+	TimeStamp        time.Time
+}
+
+type ServiceMetrics struct {
+	Id                     uuid.UUID
+	Load                   string
+	Cores                  string
+	MemoryUsed             string
+	UpTime                 time.Duration
+	NumberOfReqServerd     int64
+	TotalDurationTookByAPI time.Duration
+	TimeStamp              time.Time
+}
+
+type RuntimeMetrics struct {
+	Id             uuid.UUID
+	GoRoutines     int64
+	TotalAlloc     uint64
+	MemoryAllocSys uint64
+	HeapAlloc      uint64
+	HeapAllocSys   uint64
+	TimeStamp      time.Time
 }

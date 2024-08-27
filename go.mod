@@ -1,8 +1,14 @@
 module github.com/iyashjayesh/monigo
 
-go 1.21.0
+go 1.22
 
-require github.com/shirou/gopsutil v3.21.11+incompatible
+toolchain go1.22.6
+
+require (
+	github.com/google/uuid v1.6.0
+	github.com/shirou/gopsutil v3.21.11+incompatible
+	go.etcd.io/bbolt v1.3.11
+)
 
 require (
 	github.com/go-ole/go-ole v1.2.6 // indirect

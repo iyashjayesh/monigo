@@ -54,17 +54,17 @@ import (
 )
 
 func main() {
-    // Initialize MoniGo
-    monigo.Initialize()
 
-    // Track performance metrics
-    monigo.Track("service_name", "function_name", func() {
+    go monigo.StartDashboard("port", "service_name")
+
+    monigo.MeasureExecutionTime("function_name", func(){
         // Your code here
     })
 
-    // Start the monitoring dashboard
-    monigo.StartDashboard()
+    select {} // To keep the program running
 }
+
+
 ```
 
 For more detailed usage instructions, refer to the documentation.
@@ -86,3 +86,12 @@ For questions or feedback, please open an issue or contact me at iyashjayesh@gma
 <!-- ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=iyashjayesh/monigo&type=Date)](https://star-history.com/#iyashjayesh/monigo&Date) -->
+
+<!-- Next things to do -->
+
+<!-- / StartDashboard  -->
+
+<!-- 1. Register StoreInfo Only once when the server starts
+   Now on every time interval, do below things:
+1. Store Service Metrics
+1. Store Runtime Metrics -->
