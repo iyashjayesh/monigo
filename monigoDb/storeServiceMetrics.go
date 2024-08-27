@@ -16,7 +16,7 @@ type ServiceMetricsStore interface {
 
 func (db *DBWrapper) StoreServiceRuntimeMetrics(serviceMetrics *models.ServiceMetrics) error {
 	return db.Update(func(tx *bolt.Tx) error {
-		bucket, err := tx.CreateBucketIfNotExists([]byte(metricsInfoBucket))
+		bucket, err := tx.CreateBucketIfNotExists([]byte(metrics_info))
 		if err != nil {
 			return err
 		}
@@ -34,7 +34,7 @@ func (db *DBWrapper) GetServiceMetricsFromMonigoDb() ([]models.ServiceMetrics, e
 	var serviceMetrics []models.ServiceMetrics
 
 	err := db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(metricsInfoBucket))
+		b := tx.Bucket([]byte(metrics_info))
 		if b == nil {
 			return errors.New("bucket not found")
 		}

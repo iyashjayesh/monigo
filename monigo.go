@@ -2,7 +2,6 @@ package monigo
 
 import (
 	"embed"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/iyashjayesh/monigo/api"
 	"github.com/iyashjayesh/monigo/core"
 	"github.com/iyashjayesh/monigo/models"
 	monigodb "github.com/iyashjayesh/monigo/monigoDb"
@@ -64,7 +64,7 @@ func StartDashboard(addr int) {
 	http.HandleFunc("/generate-function-metrics", profileHandler)
 
 	// API to fetch the service metrics
-	http.HandleFunc("/get-service-info", GetServiceInfoAPI)
+	http.HandleFunc("/get-service-info", api.GetServiceInfoAPI)
 	// http.HandleFunc("/get-service-metrics", GetServiceMetricsFromMonigoDbData)
 	// http.HandleFunc("/get-function-info", getFunctionMetricsAPI)
 
@@ -96,22 +96,6 @@ func getMetrics(w http.ResponseWriter, r *http.Request) {
 
 	requestCount, totalDuration, memStats := core.GetServiceMetrics()
 	serviceStat := core.GetProcessSats()
-
-	// var serviceMetrics ServiceMetrics
-
-	// serviceMetrics.Id = uuid.New()
-	// serviceMetrics.Load = fmt.Sprintf("%.2f", serviceStat.ProcCPUPercent)
-	// serviceMetrics.Cores = fmt.Sprintf("%.2f", serviceStat.ProcessUsedCores) + "PC / " +
-	// 	fmt.Sprintf("%.2f", serviceStat.SystemUsedCores) + "SC / " +
-	// 	strconv.Itoa(serviceStat.TotalLogicalCores) + "LC / " +
-	// 	strconv.Itoa(serviceStat.TotalCores) + "C"
-	// serviceMetrics.MemoryUsed = fmt.Sprintf("%.2f", serviceStat.ProcMemPercent)
-	// serviceMetrics.UpTime = time.Since(serviceInfo.ServiceStartTime)
-	// serviceMetrics.NumberOfReqServerd = requestCount
-	// serviceMetrics.TotalDurationTookByAPI = totalDuration
-	// serviceMetrics.TimeStamp = time.Now()
-
-	// dbObj.StoreServiceRuntimeMetrics(&serviceMetrics)
 
 	// Convert bytes to different units
 	bytesToUnit := func(bytes uint64) float64 {
@@ -229,31 +213,6 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// //
-func GetServiceInfoAPI(w http.ResponseWriter, r *http.Request) {
-	serviceInfo, err := dbObj.GetServiceInfo(serviceInfo.ServiceName)
-	if err != nil {
-		log.Println("Error getting service info:", err)
-	}
-
-	jsonServiceInfo, err := json.Marshal(serviceInfo)
-	if err != nil {
-		log.Println("Error marshalling service info:", err)
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonServiceInfo)
-}
-
-func ShowRuntimeMetrics() {
-	// Store the Service Metrics
-	metricsInfo, err := dbObj.GetServiceMetricsFromMonigoDb()
-	if err != nil {
-		log.Fatalf("Error getting service metrics: %v\n", err)
-	}
-
-	log.Printf("Service Metrics: %+v\n", metricsInfo)
-}
-
 func GetBasePath() string {
 
 	const monigoFolder string = "monigo"
@@ -271,4 +230,20 @@ func GetBasePath() string {
 	}
 
 	return path
+}
+
+func PurgeMonigoDb() {
+	monigodb.PurgeMonigoDbFile()
+}
+
+func SetDbSyncFrequency(intervalStr ...string) {
+	monigodb.SetDbSyncFrequency(intervalStr...)
+}
+
+func MeasureExecutionTime(name string, f func()) {
+	core.MeasureExecutionTime(name, f)
+}
+
+func RecordRequestDuration(duration time.Duration) {
+	core.RecordRequestDuration(duration)
 }

@@ -16,14 +16,14 @@ type DBWrapper struct {
 // MetricsStore is the interface for storing and viewing metrics
 type MetricsStore interface {
 	StoreServiceInfo(storeServiceInfo *models.ServiceInfo) error
-	GetServiceInfo(serviceName string) (*models.ServiceInfo, error)
+	GetServiceInfo(serviceName string) (models.ServiceInfo, error)
 }
 
 // StoreServiceInfo stores the service metrics in BoltDB
 func (db *DBWrapper) StoreServiceInfo(storeServiceInfo *models.ServiceInfo) error {
 	return db.Update(func(tx *bolt.Tx) error {
 		// Create or get the bucket for the service info
-		bucket, err := tx.CreateBucketIfNotExists([]byte(serviceInfoBucket))
+		bucket, err := tx.CreateBucketIfNotExists([]byte(service_info))
 		if err != nil {
 			return err
 		}
@@ -40,12 +40,12 @@ func (db *DBWrapper) StoreServiceInfo(storeServiceInfo *models.ServiceInfo) erro
 }
 
 // GetServiceInfo retrieves the service info from BoltDB
-func (db *DBWrapper) GetServiceInfo(serviceName string) (*models.ServiceInfo, error) {
+func (db *DBWrapper) GetServiceInfo(serviceName string) (models.ServiceInfo, error) {
 	var serviceInfo models.ServiceInfo
 
 	err := db.View(func(tx *bolt.Tx) error {
 		// Get the bucket for the service info
-		bucket := tx.Bucket([]byte(serviceInfoBucket))
+		bucket := tx.Bucket([]byte(service_info))
 		if bucket == nil {
 			return errors.New("bucket not found")
 		}
@@ -60,5 +60,5 @@ func (db *DBWrapper) GetServiceInfo(serviceName string) (*models.ServiceInfo, er
 		return json.Unmarshal(rowData, &serviceInfo)
 	})
 
-	return &serviceInfo, err
+	return serviceInfo, err
 }

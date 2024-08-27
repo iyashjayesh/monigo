@@ -17,9 +17,9 @@ import (
 
 const (
 	// bucket name
-	serviceInfoBucket = "service_info"
-	metricsInfoBucket = "metrics_info"
-	// runtimeMetricsInfoBucket = "runtime_metrics_info"
+	service_info = "service_info"
+	metrics_info = "metrics_info"
+	// runtime_metrics_info = "runtime_metrics_info"
 )
 
 var (
@@ -61,8 +61,8 @@ func closeDb(db *bolt.DB) {
 	}
 }
 
-// PurgeMonigoDb removes the monigo.db file
-func PurgeMonigoDb() {
+// PurgeMonigoDbFile removes the monigo.db file
+func PurgeMonigoDbFile() {
 	mongigoDbPath := basePath + "/monigo/monigo.db"
 	if _, err := os.Stat(mongigoDbPath); err == nil {
 		err = os.Remove(mongigoDbPath)
@@ -98,7 +98,7 @@ func SetDbSyncFrequency(intervalStr ...string) {
 			select {
 			case <-timer.C:
 				SyncMetricsInfoToDB()
-				log.Println("Next sync in ", interval, " minutes", time.Now().Add(interval*time.Minute).Format("2006-01-02 15:04:05"))
+				log.Println("Next sync in", interval, "minutes")
 				// Reset the timer and start it again
 				if !timer.Stop() {
 					<-timer.C // Drain the channel if necessary
@@ -119,6 +119,7 @@ func GetServiceMetricsFromMonigoDbData() *models.ServiceMetrics {
 
 	requestCount, totalDuration, memStats := core.GetServiceMetrics()
 	serviceStat := core.GetProcessSats()
+	serviceInfo := dbObj.GetServiceDetails()
 
 	var serviceMetrics models.ServiceMetrics
 
@@ -129,7 +130,7 @@ func GetServiceMetricsFromMonigoDbData() *models.ServiceMetrics {
 		strconv.Itoa(serviceStat.TotalLogicalCores) + "LC / " +
 		strconv.Itoa(serviceStat.TotalCores) + "C"
 	serviceMetrics.MemoryUsed = fmt.Sprintf("%.2f", serviceStat.ProcMemPercent)
-	// serviceMetrics.UpTime = time.Since(serviceInfo.ServiceStartTime)
+	serviceMetrics.UpTime = time.Now().Sub(serviceInfo.ServiceStartTime).Round(time.Second)
 	serviceMetrics.NumberOfReqServerd = requestCount
 	serviceMetrics.TotalDurationTookByAPI = totalDuration
 	serviceMetrics.GoRoutines = int64(runtime.NumGoroutine())
