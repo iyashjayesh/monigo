@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.2/jspdf.debug.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- <link rel="stylesheet" href="/static/styles.css"> -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -349,58 +350,189 @@
             font-weight: 700;
             margin-top: 10px;
         }
+
+
+        /* /////// */
+
+        /* Container for the interval input and button */
+        div {
+            margin-bottom: 15px;
+        }
+
+        /* Label styling */
+        label {
+            font-size: 16px;
+            margin-right: 10px;
+        }
+
+        /* Input field styling */
+        input[type="number"] {
+            padding: 5px;
+            font-size: 16px;
+            width: 80px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        /* Button styling */
+        button {
+            padding: 5px 15px;
+            font-size: 16px;
+            color: white;
+            background-color: #28a745;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-left: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Refresh button styling */
+        #refresh-btn {
+            padding: 5px 15px;
+            font-size: 16px;
+            color: white;
+            background-color: #28a745;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #refresh-btn:hover {
+            background-color: #218838;
+        }
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const serviceNameElement = document.getElementById('servicename');
-            const serviceStartTimeElement = document.getElementById('servicestarttime');
-            const gcountElement = document.getElementById('gcount');
-            const rcountElement = document.getElementById('rcount');
-            const tdurElement = document.getElementById('tdur');
-            // const allocElement = document.getElementById('alloc');
-            // const totalallocElement = document.getElementById('totalalloc');
-            // const sysElement = document.getElementById('sys');
-            // const heapallocElement = document.getElementById('heapalloc');
-            // const heapsysElement = document.getElementById('heapsys');
-
-
             const unitInputs = document.querySelectorAll('input[name="unit"]');
-            const countdownElement = document.getElementById('countdown');
+            // const countdownElement = document.getElementById('countdown');
             const refreshBtn = document.getElementById('refresh-btn');
-            const functionsContainer = document.getElementById('functions-container');
 
-            const memoryContainer = document.getElementById('memory-metrics-container');
+            const countdownElement = document.getElementById('countdown');
+            const intervalInput = document.getElementById('interval-input');
+            const setIntervalBtn = document.getElementById('set-interval-btn');
 
-            let refreshInterval = 60000; // 60 seconds
+            const intervalInMinutes = parseFloat(intervalInput.value);
+
+            let refreshInterval = intervalInMinutes * 60 * 1000;
+
+            // convert intervalInput in seconds 
+
+            // Function to convert minutes to seconds
+            function convertMinutesToSeconds(minutes) {
+                return minutes * 60;
+            }
+
+            // let refreshInterval = parseInt(intervalInput.value, 10) * 1000; // default 60 seconds
             let refreshTimeout;
+            let countdown = refreshInterval / 1000; // countdown in seconds
+
+            // Containers for displaying metrics
+            const serviceInfoContainer = document.getElementById('service-container');
+            const functionsContainer = document.getElementById('functions-container');
+            const serviceMetricsContainer = document.getElementById('service-metrics-container');
+            const memoryContainer = document.getElementById('runtime-metrics-container');
 
             function fetchMetrics(unit) {
+                // Show loading indicator
+                serviceInfoContainer.innerHTML = `<div class="service-info">Fetching the data...</div>`;
+                serviceMetricsContainer.innerHTML = `<div class="service-info">Fetching the data...</div>`;
+                memoryContainer.innerHTML = `<div class="service-info">Fetching the data...</div>`;
+
                 fetch(`/metrics?unit=${unit}`)
                     .then(response => response.text())
                     .then(data => {
+                        // Remove loading indicator and process data
+                        serviceInfoContainer.innerHTML = '';
+                        serviceMetricsContainer.innerHTML = '';
+                        memoryContainer.innerHTML = '';
+
                         const lines = data.split('\n');
-                        serviceNameElement.textContent = 'Service Name: ' + lines[0].split(': ')[1];
-                        serviceStartTimeElement.textContent = 'Service Start Time: ' + lines[1].split(': ')[1];
-                        // gcountElement.textContent = lines[2].split(': ')[1];
-                        rcountElement.textContent = lines[3].split(': ')[1];
-                        // tdurElement.textContent = lines[4].split(': ')[1];
-                        // allocElement.textContent = lines[6].split(': ')[1];
-                        // totalallocElement.textContent = lines[7].split(': ')[1];
-                        // sysElement.textContent = lines[8].split(': ')[1];
-                        // heapallocElement.textContent =  lines[9].split(': ')[1];
-                        // heapsysElement.textContent =  lines[10].split(': ')[1];
 
+                        // Service Info Metrics Container
+                        // configureServiceInfoContainer(lines)
+                        const serviceName = lines[0].split(': ')[1];
+                        const goVersion = lines[12].split(': ')[1];
+                        const serviceStartTime = lines[1].split(': ')[1];
 
-                        // const memoryAllocated = lines[6].split(': ')[1];
+                        serviceInfoContainer.innerHTML = `
+                            <div class="service-info">
+                                <div class="info-item">
+                                    <span class="label">Service Name:</span> ${serviceName}
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Go Version:</span> ${goVersion}
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Service Started at:</span> ${serviceStartTime}
+                                </div>
+                            </div>
+                        `;
+                        
+
+                        // Metrics Overview Container
+                        const rcount = lines[3].split(': ')[1];
+                        let reqCountStr = lines[3].split(': ')[1];
+                        let totalDurationStr = lines[4].split(': ')[1];
+                        const load = lines[13].split(': ')[1] + '%';
+                        const cores = lines[14].split(': ')[1];
+                        const memoryUsed = lines[15].split(': ')[1] + '%';
+
+                        let currentTime = new Date();
+                        let serviceStartTimeDate = new Date(serviceStartTime);
+                        let uptime = currentTime - serviceStartTimeDate;
+
+                        let uptimeStr = '';
+                        let uptimeSeconds = Math.floor(uptime / 1000);
+                        let uptimeMinutes = Math.floor(uptimeSeconds / 60);
+                        let uptimeHours = Math.floor(uptimeMinutes / 60);
+
+                        uptimeStr += uptimeHours + 'h ';
+                        uptimeStr += uptimeMinutes % 60 + 'm ';
+                        uptimeStr += uptimeSeconds % 60 + 's';
+
+                        serviceMetricsContainer.innerHTML = `
+                        <div class="metrics-overview">
+                            <div class="metric-box">
+                                <div class="metric-title">Load</div>
+                                <div class="metric-value">${load}</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-title">Cores</div>
+                                <div class="metric-value">${cores}</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-title">Memory</div>
+                                <div class="metric-value">${memoryUsed}</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-title">Uptime</div>
+                                <div class="metric-value">${uptimeStr}</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-title">Request Served <span class="info-icon"
+                                        data-tooltip="The total number of requests handled by the service.">i</span></div>
+                                <p class="metric-value"> ${rcount}</p>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-title">Total Duration <span class="info-icon"
+                                        data-tooltip="The total time spent handling requests.">i</span></div>
+                                <p class="metric-value">${totalDurationStr}</p>
+                            </div>
+                        </div>`;
+
+                        // Runtime Metrics Overview Container
                         const goroutiuneCount = lines[2].split(': ')[1];
                         const totalAlloc = lines[7].split(': ')[1];
                         const memoryAllocatedBySystem = lines[8].split(': ')[1];
                         const heapAlloc = lines[9].split(': ')[1];
                         const heapSys = lines[10].split(': ')[1];
-
-                        let reqCountStr = lines[3].split(': ')[1]; // Example: '2'
-                        let totalDurationStr = lines[4].split(': ')[1]; // Example: '610.628417ms'
-                        tdurElement.textContent = totalDurationStr;
 
                         let reqCount = parseInt(reqCountStr, 10);
                         let totalDuration = parseFloat(totalDurationStr.replace('ms', ''));
@@ -419,35 +551,80 @@
                         }
 
                         memoryContainer.innerHTML = `
-                         <div class="metrics-overview">
-                             <div class="metric-box">
-                                 <div class="metric-title">Goroutines<span class="info-icon" data-tooltip="The number of goroutines currently running in the application.">i</span></div>
-                                 <p class="metric-value">${goroutiuneCount}</p>
-                             </div>
-                             <div class="metric-box">
-                                 <div class="metric-title">TotalAlloc <span class="info-icon" data-tooltip="Total memory allocated by the application since it started.">i</span>
-                                 </div>
-                                 <p class="metric-value">${totalAlloc}</p>
-                             </div>
-                             <div class="metric-box">
-                                 <div class="metric-title">Memory Allocated by System <span class="info-icon" data-tooltip="Total memory obtained from the OS.">i</span></div>
-                                 <p class="metric-value">${memoryAllocatedBySystem}</p>
-                             </div>
-                             <div class="metric-box">
-                                 <div class="metric-title">HeapAlloc <span class="info-icon" data-tooltip="Memory allocated to the heap.">i</span></div>
-                                 <p class="metric-value">${heapAlloc}</p>
-                             </div>
-                             <div class="metric-box">
-                                 <div class="metric-title">HeapSys: <span class="info-icon" data-tooltip="Total memory obtained from the OS for the heap.">i</span></div>
-                                 <p class="metric-value">${heapSys}</p>
-                             </div>
-                             <div class="metric-box">
-                                 <div class="metric-title">Average API Response Time <span class="info-icon" data-tooltip="The average time taken to respond to an API request.">i</span></div>
-                                 <p class="metric-value">${avgAPIResponseTimeStr}</p>
-                             </div>
-                         </div>
-                             `;
+                        <div class="metrics-overview">
+                            <div class="metric-box">
+                                <div class="metric-title">Goroutines<span class="info-icon" data-tooltip="The number of goroutines currently running in the application.">i</span></div>
+                                <p class="metric-value">${goroutiuneCount}</p>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-title">TotalAlloc <span class="info-icon" data-tooltip="Total memory allocated by the application since it started.">i</span>
+                                </div>
+                                <p class="metric-value">${totalAlloc}</p>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-title">Memory Allocated by System <span class="info-icon" data-tooltip="Total memory obtained from the OS.">i</span></div>
+                                <p class="metric-value">${memoryAllocatedBySystem}</p>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-title">HeapAlloc <span class="info-icon" data-tooltip="Memory allocated to the heap.">i</span></div>
+                                <p class="metric-value">${heapAlloc}</p>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-title">HeapSys: <span class="info-icon" data-tooltip="Total memory obtained from the OS for the heap.">i</span></div>
+                                <p class="metric-value">${heapSys}</p>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-title">Average API Response Time <span class="info-icon" data-tooltip="The average time taken to respond to an API request.">i</span></div>
+                                <p class="metric-value">${avgAPIResponseTimeStr}</p>
+                            </div>
+                        </div>`;
+                            })   
+                    .catch(error => {
+                        serviceInfoContainer.innerHTML = `<div class="error">Failed to load service information.</div>`;
+                        serviceMetricsContainer.innerHTML = `<div class="error">Failed to load service metrics.</div>`;
+                        memoryContainer.innerHTML = `<div class="error">Failed to load memory metrics.</div>`;
                     });
+
+                    // Reset the countdown
+                    countdown = refreshInterval / 1000;
+            }
+
+            function configureServiceInfoContainer(lines) {
+                
+
+                const serviceName = lines[0].split(': ')[1];
+                const goVersion = lines[12].split(': ')[1];
+                const serviceStartTime = lines[1].split(': ')[1];
+
+                serviceInfoContainer.innerHTML = `
+                            <div class="service-info">
+                                <div class="info-item">
+                                    <span class="label">Service Name:</span> ${serviceName}
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Go Version:</span> ${goVersion}
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Service Started at:</span> ${serviceStartTime}
+                                </div>
+                            </div>
+                        `;
+            }
+
+            function startCountdown() {
+                countdownElement.textContent = `Refreshing in ${countdown} seconds`;
+
+                refreshTimeout = setInterval(() => {
+                    countdown--;
+                    countdownElement.textContent = `Refreshing in ${countdown} seconds`;
+
+                    if (countdown <= 0) {
+                        clearInterval(refreshTimeout);
+                        // fetchMetrics(); // Fetch metrics when countdown reaches 0
+                        fetchAllMetrics(); // Fetch all metrics when countdown reaches 0
+                        startCountdown(); // Restart countdown
+                    }
+                }, 1000); // Update countdown every second
             }
 
             function fetchFunctionMetrics(unit) {
@@ -537,7 +714,7 @@
                 const selectedUnit = Array.from(unitInputs).find(input => input.checked).value;
                 localStorage.setItem('selectedUnit', selectedUnit);
                 fetchAllMetrics();
-                resetRefreshTimer();
+                clearInterval(refreshTimeout); // Stoping the current countdown
             }
 
             function startAutoRefresh() {
@@ -548,34 +725,13 @@
                     }
                 });
                 fetchAllMetrics();
-                startRefreshTimer();
-            }
-
-            function startRefreshTimer() {
-                let timeLeft = refreshInterval / 1000; // Convert milliseconds to seconds
-
-                function updateCountdown() {
-                    countdownElement.textContent = `Refreshing in: ${timeLeft}s`;
-                    if (timeLeft > 0) {
-                        timeLeft -= 1;
-                        refreshTimeout = setTimeout(updateCountdown, 1000); // Update every second
-                    } else {
-                        fetchAllMetrics();
-                        startRefreshTimer(); // Restart the timer after fetching metrics
-                    }
-                }
-
-                updateCountdown();
-            }
-
-            function resetRefreshTimer() {
-                clearTimeout(refreshTimeout);
-                startRefreshTimer();
+                startCountdown();
             }
 
             function refreshMetrics() {
-                fetchAllMetrics();
-                resetRefreshTimer();
+                clearInterval(refreshTimeout); // Stopping the current countdown
+                fetchAllMetrics(); // Fetching metrics immediately
+                startCountdown(); // Restarting the countdown
             }
 
             unitInputs.forEach(input => {
@@ -583,6 +739,13 @@
             });
 
             refreshBtn.addEventListener('click', refreshMetrics);
+
+            setIntervalBtn.addEventListener('click', () => {
+                clearInterval(refreshTimeout); // Stop the current countdown
+                refreshInterval = parseInt(intervalInput.value, 10) * 1000; // Update interval
+                fetchMetrics(); // Fetch metrics immediately
+                startCountdown(); // Restart countdown with new interval
+            });
 
             startAutoRefresh();
         });
@@ -610,62 +773,32 @@
                     </label>
                 </div>
             </div>
-            <!-- <button id="refresh-btn" title="Refresh Metrics">
-               <img src="/refresh-icon.png" alt="Refresh Icon">
-               </button> -->
-            <!-- <button id="refresh-btn" title="Refresh Metrics"><i class="fa fa-refresh"></i></button> -->
             <button id="refresh-btn" aria-label="Refresh metrics">
                 <i class="fa fa-refresh"></i>
             </button>
-            <p id="countdown">Refreshing in: 60s</p>
+            <div>
+                <label for="interval-input">Set Refresh Interval (Mins): </label>
+                <input type="number" id="interval-input" min="1" value="1">
+                <button id="set-interval-btn">Set Interval</button>
+            </div>
+            <p id="countdown"></p>
         </div>
     </header>
-    <div class="service-info">
-        <div class="info-item">
-            <span id="servicename" class="label">Service Name:</span>
-        </div>
-        <div class="info-item">
-            <span id="servicestarttime" class="label">Service Started at:</span>
-        </div>
+    <div id="service-container">
     </div>
     <div>
         <div class="section-title">
             <h1>Metrics Overview:</h1>
         </div>
-        <div class="metrics-overview">
-            <div class="metric-box">
-                <div class="metric-title">Load</div>
-                <div class="metric-value">40%</div>
-            </div>
-            <div class="metric-box">
-                <div class="metric-title">Cores</div>
-                <div class="metric-value">1/8</div>
-            </div>
-            <div class="metric-box">
-                <div class="metric-title">Memory</div>
-                <div class="metric-value">127.8MB</div>
-            </div>
-            <div class="metric-box">
-                <div class="metric-title">Uptime</div>
-                <div class="metric-value">7h 28m</div>
-            </div>
-            <div class="metric-box">
-                <div class="metric-title">Request Served <span class="info-icon"
-                        data-tooltip="The total number of requests handled by the service.">i</span></div>
-                <p id="rcount" class="metric-value"> </p>
-            </div>
-            <div class="metric-box">
-                <div class="metric-title">Total Duration <span class="info-icon"
-                        data-tooltip="The total time spent handling requests.">i</span></div>
-                <p id="tdur" class="metric-value"></p>
-            </div>
+        <div id="service-metrics-container">
+            <!--  -->
         </div>
     </div>
     <div>
         <div class="section-title">
             <h1>Runtime Metrics Overview:</h1>
         </div>
-        <div id="memory-metrics-container">
+        <div id="runtime-metrics-container">
             <!--  -->
         </div>
     </div>
@@ -673,6 +806,7 @@
         <div class="section service-metrics">
             <div class="section-title">Function Metrics Overview:</div>
             <div id="functions-container">
+                <!--  -->
             </div>
         </div>
         <div class="section service-metrics">
