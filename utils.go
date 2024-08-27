@@ -48,6 +48,7 @@ func MeasureExecutionTime(name string, f func()) {
 
 	cpuProfileName := fmt.Sprintf("%s_cpu.prof", name)
 	cpuProfFilePath := fmt.Sprintf("%s/%s", profilesFolderPath, cpuProfileName)
+
 	log.Printf("cpuProfFilePath = %s\n", cpuProfFilePath)
 
 	cpuProfileFile, err := StartCPUProfile(cpuProfFilePath)
