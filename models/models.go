@@ -1,4 +1,4 @@
-package monigo
+package models
 
 import (
 	"time"

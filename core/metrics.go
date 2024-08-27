@@ -1,5 +1,4 @@
-// Function for recording and retrieving metrics.
-package monigo
+package core
 
 import (
 	"fmt"
@@ -8,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/iyashjayesh/monigo/models"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/mem"
 	"github.com/shirou/gopsutil/process"
@@ -17,7 +17,7 @@ var (
 	mu              sync.Mutex
 	requestCount    int64
 	totalDuration   time.Duration
-	functionMetrics = make(map[string]*FunctionMetrics)
+	functionMetrics = make(map[string]*models.FunctionMetrics)
 )
 
 func RecordRequestDuration(duration time.Duration) {
@@ -27,7 +27,7 @@ func RecordRequestDuration(duration time.Duration) {
 	totalDuration += duration
 }
 
-func GetServiceMetricsFromMonigoDb() (int64, time.Duration, *runtime.MemStats) {
+func GetServiceMetrics() (int64, time.Duration, *runtime.MemStats) {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -37,31 +37,31 @@ func GetServiceMetricsFromMonigoDb() (int64, time.Duration, *runtime.MemStats) {
 	return requestCount, totalDuration, &memStats
 }
 
-func GetFunctionMetrics(functionName string) *FunctionMetrics {
+func GetFunctionMetrics(functionName string) *models.FunctionMetrics {
 	mu.Lock()
 	defer mu.Unlock()
 	return functionMetrics[functionName]
 }
 
-func GetProcessSats() ProcessStats {
+func GetProcessSats() models.ProcessStats {
 
 	pid, proc, err := GetProcessDetails()
 	if err != nil {
 		fmt.Printf("Error fetching process information: %v\n", err)
-		return ProcessStats{}
+		return models.ProcessStats{}
 	}
 
 	// Getting system and process resource usage
 	sysCPUPercent, sysMemUsage, err := getSystemUsage()
 	if err != nil {
 		fmt.Printf("Error fetching system usage: %v\n", err)
-		return ProcessStats{}
+		return models.ProcessStats{}
 	}
 
 	procCPUPercent, procMemPercent, err := getProcessUsage(proc, &sysMemUsage)
 	if err != nil {
 		fmt.Printf("Error fetching process usage: %v\n", err)
-		return ProcessStats{}
+		return models.ProcessStats{}
 	}
 
 	totalCores, _ := cpu.Counts(false)
@@ -69,7 +69,7 @@ func GetProcessSats() ProcessStats {
 	systemUsedCores := (sysCPUPercent / 100) * float64(totalLogicalCores)
 	processUsedCores := (procCPUPercent / 100) * float64(totalLogicalCores)
 
-	return ProcessStats{
+	return models.ProcessStats{
 		ProcessId:         pid,
 		SysCPUPercent:     sysCPUPercent,
 		ProcCPUPercent:    procCPUPercent,
@@ -94,19 +94,19 @@ func GetProcessDetails() (int32, *process.Process, error) {
 }
 
 // Fetches and returns system CPU and memory usage
-func getSystemUsage() (float64, Memory, error) {
+func getSystemUsage() (float64, models.Memory, error) {
 	cpuPercent, err := cpu.Percent(time.Second, false)
 	if err != nil {
-		return 0, Memory{}, err
+		return 0, models.Memory{}, err
 	}
 
-	memUsage := Memory{}
+	memUsage := models.Memory{}
 	memInfo, err := mem.VirtualMemory()
 	if err != nil {
-		return 0, Memory{}, err
+		return 0, models.Memory{}, err
 	}
 
-	memUsage = Memory{
+	memUsage = models.Memory{
 		TotalMemoryUsage: float64(memInfo.Total),
 		FreeMemory:       float64(memInfo.Free),
 		UsedPercent:      memInfo.UsedPercent,
@@ -116,7 +116,7 @@ func getSystemUsage() (float64, Memory, error) {
 }
 
 // Fetches and returns process CPU and memory usage
-func getProcessUsage(proc *process.Process, sysMemUsage *Memory) (float64, float64, error) {
+func getProcessUsage(proc *process.Process, sysMemUsage *models.Memory) (float64, float64, error) {
 	procCPUPercent, err := proc.CPUPercent()
 	if err != nil {
 		return 0, 0, err
@@ -134,4 +134,8 @@ func getProcessUsage(proc *process.Process, sysMemUsage *Memory) (float64, float
 	procMemPercent := float64(procMem.RSS) / sysMemUsage.TotalMemoryUsage * 100
 
 	return procCPUPercent, procMemPercent, nil
+}
+
+func GetLocalFunctionMetrics() map[string]*models.FunctionMetrics {
+	return functionMetrics
 }

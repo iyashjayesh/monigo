@@ -1,17 +1,27 @@
 // Utility functions and helpers.
-package monigo
+package utils
 
 import (
 	"fmt"
 	"log"
 	"os"
 	"runtime"
+	"sync"
 	"time"
+
+	"github.com/iyashjayesh/monigo"
+	"github.com/iyashjayesh/monigo/core"
+	"github.com/iyashjayesh/monigo/models"
 )
 
-const monigoFolder string = "monigo"
+var (
+	mu              sync.Mutex = sync.Mutex{}
+	functionMetrics            = make(map[string]*models.FunctionMetrics)
+)
 
 func GetBasePath() string {
+
+	const monigoFolder string = "monigo"
 
 	var path string
 	appPath, _ := os.Getwd()
@@ -28,10 +38,6 @@ func GetBasePath() string {
 	return path
 }
 
-func GetGoroutineCount() int64 {
-	return int64(runtime.NumGoroutine())
-}
-
 func MeasureExecutionTime(name string, f func()) {
 
 	initialGoroutines := runtime.NumGoroutine() // Capturing the initial number of goroutines
@@ -40,7 +46,7 @@ func MeasureExecutionTime(name string, f func()) {
 
 	log.Printf("memStatsBefore = %v\n", memStatsBefore.Alloc)
 
-	profilesFolderPath := fmt.Sprintf("%s/profiles", basePath)
+	profilesFolderPath := fmt.Sprintf("%s/profiles", monigo.BasePath)
 
 	if _, err := os.Stat(profilesFolderPath); os.IsNotExist(err) {
 		os.Mkdir(profilesFolderPath, os.ModePerm)
@@ -51,12 +57,12 @@ func MeasureExecutionTime(name string, f func()) {
 
 	log.Printf("cpuProfFilePath = %s\n", cpuProfFilePath)
 
-	cpuProfileFile, err := StartCPUProfile(cpuProfFilePath)
+	cpuProfileFile, err := core.StartCPUProfile(cpuProfFilePath)
 	if err != nil {
 		fmt.Printf("Error starting CPU profile for %s: %v\n", name, err)
 		return
 	}
-	defer StopCPUProfile(cpuProfileFile)
+	defer core.StopCPUProfile(cpuProfileFile)
 
 	memProfName := fmt.Sprintf("%s_mem.prof", name)
 	memProfFilePath := fmt.Sprintf("%s/%s", profilesFolderPath, memProfName)
@@ -66,7 +72,7 @@ func MeasureExecutionTime(name string, f func()) {
 	f()
 	elapsed := time.Since(start)
 
-	if err := WriteHeapProfile(memProfFilePath); err != nil {
+	if err := core.WriteHeapProfile(memProfFilePath); err != nil {
 		log.Fatal("could not write memory profile: ", err)
 	}
 
@@ -90,7 +96,7 @@ func MeasureExecutionTime(name string, f func()) {
 	defer mu.Unlock()
 
 	// Recording the metrics
-	functionMetrics[name] = &FunctionMetrics{
+	functionMetrics[name] = &models.FunctionMetrics{
 		FunctionLastRanAt: start,
 		CPUProfile:        cpuProfileFile.Name(),
 		MemoryUsage:       memoryUsage,

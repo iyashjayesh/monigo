@@ -1,9 +1,10 @@
-package monigo
+package monigodb
 
 import (
 	"encoding/json"
 	"errors"
 
+	"github.com/iyashjayesh/monigo/models"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -14,12 +15,12 @@ type DBWrapper struct {
 
 // MetricsStore is the interface for storing and viewing metrics
 type MetricsStore interface {
-	StoreServiceInfo(storeServiceInfo *ServiceInfo) error
-	GetServiceInfo(serviceName string) (*ServiceInfo, error)
+	StoreServiceInfo(storeServiceInfo *models.ServiceInfo) error
+	GetServiceInfo(serviceName string) (*models.ServiceInfo, error)
 }
 
 // StoreServiceInfo stores the service metrics in BoltDB
-func (db *DBWrapper) StoreServiceInfo(storeServiceInfo *ServiceInfo) error {
+func (db *DBWrapper) StoreServiceInfo(storeServiceInfo *models.ServiceInfo) error {
 	return db.Update(func(tx *bolt.Tx) error {
 		// Create or get the bucket for the service info
 		bucket, err := tx.CreateBucketIfNotExists([]byte(serviceInfoBucket))
@@ -39,8 +40,8 @@ func (db *DBWrapper) StoreServiceInfo(storeServiceInfo *ServiceInfo) error {
 }
 
 // GetServiceInfo retrieves the service info from BoltDB
-func (db *DBWrapper) GetServiceInfo(serviceName string) (*ServiceInfo, error) {
-	var serviceInfo ServiceInfo
+func (db *DBWrapper) GetServiceInfo(serviceName string) (*models.ServiceInfo, error) {
+	var serviceInfo models.ServiceInfo
 
 	err := db.View(func(tx *bolt.Tx) error {
 		// Get the bucket for the service info

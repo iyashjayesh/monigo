@@ -1,19 +1,20 @@
-package monigo
+package monigodb
 
 import (
 	"encoding/json"
 	"errors"
 
+	"github.com/iyashjayesh/monigo/models"
 	bolt "go.etcd.io/bbolt"
 )
 
 // ServiceMetrics is the interface for storing and viewing metrics
 type ServiceMetricsStore interface {
-	StoreServiceRuntimeMetrics(serviceMetrics *ServiceMetrics) error
-	GetServiceMetricsFromMonigoDb() (*ServiceMetrics, error)
+	StoreServiceRuntimeMetrics(serviceMetrics *models.ServiceMetrics) error
+	GetServiceMetricsFromMonigoDb() (*models.ServiceMetrics, error)
 }
 
-func (db *DBWrapper) StoreServiceRuntimeMetrics(serviceMetrics *ServiceMetrics) error {
+func (db *DBWrapper) StoreServiceRuntimeMetrics(serviceMetrics *models.ServiceMetrics) error {
 	return db.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte(metricsInfoBucket))
 		if err != nil {
@@ -29,8 +30,8 @@ func (db *DBWrapper) StoreServiceRuntimeMetrics(serviceMetrics *ServiceMetrics) 
 	})
 }
 
-func (db *DBWrapper) GetServiceMetricsFromMonigoDb() ([]ServiceMetrics, error) {
-	var serviceMetrics []ServiceMetrics
+func (db *DBWrapper) GetServiceMetricsFromMonigoDb() ([]models.ServiceMetrics, error) {
+	var serviceMetrics []models.ServiceMetrics
 
 	err := db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(metricsInfoBucket))
@@ -39,7 +40,7 @@ func (db *DBWrapper) GetServiceMetricsFromMonigoDb() ([]ServiceMetrics, error) {
 		}
 
 		return b.ForEach(func(k, v []byte) error {
-			var sm ServiceMetrics
+			var sm models.ServiceMetrics
 			if err := json.Unmarshal(v, &sm); err != nil {
 				return err
 			}

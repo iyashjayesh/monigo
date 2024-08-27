@@ -1,6 +1,4 @@
-// Functions for CPU and memory profiling.
-
-package monigo
+package core
 
 import (
 	"os"

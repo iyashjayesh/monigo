@@ -1,4 +1,3 @@
-// Functions for serving the dashboard and handling HTTP requests.
 package monigo
 
 import (
@@ -7,13 +6,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
 	"runtime"
 	"strconv"
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/iyashjayesh/monigo/core"
+	"github.com/iyashjayesh/monigo/models"
+	monigodb "github.com/iyashjayesh/monigo/monigoDb"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -23,21 +25,15 @@ var (
 	serviceStartTime time.Time = time.Now()
 	Once             sync.Once = sync.Once{}
 	Db               *bolt.DB
-	basePath         string
-	serviceInfo      ServiceInfo
-	dbObj            *DBWrapper
+	BasePath         string
+	serviceInfo      models.ServiceInfo
+	dbObj            *monigodb.DBWrapper
+	mu               sync.Mutex = sync.Mutex{}
 )
 
 func init() {
-	Once.Do(func() {
-		log.Println("Initializing the DB")
-		basePath = GetBasePath()
-		var err error
-		dbObj, err = connectDb()
-		if err != nil {
-			log.Fatalf("Error connecting to database: %v\n", err)
-		}
-	})
+	BasePath = GetBasePath()
+	dbObj = monigodb.GetDbInstance()
 }
 
 func Start(addr int, serviceName string) {
@@ -98,8 +94,8 @@ func getMetrics(w http.ResponseWriter, r *http.Request) {
 		unit = "MB" // Default Unit
 	}
 
-	requestCount, totalDuration, memStats := GetServiceMetricsFromMonigoDb()
-	serviceStat := GetProcessSats()
+	requestCount, totalDuration, memStats := core.GetServiceMetrics()
+	serviceStat := core.GetProcessSats()
 
 	// var serviceMetrics ServiceMetrics
 
@@ -139,12 +135,13 @@ func getMetrics(w http.ResponseWriter, r *http.Request) {
 
 	// ProcMemPercent
 	memoryUsed := fmt.Sprintf("%.2f", serviceStat.ProcMemPercent)
+	runtimeGoRoutine := runtime.NumGoroutine()
 
 	metrics := fmt.Sprintf(
 		"Service Name: %s\nService Start Time: %s\nGoroutines: %d\nRequests: %d\nTotal Duration: %s\n\nMemory Usage (%s):\nAlloc: %.2f %s\nTotalAlloc: %.2f %s\nSys: %.2f %s\nHeapAlloc: %.2f %s\nHeapSys: %.2f %s\nGo Version: %s\n Load: %s\nCores: %s\n Memory Used: %s\n",
 		serviceInfo.ServiceName,
 		serviceStartTime.Format(time.RFC3339),
-		GetGoroutineCount(),
+		runtimeGoRoutine,
 		requestCount,
 		totalDuration,
 		unit,
@@ -186,9 +183,11 @@ func getFunctionMetrics(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	functionsMetrics := core.GetLocalFunctionMetrics()
+
 	var results string
 	mu.Lock()
-	for name, metrics := range functionMetrics {
+	for name, metrics := range functionsMetrics {
 		results += fmt.Sprintf(
 			"Function: %s\nFunction Ran At: %s\nCPU Profile: %s\nExecution Time: %s\nMemory Usage: %.2f %s\nGoroutines: %d\n\n",
 			name,
@@ -214,7 +213,7 @@ func profileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	profilesFolderPath := fmt.Sprintf("%s/profiles", basePath)
+	profilesFolderPath := fmt.Sprintf("%s/profiles", BasePath)
 
 	cmd := exec.Command("go", "tool", "pprof", "-svg", profilesFolderPath)
 	output, err := cmd.Output()
@@ -245,33 +244,6 @@ func GetServiceInfoAPI(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonServiceInfo)
 }
 
-func GetServiceMetricsFromMonigoDbData() *ServiceMetrics {
-
-	requestCount, totalDuration, memStats := GetServiceMetricsFromMonigoDb()
-	serviceStat := GetProcessSats()
-
-	var serviceMetrics ServiceMetrics
-
-	serviceMetrics.Id = uuid.New()
-	serviceMetrics.Load = fmt.Sprintf("%.2f", serviceStat.ProcCPUPercent)
-	serviceMetrics.Cores = fmt.Sprintf("%.2f", serviceStat.ProcessUsedCores) + "PC / " +
-		fmt.Sprintf("%.2f", serviceStat.SystemUsedCores) + "SC / " +
-		strconv.Itoa(serviceStat.TotalLogicalCores) + "LC / " +
-		strconv.Itoa(serviceStat.TotalCores) + "C"
-	serviceMetrics.MemoryUsed = fmt.Sprintf("%.2f", serviceStat.ProcMemPercent)
-	serviceMetrics.UpTime = time.Since(serviceInfo.ServiceStartTime)
-	serviceMetrics.NumberOfReqServerd = requestCount
-	serviceMetrics.TotalDurationTookByAPI = totalDuration
-	serviceMetrics.GoRoutines = GetGoroutineCount()
-	serviceMetrics.TotalAlloc = memStats.TotalAlloc
-	serviceMetrics.MemoryAllocSys = memStats.Sys
-	serviceMetrics.HeapAlloc = memStats.HeapAlloc
-	serviceMetrics.HeapAllocSys = memStats.HeapSys
-	serviceMetrics.TimeStamp = time.Now()
-
-	return &serviceMetrics
-}
-
 func ShowRuntimeMetrics() {
 	// Store the Service Metrics
 	metricsInfo, err := dbObj.GetServiceMetricsFromMonigoDb()
@@ -280,4 +252,23 @@ func ShowRuntimeMetrics() {
 	}
 
 	log.Printf("Service Metrics: %+v\n", metricsInfo)
+}
+
+func GetBasePath() string {
+
+	const monigoFolder string = "monigo"
+
+	var path string
+	appPath, _ := os.Getwd()
+	if appPath == "/" {
+		path = fmt.Sprintf("%s%s", appPath, monigoFolder)
+	} else {
+		path = fmt.Sprintf("%s/%s", appPath, monigoFolder)
+	}
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		os.Mkdir(path, os.ModePerm)
+	}
+
+	return path
 }
