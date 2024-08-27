@@ -55,23 +55,17 @@ import (
 
 func main() {
 
-    go monigo.StartDashboard("port", "service_name")
+    // Note: MonigoDb is a local database to store the metrics.
+	monigo.PurgeMonigoDb()
+	monigo.Start(8080, "service_name") // Default port is 8080
+	monigo.SetDbSyncFrequency("5m") // Default is 5m
 
     monigo.MeasureExecutionTime("function_name", func(){
         // Your code here
     })
 
-    monigo.ShowLoad()
-    monigo.ShowMemoryUsage()
-
-    monigo.ShowAllMetric()
-
-
-
     select {} // To keep the program running
 }
-
-
 ```
 
 For more detailed usage instructions, refer to the documentation.
@@ -102,4 +96,3 @@ For questions or feedback, please open an issue or contact me at iyashjayesh@gma
    Now on every time interval, do below things:
 1. Store Service Metrics
 1. Store Runtime Metrics -->
-
