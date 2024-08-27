@@ -15,7 +15,7 @@ import (
 
 var (
 	mu              sync.Mutex
-	requestCount    int
+	requestCount    int64
 	totalDuration   time.Duration
 	functionMetrics = make(map[string]*FunctionMetrics)
 )
@@ -27,7 +27,7 @@ func RecordRequestDuration(duration time.Duration) {
 	totalDuration += duration
 }
 
-func GetServiceMetrics() (int, time.Duration, *runtime.MemStats) {
+func GetServiceMetricsFromMonigoDb() (int64, time.Duration, *runtime.MemStats) {
 	mu.Lock()
 	defer mu.Unlock()
 

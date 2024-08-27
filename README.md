@@ -61,6 +61,13 @@ func main() {
         // Your code here
     })
 
+    monigo.ShowLoad()
+    monigo.ShowMemoryUsage()
+
+    monigo.ShowAllMetric()
+
+
+
     select {} // To keep the program running
 }
 
@@ -95,3 +102,4 @@ For questions or feedback, please open an issue or contact me at iyashjayesh@gma
    Now on every time interval, do below things:
 1. Store Service Metrics
 1. Store Runtime Metrics -->
+

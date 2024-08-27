@@ -11,7 +11,7 @@ import (
 
 const monigoFolder string = "monigo"
 
-func getBasePath() string {
+func GetBasePath() string {
 
 	var path string
 	appPath, _ := os.Getwd()
@@ -28,8 +28,8 @@ func getBasePath() string {
 	return path
 }
 
-func GetGoroutineCount() int {
-	return runtime.NumGoroutine()
+func GetGoroutineCount() int64 {
+	return int64(runtime.NumGoroutine())
 }
 
 func MeasureExecutionTime(name string, f func()) {

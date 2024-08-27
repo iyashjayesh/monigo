@@ -695,13 +695,13 @@
             function viewCPUMetrics(functionBlock, metricType) {
                 const functionName = functionBlock.querySelector('h3').textContent.replace('Function: ', '') + '_' + metricType;
                 const profileCanvas = document.getElementById('profile-canvas');
-                profileCanvas.src = `/cpu-metrics?name=${encodeURIComponent(functionName)}`;
+                profileCanvas.src = `/generate-function-metrics?name=${encodeURIComponent(functionName)}`;
             }
 
             function viewMEMmetrics(functionBlock, metricType) {
                 const functionName = functionBlock.querySelector('h3').textContent.replace('Function: ', '') + '_' + metricType;
                 const profileCanvas = document.getElementById('profile-canvas');
-                profileCanvas.src = `/mem-metrics?name=${encodeURIComponent(functionName)}`;
+                profileCanvas.src = `/generate-function-metrics?name=${encodeURIComponent(functionName)}`;
             }
 
             function fetchAllMetrics() {

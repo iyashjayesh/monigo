@@ -50,15 +50,10 @@ type ServiceMetrics struct {
 	UpTime                 time.Duration
 	NumberOfReqServerd     int64
 	TotalDurationTookByAPI time.Duration
+	GoRoutines             int64
+	TotalAlloc             uint64
+	MemoryAllocSys         uint64
+	HeapAlloc              uint64
+	HeapAllocSys           uint64
 	TimeStamp              time.Time
-}
-
-type RuntimeMetrics struct {
-	Id             uuid.UUID
-	GoRoutines     int64
-	TotalAlloc     uint64
-	MemoryAllocSys uint64
-	HeapAlloc      uint64
-	HeapAllocSys   uint64
-	TimeStamp      time.Time
 }
