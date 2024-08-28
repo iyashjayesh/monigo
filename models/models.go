@@ -38,7 +38,7 @@ type FunctionMetrics struct {
 type ServiceInfo struct {
 	ServiceName      string
 	ServiceStartTime time.Time
-	GoVerison        string
+	GoVersion        string
 	TimeStamp        time.Time
 }
 
@@ -56,4 +56,20 @@ type ServiceMetrics struct {
 	HeapAlloc              uint64
 	HeapAllocSys           uint64
 	TimeStamp              time.Time
+}
+
+/// TIME SERIES
+
+type TimeSeriesServiceMetrics struct {
+	Load                   float64
+	Cores                  float64
+	MemoryUsed             float64
+	NumberOfReqServerd     float64
+	GoRoutines             float64
+	TotalAlloc             float64
+	MemoryAllocSys         float64
+	HeapAlloc              float64
+	HeapAllocSys           float64
+	UpTime                 time.Duration
+	TotalDurationTookByAPI time.Duration
 }

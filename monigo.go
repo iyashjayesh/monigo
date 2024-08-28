@@ -2,6 +2,7 @@ package monigo
 
 import (
 	"embed"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,6 +17,8 @@ import (
 	"github.com/iyashjayesh/monigo/core"
 	"github.com/iyashjayesh/monigo/models"
 	monigodb "github.com/iyashjayesh/monigo/monigoDb"
+	"github.com/iyashjayesh/monigo/timeseries"
+	"github.com/nakabonne/tstorage"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -33,14 +36,14 @@ var (
 
 func init() {
 	BasePath = GetBasePath()
-	dbObj = monigodb.GetDbInstance()
+	// dbObj = monigodb.GetDbInstance()
 }
 
 func Start(addr int, serviceName string) {
 	// Store the service info
 	serviceInfo.ServiceName = serviceName
 	serviceInfo.ServiceStartTime = serviceStartTime
-	serviceInfo.GoVerison = runtime.Version()
+	serviceInfo.GoVersion = runtime.Version()
 	serviceInfo.TimeStamp = serviceStartTime
 
 	dbObj.StoreServiceInfo(&serviceInfo)
@@ -49,7 +52,7 @@ func Start(addr int, serviceName string) {
 		log.Fatalf("Error getting service info: %v\n", err)
 	}
 	log.Printf("Service Name: %s\nService Start Time: %s\nGo Version: %s\nTime Stamp: %s\n",
-		serviceInfo.ServiceName, serviceInfo.ServiceStartTime, serviceInfo.GoVerison, serviceInfo.TimeStamp)
+		serviceInfo.ServiceName, serviceInfo.ServiceStartTime, serviceInfo.GoVersion, serviceInfo.TimeStamp)
 
 	go StartDashboard(addr)
 }
@@ -246,4 +249,51 @@ func MeasureExecutionTime(name string, f func()) {
 
 func RecordRequestDuration(duration time.Duration) {
 	core.RecordRequestDuration(duration)
+}
+
+func NewInitializeStorage() {
+	timeseries.PurgeStorage()
+
+	insertTimes := 150
+
+	for i := 0; i < insertTimes; i++ {
+		var serviceMetrics models.TimeSeriesServiceMetrics
+		serviceMetrics.Load = float64(i)
+		serviceMetrics.MemoryUsed = 0.21
+		serviceMetrics.Cores = 0.21
+		serviceMetrics.NumberOfReqServerd = 0.21
+		serviceMetrics.GoRoutines = 0.21
+		serviceMetrics.TotalAlloc = 0.21
+		serviceMetrics.MemoryAllocSys = 0.21
+		serviceMetrics.HeapAlloc = 0.21
+		serviceMetrics.HeapAllocSys = 0.21
+		serviceMetrics.UpTime = time.Duration(0)
+		serviceMetrics.TotalDurationTookByAPI = time.Duration(0)
+
+		if err := timeseries.StoreServiceMetrics(&serviceMetrics); err != nil {
+			log.Fatalf("Error storing service metrics: %v\n", err)
+		}
+
+		log.Printf("Stored service metrics %d\n", i)
+		time.Sleep(1 * time.Second)
+	}
+
+	time.Sleep(5 * time.Second)
+
+	timestamp := time.Now()
+	timestampInt := timestamp.Add(-24 * time.Hour).Unix()
+
+	load, err := timeseries.GetDataPoints("load_metrics", []tstorage.Label{{Name: "host", Value: "server1"}}, timestampInt, timestamp.Unix())
+	if err != nil {
+		log.Fatalf("Error getting data points: %v\n", err)
+	}
+
+	jsonLoad, err := json.Marshal(load)
+	if err != nil {
+		log.Fatalf("Error marshalling JSON: %v\n", err)
+	}
+
+	log.Printf("Load: %s\n", string(jsonLoad))
+
+	timeseries.CloseStorage() // Close storage only once, at the end
 }
