@@ -16,10 +16,8 @@ import (
 	"github.com/iyashjayesh/monigo/api"
 	"github.com/iyashjayesh/monigo/core"
 	"github.com/iyashjayesh/monigo/models"
-	monigodb "github.com/iyashjayesh/monigo/monigoDb"
 	"github.com/iyashjayesh/monigo/timeseries"
 	"github.com/nakabonne/tstorage"
-	bolt "go.etcd.io/bbolt"
 )
 
 var (
@@ -27,10 +25,8 @@ var (
 	staticFiles      embed.FS
 	serviceStartTime time.Time = time.Now()
 	Once             sync.Once = sync.Once{}
-	Db               *bolt.DB
 	BasePath         string
 	serviceInfo      models.ServiceInfo
-	dbObj            *monigodb.DBWrapper
 	mu               sync.Mutex = sync.Mutex{}
 )
 
@@ -46,11 +42,6 @@ func Start(addr int, serviceName string) {
 	serviceInfo.GoVersion = runtime.Version()
 	serviceInfo.TimeStamp = serviceStartTime
 
-	dbObj.StoreServiceInfo(&serviceInfo)
-	serviceInfo, err := dbObj.GetServiceInfo(serviceInfo.ServiceName)
-	if err != nil {
-		log.Fatalf("Error getting service info: %v\n", err)
-	}
 	log.Printf("Service Name: %s\nService Start Time: %s\nGo Version: %s\nTime Stamp: %s\n",
 		serviceInfo.ServiceName, serviceInfo.ServiceStartTime, serviceInfo.GoVersion, serviceInfo.TimeStamp)
 
@@ -233,14 +224,6 @@ func GetBasePath() string {
 	}
 
 	return path
-}
-
-func PurgeMonigoDb() {
-	monigodb.PurgeMonigoDbFile()
-}
-
-func SetDbSyncFrequency(intervalStr ...string) {
-	monigodb.SetDbSyncFrequency(intervalStr...)
 }
 
 func MeasureExecutionTime(name string, f func()) {

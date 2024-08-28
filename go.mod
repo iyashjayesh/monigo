@@ -1,14 +1,11 @@
 module github.com/iyashjayesh/monigo
 
-go 1.22
-
-toolchain go1.22.6
+go 1.21.0
 
 require (
 	github.com/google/uuid v1.6.0
 	github.com/nakabonne/tstorage v0.3.6
 	github.com/shirou/gopsutil v3.21.11+incompatible
-	go.etcd.io/bbolt v1.3.11
 )
 
 require (
