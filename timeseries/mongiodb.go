@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"sync"
 	"time"
@@ -111,7 +112,6 @@ func CloseStorage() {
 
 // PurgeStorage removes all storage data and closes the storage.
 func PurgeStorage() {
-	CloseStorage()
 	basePath := GetBasePath()
 	log.Println("Purging storage from path:", basePath)
 	if err := os.RemoveAll(basePath); err != nil {
@@ -144,8 +144,6 @@ func SetDbSyncFrequency(frequency ...string) {
 		serviceMetrics := core.GetServiceMetricsModel()
 		if err := StoreServiceMetrics(&serviceMetrics); err != nil {
 			log.Printf("Error storing service metrics: %v\n", err)
-		} else {
-			CloseStorage()
 		}
 	})
 
@@ -159,17 +157,14 @@ func SetDbSyncFrequency(frequency ...string) {
 				serviceMetrics := core.GetServiceMetricsModel()
 				if err := StoreServiceMetrics(&serviceMetrics); err != nil {
 					log.Printf("Error storing service metrics: %v\n", err)
-				} else {
-					CloseStorage() // Close storage only once, at the end
-					log.Println("Service metrics stored successfully in the storage")
-				}
+				} 
 				timer.Reset(freqTime)
 			}
 		}
 	}()
 }
 
-func ShowMetrics() {
+func ShowMetrics(w http.ResponseWriter, r *http.Request) {
 
 	timestamp := time.Now()
 	timestamp = timestamp.Add(-24 * time.Hour)
@@ -182,6 +177,8 @@ func ShowMetrics() {
 	if err != nil {
 		log.Fatalf("Error getting data points: %v\n", err)
 	}
+
+	log.Printf("Load length: ", len(load))
 
 	jsonLoad, err := json.Marshal(load)
 	if err != nil {

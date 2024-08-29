@@ -1,7 +1,6 @@
 package api
 
 import (
-	"embed"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,8 +15,7 @@ import (
 )
 
 var (
-	staticFiles embed.FS
-	mu          sync.Mutex = sync.Mutex{}
+	mu sync.Mutex = sync.Mutex{}
 )
 
 func GetServiceInfoAPI(w http.ResponseWriter, r *http.Request) {
@@ -38,19 +36,6 @@ func GetServiceInfoAPI(w http.ResponseWriter, r *http.Request) {
 	// w.Write(jsonServiceInfo)
 }
 
-func ServeHtmlSite(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/" {
-		file, err := staticFiles.ReadFile("static/index.html")
-		if err != nil {
-			http.Error(w, "Could not load index.html", http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "text/html")
-		w.Write(file)
-		return
-	}
-	http.StripPrefix("/static/", http.FileServer(http.FS(staticFiles))).ServeHTTP(w, r)
-}
 
 func GetMetrics(w http.ResponseWriter, r *http.Request) {
 	unit := r.URL.Query().Get("unit")

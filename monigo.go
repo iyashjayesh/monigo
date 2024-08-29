@@ -1,6 +1,7 @@
 package monigo
 
 import (
+	"embed"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,6 +17,8 @@ import (
 )
 
 var (
+	//go:embed static/*
+	staticFiles      embed.FS
 	serviceStartTime time.Time = time.Now()
 	Once             sync.Once = sync.Once{}
 	BasePath         string
@@ -68,17 +71,18 @@ func (m *Monigo) SetDbSyncFrequency(frequency ...string) {
 
 func (m *Monigo) ShowMetrics() {
 	log.Println("Showing the metrics")
-	timeseries.ShowMetrics()
+	// timeseries.ShowMetrics()
 }
 
 func StartDashboard(addr int) {
 
 	log.Println("Starting the dashboard")
 
-	http.HandleFunc("/", api.ServeHtmlSite)
+	http.HandleFunc("/", serveHtmlSite)
 	http.HandleFunc("/metrics", api.GetMetrics)
 	http.HandleFunc("/function-metrics", api.GetFunctionMetrics)
 	http.HandleFunc("/generate-function-metrics", api.ProfileHandler)
+	http.HandleFunc("/yash", timeseries.ShowMetrics)
 
 	// API to fetch the service metrics
 	// http.HandleFunc("/service-metrics", GetServiceMetricsFromMonigoDbData)
@@ -89,6 +93,20 @@ func StartDashboard(addr int) {
 	}
 }
 
+func serveHtmlSite(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/" {
+		file, err := staticFiles.ReadFile("static/index.html")
+		if err != nil {
+			http.Error(w, "Could not load index.html", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html")
+		w.Write(file)
+		return
+	}
+	http.StripPrefix("/static/", http.FileServer(http.FS(staticFiles))).ServeHTTP(w, r)
+}
+
 func MeasureExecutionTime(name string, f func()) {
 	core.MeasureExecutionTime(name, f)
 }
@@ -96,3 +114,7 @@ func MeasureExecutionTime(name string, f func()) {
 func RecordRequestDuration(duration time.Duration) {
 	core.RecordRequestDuration(duration)
 }
+
+// func GetMetrics(getMetrics models.GetMetrics) string {
+// 	return timeseries.GetMetrics(getMetrics.Name, getMetrics.Start, getMetrics.End)
+// }

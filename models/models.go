@@ -52,3 +52,9 @@ type ServiceMetrics struct {
 	HeapAllocSys           float64
 	TotalDurationTookByAPI time.Duration
 }
+
+type GetMetrics struct {
+	Name  string
+	Start time.Time
+	End   time.Time
+}
