@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.2/jspdf.debug.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.0.0/dist/echarts.min.js"></script>
     <!-- <link rel="stylesheet" href="/static/styles.css"> -->
     <style>
         body {
@@ -221,20 +222,6 @@
             width: 100%;
             max-width: 600px;
             /* Match the width of the canvas container */
-        }
-
-        #download-pdf-btn {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        #download-pdf-btn:hover {
-            background-color: #218838;
         }
 
         /* ----------------------- */
@@ -747,8 +734,101 @@
                 startCountdown(); // Restart countdown with new interval
             });
 
-            startAutoRefresh();
+            // Echart chart
+            var myChart = echarts.init(document.getElementById('chartContainer'));
+            var option = {
+                xAxis: {
+                    type: 'category',
+                    data: [],
+                },
+                yAxis: {
+                    type: 'value',
+                },
+                series: [{
+                    data: [],
+                    type: 'line',
+                }]
+            };
+
+            myChart.setOption(option);
+            function updateChart(data) {
+                const values = data.map(item => item.Value);
+                const timestamps = data.map(item => new Date(item.Timestamp * 1000).toLocaleString());
+
+                myChart.setOption({
+                    xAxis: {
+                        data: timestamps,
+                    },
+                    series: [{
+                        data: values,
+                    }]
+                });
+            }
+
+            function fetchAndUpdateChart(startTime, endTime) {
+                fetch('/service-metrics', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        field_name: 'load_metrics',
+                        start_time: startTime,
+                        end_time: endTime,
+                    }),
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        updateChart(data);
+                    });
+            }
+
+            document.getElementById('timeFilter').addEventListener('change', function () {
+                const filter = this.value;
+                let startTime, endTime;
+
+                const now = new Date();
+                if (filter === 'custom') {
+                    document.getElementById('customTimeRange').style.display = 'block';
+                } else {
+                    document.getElementById('customTimeRange').style.display = 'none';
+                    switch (filter) {
+                        case 'seconds':
+                            startTime = new Date(now.getTime() - 1000 * 60).toISOString(); // Last 60 seconds
+                            break;
+                        case 'minutes':
+                            startTime = new Date(now.getTime() - 1000 * 60 * 60).toISOString(); // Last 60 minutes
+                            break;
+                        case 'hours':
+                            startTime = new Date(now.getTime() - 1000 * 60 * 60 * 24).toISOString(); // Last 24 hours
+                            break;
+                        case 'days':
+                            startTime = new Date(now.getTime() - 1000 * 60 * 60 * 24 * 7).toISOString(); // Last 7 days
+                            break;
+                        case 'months':
+                            startTime = new Date(now.getTime() - 1000 * 60 * 60 * 24 * 30).toISOString(); // Last 30 days
+                            break;
+                        default:
+                            startTime = now.toISOString();
+                    }
+
+                    endTime = now.toISOString();
+                    fetchAndUpdateChart(startTime, endTime);
+                }
+            });
+
+            document.getElementById('applyCustomRange').addEventListener('click', function () {
+                const startTime = new Date(document.getElementById('startTime').value).toISOString();
+                const endTime = new Date(document.getElementById('endTime').value).toISOString();
+
+                fetchAndUpdateChart(startTime, endTime);
+            });
+
+            document.getElementById('timeFilter').dispatchEvent(new Event('change'));
+
+            startAutoRefresh();            
         });
+
     </script>
 </head>
 
@@ -812,15 +892,34 @@
         <div class="section service-metrics">
             <div class="section-title">Runtime Charts</div>
             <div id="view-canvas-section">
-                    <!-- <div id="canvas-controls">
-                        <i class="fa fa-download"></i>
-                        <button id="download-pdf-btn">Download as PDF</button>
-                    </div> -->
                 <div id="profile-canvas-container">
                     <iframe id="profile-canvas" style="width: 100%; height: 600px; border: solid 1px #007bff;"></iframe>
                 </div>
             </div>
         </div>
+    </div>
+    <div class="metrics-section">
+        <div>
+            <label for="timeFilter">Time Filter:</label>
+            <select id="timeFilter">
+                <option value="seconds">Seconds</option>
+                <option value="minutes">Minutes</option>
+                <option value="hours">Hours</option>
+                <option value="days">Days</option>
+                <option value="months">Months</option>
+                <option value="custom">Custom Range</option>
+            </select>
+        </div>
+        
+        <div id="customTimeRange" style="display: none;">
+            <label for="startTime">Start Time:</label>
+            <input type="datetime-local" id="startTime">
+            <label for="endTime">End Time:</label>
+            <input type="datetime-local" id="endTime">
+            <button id="applyCustomRange">Apply</button>
+        </div>
+        
+        <div id="chartContainer" style="width: 100%; height: 400px;"></div>
     </div>
 </body>
 
