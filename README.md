@@ -55,14 +55,14 @@ import (
 
 func main() {
 
-    // Note: MonigoDb is a local database to store the metrics.
-	monigo.PurgeMonigoDb()
-	monigo.Start(8080, "service_name") // Default port is 8080
-	monigo.SetDbSyncFrequency("5m") // Default is 5m
+    monigoInstance := &monigo.Monigo{
+		ServiceName:   "service_name", // Default service name is "service_name"
+		DashboardPort: 8080, // Default port is 8080
+	}
 
-    monigo.MeasureExecutionTime("function_name", func(){
-        // Your code here
-    })
+	monigoInstance.PurgeMonigoStorage()
+	monigoInstance.SetDbSyncFrequency("1m") // Default is 5m
+	monigoInstance.StartDashboard()
 
     select {} // To keep the program running
 }
