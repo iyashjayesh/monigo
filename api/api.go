@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,6 +13,8 @@ import (
 
 	"github.com/iyashjayesh/monigo/common"
 	"github.com/iyashjayesh/monigo/core"
+	"github.com/iyashjayesh/monigo/timeseries"
+	"github.com/nakabonne/tstorage"
 )
 
 var (
@@ -35,7 +38,6 @@ func GetServiceInfoAPI(w http.ResponseWriter, r *http.Request) {
 	// w.Header().Set("Content-Type", "application/json")
 	// w.Write(jsonServiceInfo)
 }
-
 
 func GetMetrics(w http.ResponseWriter, r *http.Request) {
 	unit := r.URL.Query().Get("unit")
@@ -162,4 +164,46 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request) {
 	if _, err := w.Write(output); err != nil {
 		http.Error(w, "Failed to write response", http.StatusInternalServerError)
 	}
+}
+
+type ReqObj struct {
+	FieldName string `json:"field_name"`
+	StartTime string `json:"start_time"` // "2006-01-02T15:04:05Z07:00"
+	EndTime   string `json:"end_time"`   // "2006-01-02T15:04:05Z07:00"
+}
+
+func GetServiceMetricsFromStorage(w http.ResponseWriter, r *http.Request) {
+
+	var req ReqObj
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Failed to decode request", http.StatusBadRequest)
+		return
+	}
+
+	startTime, err := time.Parse(time.RFC3339, req.StartTime)
+	if err != nil {
+		http.Error(w, "Invalid start time", http.StatusBadRequest)
+		return
+	}
+
+	endTime, err := time.Parse(time.RFC3339, req.EndTime)
+	if err != nil {
+		http.Error(w, "Invalid end time", http.StatusBadRequest)
+		return
+	}
+
+	datapoints, err := timeseries.GetDataPoints(req.FieldName, []tstorage.Label{{Name: "host", Value: "server1"}}, startTime.Unix(), endTime.Unix())
+	if err != nil {
+		http.Error(w, "Failed to get data points", http.StatusInternalServerError)
+		return
+	}
+
+	jsonDP, err := json.Marshal(datapoints)
+	if err != nil {
+		http.Error(w, "Failed to marshal data points", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonDP)
 }

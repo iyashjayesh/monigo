@@ -64,11 +64,6 @@ func StoreServiceMetrics(serviceMetrics *models.ServiceMetrics) error {
 			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.HeapAllocSys},
 			Labels:    []tstorage.Label{{Name: "host", Value: "server1"}},
 		},
-		// {
-		// 	Metric:    "uptime_metrics",
-		// 	DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: float64(serviceMetrics.UpTime.Seconds())},
-		// 	Labels:    []tstorage.Label{{Name: "host", Value: "server1"}},
-		// },
 		{
 			Metric:    "total_duration_metrics",
 			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: float64(serviceMetrics.TotalDurationTookByAPI.Seconds())},
@@ -80,7 +75,7 @@ func StoreServiceMetrics(serviceMetrics *models.ServiceMetrics) error {
 		return fmt.Errorf("error storing service metrics: %w", err)
 	}
 
-	log.Println("Service metrics stored successfully in the storage, timestamp:", timestamp)
+	log.Println("Stored service metrics, timestamp:", timestamp)
 	return nil
 }
 

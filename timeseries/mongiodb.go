@@ -1,10 +1,8 @@
 package timeseries
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"sync"
 	"time"
@@ -110,7 +108,7 @@ func CloseStorage() {
 	})
 }
 
-// PurgeStorage removes all storage data and closes the storage.
+// PurgeStorage removes alqqql storage data and closes the storage.
 func PurgeStorage() {
 	basePath := GetBasePath()
 	log.Println("Purging storage from path:", basePath)
@@ -124,26 +122,22 @@ func PurgeStorage() {
 }
 
 func SetDbSyncFrequency(frequency ...string) {
-	log.Println("Setting up the service metrics storage")
 	freqStr := "5m"
 	if len(frequency) > 0 {
 		freqStr = frequency[0]
 	}
 
-	log.Printf("Frequency set to: %s\n", freqStr)
 	freqTime, err := time.ParseDuration(freqStr)
 	if err != nil {
 		log.Printf("Invalid frequency format: %v. Using default of 5m.\n", err)
 		freqTime = 5 * time.Minute
 	}
 
-	log.Printf("Frequency set to: %v\n", freqTime)
-
 	freqOnce := sync.Once{}
 	freqOnce.Do(func() {
 		serviceMetrics := core.GetServiceMetricsModel()
 		if err := StoreServiceMetrics(&serviceMetrics); err != nil {
-			log.Printf("Error storing service metrics: %v\n", err)
+			log.Panicf("Error storing service metrics: %v\n", err)
 		}
 	})
 
@@ -153,37 +147,27 @@ func SetDbSyncFrequency(frequency ...string) {
 		for {
 			select {
 			case <-timer.C:
-				log.Println("Storing service metrics at interval:"+freqStr+" curent time:", time.Now())
 				serviceMetrics := core.GetServiceMetricsModel()
 				if err := StoreServiceMetrics(&serviceMetrics); err != nil {
-					log.Printf("Error storing service metrics: %v\n", err)
-				} 
+					log.Panicf("Error storing service metrics: %v\n", err)
+				}
 				timer.Reset(freqTime)
 			}
 		}
 	}()
 }
 
-func ShowMetrics(w http.ResponseWriter, r *http.Request) {
+// func ShowMetrics(w http.ResponseWriter, r *http.Request) {
 
-	timestamp := time.Now()
-	timestamp = timestamp.Add(-24 * time.Hour)
-	timestampFotmat := timestamp.Format("2006-01-02 15:04:05")
+// 	timestamp := time.Now()
+// 	timestamp = timestamp.Add(-24 * time.Hour)
 
-	log.Printf("Showing the metrics for the timestamp: %s\n", timestampFotmat)
-	startTime := timestamp.Unix()
-	endTime := time.Now().Unix()
-	load, err := GetDataPoints("load_metrics", []tstorage.Label{{Name: "host", Value: "server1"}}, startTime, endTime)
-	if err != nil {
-		log.Fatalf("Error getting data points: %v\n", err)
-	}
+// 	startTime := timestamp.Unix()
+// 	endTime := time.Now().Unix()
+// 	load, err := GetDataPoints("load_metrics", []tstorage.Label{{Name: "host", Value: "server1"}}, startTime, endTime)
+// 	if err != nil {
+// 		log.Fatalf("Error getting data points: %v\n", err)
+// 	}
 
-	log.Printf("Load length: ", len(load))
-
-	jsonLoad, err := json.Marshal(load)
-	if err != nil {
-		log.Fatalf("Error marshalling load metrics: %v\n", err)
-	}
-
-	log.Printf("Load metrics: " + string(jsonLoad))
-}
+// 	log.Printf("Load length: ", len(load))
+// }

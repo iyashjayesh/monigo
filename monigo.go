@@ -65,13 +65,7 @@ func (m *Monigo) PurgeMonigoStorage() {
 }
 
 func (m *Monigo) SetDbSyncFrequency(frequency ...string) {
-	log.Printf("Setting db sync frequency: %v\n", frequency)
 	timeseries.SetDbSyncFrequency(frequency...)
-}
-
-func (m *Monigo) ShowMetrics() {
-	log.Println("Showing the metrics")
-	// timeseries.ShowMetrics()
 }
 
 func StartDashboard(addr int) {
@@ -82,14 +76,11 @@ func StartDashboard(addr int) {
 	http.HandleFunc("/metrics", api.GetMetrics)
 	http.HandleFunc("/function-metrics", api.GetFunctionMetrics)
 	http.HandleFunc("/generate-function-metrics", api.ProfileHandler)
-	http.HandleFunc("/yash", timeseries.ShowMetrics)
 
 	// API to fetch the service metrics
-	// http.HandleFunc("/service-metrics", GetServiceMetricsFromMonigoDbData)
-
-	fmt.Printf("Starting dashboard at http://localhost:%d\n", addr)
+	http.HandleFunc("/service-metrics", api.GetServiceMetricsFromStorage)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", addr), nil); err != nil {
-		log.Fatalf("Error starting the dashboard: %v\n", err)
+		log.Panicf("Error starting the dashboard: %v\n", err)
 	}
 }
 
