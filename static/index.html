@@ -882,6 +882,34 @@
             <!--  -->
         </div>
     </div>
+    <div>
+        <div class="section-title">
+            <h1>Runtime Metrics Overview:</h1>
+        </div>
+        <div>
+            <div>
+                <label for="timeFilter">Time Filter:</label>
+                <select id="timeFilter">
+                    <option value="seconds">Seconds</option>
+                    <option value="minutes">Minutes</option>
+                    <option value="hours">Hours</option>
+                    <option value="days">Days</option>
+                    <option value="months">Months</option>
+                    <option value="custom">Custom Range</option>
+                </select>
+            </div>
+            
+            <div id="customTimeRange" style="display: none;">
+                <label for="startTime">Start Time:</label>
+                <input type="datetime-local" id="startTime">
+                <label for="endTime">End Time:</label>
+                <input type="datetime-local" id="endTime">
+                <button id="applyCustomRange">Apply</button>
+            </div>
+            
+            <div id="chartContainer" style="width: 100%; height: 400px;"></div>
+        </div>
+    </div>
     <div class="metrics-section">
         <div class="section service-metrics">
             <div class="section-title">Function Metrics Overview:</div>
