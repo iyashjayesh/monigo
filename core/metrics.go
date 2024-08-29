@@ -139,3 +139,32 @@ func getProcessUsage(proc *process.Process, sysMemUsage *models.Memory) (float64
 func GetLocalFunctionMetrics() map[string]*models.FunctionMetrics {
 	return functionMetrics
 }
+
+func GetServiceMetricsModel() models.ServiceMetrics {
+
+	requestCount, totalDuration, memStats := GetServiceMetrics()
+	serviceStat := GetProcessSats()
+
+	// SystemUsedCoresToString := fmt.Sprintf("%.2f", serviceStat.SystemUsedCores)
+	// ProcessUsedCoresToString := fmt.Sprintf("%.2f", serviceStat.ProcessUsedCores)
+
+	// core := ProcessUsedCoresToString + "PC / " +
+	// 	SystemUsedCoresToString + "SC / " +
+	// 	strconv.Itoa(serviceStat.TotalLogicalCores) + "LC / " +
+	// 	strconv.Itoa(serviceStat.TotalCores) + "C"
+
+	metrics := models.ServiceMetrics{
+		Load:                   serviceStat.ProcCPUPercent,
+		Cores:                  serviceStat.ProcessUsedCores,
+		MemoryUsed:             float64(memStats.Alloc),
+		NumberOfReqServerd:     float64(requestCount),
+		GoRoutines:             float64(runtime.NumGoroutine()),
+		TotalAlloc:             float64(memStats.TotalAlloc),
+		MemoryAllocSys:         float64(memStats.Sys),
+		HeapAlloc:              float64(memStats.HeapAlloc),
+		HeapAllocSys:           float64(memStats.HeapSys),
+		TotalDurationTookByAPI: totalDuration,
+	}
+
+	return metrics
+}

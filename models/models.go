@@ -2,8 +2,6 @@ package models
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type ProcessStats struct {
@@ -43,24 +41,6 @@ type ServiceInfo struct {
 }
 
 type ServiceMetrics struct {
-	Id                     uuid.UUID
-	Load                   string
-	Cores                  string
-	MemoryUsed             string
-	UpTime                 time.Duration
-	NumberOfReqServerd     int64
-	TotalDurationTookByAPI time.Duration
-	GoRoutines             int64
-	TotalAlloc             uint64
-	MemoryAllocSys         uint64
-	HeapAlloc              uint64
-	HeapAllocSys           uint64
-	TimeStamp              time.Time
-}
-
-/// TIME SERIES
-
-type TimeSeriesServiceMetrics struct {
 	Load                   float64
 	Cores                  float64
 	MemoryUsed             float64
@@ -70,6 +50,5 @@ type TimeSeriesServiceMetrics struct {
 	MemoryAllocSys         float64
 	HeapAlloc              float64
 	HeapAllocSys           float64
-	UpTime                 time.Duration
 	TotalDurationTookByAPI time.Duration
 }

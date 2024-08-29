@@ -1,13 +1,14 @@
 package timeseries
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"sync"
 	"time"
 
-	"github.com/iyashjayesh/monigo/models"
+	"github.com/iyashjayesh/monigo/core"
 	"github.com/nakabonne/tstorage"
 )
 
@@ -66,7 +67,7 @@ func GetStorageInstance() (Storage, error) {
 	once.Do(func() {
 		basePath = GetBasePath()
 		tstorageInstance, err := tstorage.NewStorage(
-			tstorage.WithDataPath("./data"),
+			tstorage.WithDataPath(basePath+"/data"),
 			tstorage.WithRetention(1*time.Hour),
 		)
 		if err != nil {
@@ -96,45 +97,6 @@ func GetBasePath() string {
 	return path
 }
 
-// StoreServiceMetrics stores the service metrics in the storage.
-func StoreServiceMetrics(serviceMetrics *models.TimeSeriesServiceMetrics) error {
-	sto, err := GetStorageInstance()
-	if err != nil {
-		return fmt.Errorf("error getting storage instance: %w", err)
-	}
-
-	var rows []tstorage.Row
-	timestamp := time.Now().Unix()
-	rows = []tstorage.Row{
-		{
-			Metric:    "load_metrics",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.Load},
-			Labels:    []tstorage.Label{{Name: "host", Value: "server1"}},
-		},
-		{
-			Metric:    "cores_metrics",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.Cores},
-			Labels:    []tstorage.Label{{Name: "host", Value: "server1"}},
-		},
-	}
-
-	if err := sto.InsertRows(rows); err != nil {
-		return fmt.Errorf("error storing service metrics: %w", err)
-	}
-
-	log.Println("Service metrics stored successfully in the storage, timestamp:", timestamp)
-	return nil
-}
-
-// GetDataPoints retrieves data points for a given metric and labels.
-func GetDataPoints(metric string, labels []tstorage.Label, start, end int64) ([]*tstorage.DataPoint, error) {
-	sto, err := GetStorageInstance()
-	if err != nil {
-		return nil, fmt.Errorf("error getting storage instance: %w", err)
-	}
-	return sto.Select(metric, labels, start, end)
-}
-
 // CloseStorage closes the storage instance.
 func CloseStorage() {
 	closeOnce.Do(func() {
@@ -159,4 +121,72 @@ func PurgeStorage() {
 	if err := os.RemoveAll("./data"); err != nil {
 		log.Fatalf("Error purging storage: %v\n", err)
 	}
+}
+
+func SetDbSyncFrequency(frequency ...string) {
+	log.Println("Setting up the service metrics storage")
+	freqStr := "5m"
+	if len(frequency) > 0 {
+		freqStr = frequency[0]
+	}
+
+	log.Printf("Frequency set to: %s\n", freqStr)
+	freqTime, err := time.ParseDuration(freqStr)
+	if err != nil {
+		log.Printf("Invalid frequency format: %v. Using default of 5m.\n", err)
+		freqTime = 5 * time.Minute
+	}
+
+	log.Printf("Frequency set to: %v\n", freqTime)
+
+	freqOnce := sync.Once{}
+	freqOnce.Do(func() {
+		serviceMetrics := core.GetServiceMetricsModel()
+		if err := StoreServiceMetrics(&serviceMetrics); err != nil {
+			log.Printf("Error storing service metrics: %v\n", err)
+		} else {
+			CloseStorage()
+		}
+	})
+
+	timer := time.NewTimer(freqTime)
+	go func() {
+		defer timer.Stop()
+		for {
+			select {
+			case <-timer.C:
+				log.Println("Storing service metrics at interval:"+freqStr+" curent time:", time.Now())
+				serviceMetrics := core.GetServiceMetricsModel()
+				if err := StoreServiceMetrics(&serviceMetrics); err != nil {
+					log.Printf("Error storing service metrics: %v\n", err)
+				} else {
+					CloseStorage() // Close storage only once, at the end
+					log.Println("Service metrics stored successfully in the storage")
+				}
+				timer.Reset(freqTime)
+			}
+		}
+	}()
+}
+
+func ShowMetrics() {
+
+	timestamp := time.Now()
+	timestamp = timestamp.Add(-24 * time.Hour)
+	timestampFotmat := timestamp.Format("2006-01-02 15:04:05")
+
+	log.Printf("Showing the metrics for the timestamp: %s\n", timestampFotmat)
+	startTime := timestamp.Unix()
+	endTime := time.Now().Unix()
+	load, err := GetDataPoints("load_metrics", []tstorage.Label{{Name: "host", Value: "server1"}}, startTime, endTime)
+	if err != nil {
+		log.Fatalf("Error getting data points: %v\n", err)
+	}
+
+	jsonLoad, err := json.Marshal(load)
+	if err != nil {
+		log.Fatalf("Error marshalling load metrics: %v\n", err)
+	}
+
+	log.Printf("Load metrics: " + string(jsonLoad))
 }
