@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/iyashjayesh/monigo/common"
 	"github.com/iyashjayesh/monigo/core"
 	"github.com/nakabonne/tstorage"
 )
@@ -151,6 +152,8 @@ func SetDbSyncFrequency(frequency ...string) {
 				if err := StoreServiceMetrics(&serviceMetrics); err != nil {
 					log.Panicf("Error storing service metrics: %v\n", err)
 				}
+				size := common.GetDirSize(basePath + "/data")
+				log.Println("Size of data directory: ", size)
 				timer.Reset(freqTime)
 			}
 		}

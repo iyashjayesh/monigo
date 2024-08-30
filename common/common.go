@@ -3,6 +3,7 @@ package common
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 const monigoFolder string = "monigo"
@@ -22,4 +23,16 @@ func GetBasePath() string {
 	}
 
 	return path
+}
+
+func GetDirSize(folderPath string) string {
+	var size int64
+	filepath.Walk(folderPath, func(_ string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		size += info.Size()
+		return nil
+	})
+	return fmt.Sprintf("%.2f MB", float64(size)/1024/1024)
 }
