@@ -12,7 +12,6 @@ import (
 	"github.com/iyashjayesh/monigo/api"
 	"github.com/iyashjayesh/monigo/common"
 	"github.com/iyashjayesh/monigo/core"
-	"github.com/iyashjayesh/monigo/models"
 	"github.com/iyashjayesh/monigo/timeseries"
 )
 
@@ -22,7 +21,6 @@ var (
 	serviceStartTime time.Time = time.Now()
 	Once             sync.Once = sync.Once{}
 	BasePath         string
-	serviceInfo      models.ServiceInfo
 )
 
 func init() {
@@ -45,10 +43,7 @@ type MonigoInt interface {
 
 func (m *Monigo) StartDashboard() {
 
-	serviceInfo.ServiceName = m.ServiceName
-	serviceInfo.ServiceStartTime = serviceStartTime
-	serviceInfo.GoVersion = runtime.Version()
-	serviceInfo.TimeStamp = serviceStartTime
+	common.SetServiceInfo(m.ServiceName, serviceStartTime, runtime.Version())
 
 	m.GoVersion = runtime.Version()
 	m.ServiceStartTime = serviceStartTime
@@ -78,7 +73,12 @@ func StartDashboard(addr int) {
 	http.HandleFunc("/generate-function-metrics", api.ProfileHandler)
 
 	// API to fetch the service metrics
+	http.HandleFunc("/service-info", api.GetServiceInfoAPI)
 	http.HandleFunc("/service-metrics", api.GetServiceMetricsFromStorage)
+
+	// /get-metrics?fields=service-info
+	http.HandleFunc("/get-metrics", api.GetMetricsInfo)
+
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", addr), nil); err != nil {
 		log.Panicf("Error starting the dashboard: %v\n", err)
 	}
@@ -105,7 +105,3 @@ func MeasureExecutionTime(name string, f func()) {
 func RecordRequestDuration(duration time.Duration) {
 	core.RecordRequestDuration(duration)
 }
-
-// func GetMetrics(getMetrics models.GetMetrics) string {
-// 	return timeseries.GetMetrics(getMetrics.Name, getMetrics.Start, getMetrics.End)
-// }

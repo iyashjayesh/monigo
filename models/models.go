@@ -37,7 +37,6 @@ type ServiceInfo struct {
 	ServiceName      string
 	ServiceStartTime time.Time
 	GoVersion        string
-	TimeStamp        time.Time
 }
 
 type ServiceMetrics struct {

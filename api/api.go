@@ -23,20 +23,20 @@ var (
 
 func GetServiceInfoAPI(w http.ResponseWriter, r *http.Request) {
 
-	// dbObj := monigodb.GetDbInstance()
-	// serviceInfo := dbObj.GetServiceDetails()
+	serviceInfo := common.GetServiceInfo()
+	jsonObj := struct {
+		ServiceName      string `json:"service_name"`
+		ServiceStartTime string `json:"service_start_time"`
+		GoVersion        string `json:"go_version"`
+	}{
+		ServiceName:      serviceInfo.ServiceName,
+		ServiceStartTime: serviceInfo.ServiceStartTime.Format(time.RFC3339),
+		GoVersion:        serviceInfo.GoVersion,
+	}
 
-	// serviceInfo, err := dbObj.GetServiceInfo(serviceInfo.ServiceName)
-	// if err != nil {
-	// 	log.Println("Error getting service info:", err)
-	// }
-
-	// jsonServiceInfo, err := json.Marshal(serviceInfo)
-	// if err != nil {
-	// 	log.Println("Error marshalling service info:", err)
-	// }
-	// w.Header().Set("Content-Type", "application/json")
-	// w.Write(jsonServiceInfo)
+	jsonObjStr, _ := json.Marshal(jsonObj)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonObjStr)
 }
 
 func GetMetrics(w http.ResponseWriter, r *http.Request) {
@@ -71,35 +71,58 @@ func GetMetrics(w http.ResponseWriter, r *http.Request) {
 	// ProcMemPercent
 	memoryUsed := fmt.Sprintf("%.2f", serviceStat.ProcMemPercent)
 	runtimeGoRoutine := runtime.NumGoroutine()
+	serviceInfo := common.GetServiceInfo()
 
-	metrics := fmt.Sprintf(
-		"Service Name: %s\nService Start Time: %s\nGoroutines: %d\nRequests: %d\nTotal Duration: %s\n\nMemory Usage (%s):\nAlloc: %.2f %s\nTotalAlloc: %.2f %s\nSys: %.2f %s\nHeapAlloc: %.2f %s\nHeapSys: %.2f %s\nGo Version: %s\n Load: %s\nCores: %s\n Memory Used: %s\n",
-		// serviceInfo.ServiceName,
-		// serviceStartTime.Format(time.RFC3339),
-		"name",
-		"serviceStartTime",
-		runtimeGoRoutine,
-		requestCount,
-		totalDuration,
-		unit,
-		bytesToUnit(memStats.Alloc),
-		unit,
-		bytesToUnit(memStats.TotalAlloc),
-		unit,
-		bytesToUnit(memStats.Sys),
-		unit,
-		bytesToUnit(memStats.HeapAlloc),
-		unit,
-		bytesToUnit(memStats.HeapSys),
-		unit,
-		runtime.Version(),
-		fmt.Sprintf("%.2f", serviceStat.ProcCPUPercent),
-		core,
-		memoryUsed,
-	)
+	// 7.051466958s
+	uptime := time.Since(serviceInfo.ServiceStartTime)
+	uptimeStr := fmt.Sprintf("%.2f s", uptime.Seconds())
 
-	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte(metrics))
+	if uptime.Seconds() > 60 {
+		uptimeStr = fmt.Sprintf("%.2f m", uptime.Minutes())
+	} else if uptime.Hours() > 60 {
+		uptimeStr = fmt.Sprintf("%.2f h", uptime.Hours())
+	} else if uptime.Hours() > 24 {
+		uptimeStr = fmt.Sprintf("%.2f d", uptime.Hours()/24)
+	} else if uptime.Hours() > 30*24 {
+		uptimeStr = fmt.Sprintf("%.2f m", uptime.Hours()/(30*24))
+	} else if uptime.Hours() > 12*30*24 {
+		uptimeStr = fmt.Sprintf("%.2f y", uptime.Hours()/(12*30*24))
+	}
+
+	metrics := struct {
+		Goroutines    int    `json:"goroutines"`
+		Requests      int64  `json:"requests"`
+		TotalDuration string `json:"total_duration"`
+		MemoryUsage   string `json:"memory_usage"`
+		Alloc         string `json:"alloc"`
+		TotalAlloc    string `json:"total_alloc"`
+		Sys           string `json:"sys"`
+		HeapAlloc     string `json:"heap_alloc"`
+		HeapSys       string `json:"heap_sys"`
+		Load          string `json:"load"`
+		Cores         string `json:"cores"`
+		MemoryUsed    string `json:"memory_used"`
+		Uptime        string `json:"uptime"`
+	}{
+		Goroutines:    runtimeGoRoutine,
+		Requests:      requestCount,
+		TotalDuration: totalDuration.String(),
+		MemoryUsage:   unit,
+		Alloc:         fmt.Sprintf("%.2f", bytesToUnit(memStats.Alloc)),
+		TotalAlloc:    fmt.Sprintf("%.2f", bytesToUnit(memStats.TotalAlloc)),
+		Sys:           fmt.Sprintf("%.2f", bytesToUnit(memStats.Sys)),
+		HeapAlloc:     fmt.Sprintf("%.2f", bytesToUnit(memStats.HeapAlloc)),
+		HeapSys:       fmt.Sprintf("%.2f", bytesToUnit(memStats.HeapSys)),
+		Load:          fmt.Sprintf("%.2f", serviceStat.ProcCPUPercent) + "%",
+		Cores:         core,
+		MemoryUsed:    memoryUsed + "%",
+		Uptime:        uptimeStr,
+	}
+
+	jsonMetrics, _ := json.Marshal(metrics)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(jsonMetrics))
 }
 
 func GetFunctionMetrics(w http.ResponseWriter, r *http.Request) {
@@ -206,4 +229,25 @@ func GetServiceMetricsFromStorage(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonDP)
+}
+
+func GetMetricsInfo(w http.ResponseWriter, r *http.Request) {
+
+	// /get-metrics?fields=service-info
+
+	fields := r.URL.Query().Get("fields")
+	if fields == "" {
+		http.Error(w, "Fields parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	switch fields {
+	case "service-info":
+		GetServiceInfoAPI(w, r)
+	case "service-stats":
+		GetMetrics(w, r)
+	default:
+		http.Error(w, "Invalid fields parameter", http.StatusBadRequest)
+	}
+
 }

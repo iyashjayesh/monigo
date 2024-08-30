@@ -18,55 +18,56 @@ func StoreServiceMetrics(serviceMetrics *models.ServiceMetrics) error {
 
 	var rows []tstorage.Row
 	timestamp := time.Now().Unix()
+
 	rows = []tstorage.Row{
 		{
 			Metric:    "load_metrics",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.Load},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: FormatFloat(serviceMetrics.Load)},
 			Labels:    []tstorage.Label{{Name: "host", Value: "server1"}},
 		},
 		{
 			Metric:    "cores_metrics",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.Cores},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: FormatFloat(serviceMetrics.Cores)},
 			Labels:    []tstorage.Label{{Name: "host", Value: "server1"}},
 		},
 		{
 			Metric:    "memory_used_metrics",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.MemoryUsed},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: FormatFloat(serviceMetrics.MemoryUsed)},
 			Labels:    []tstorage.Label{{Name: "host", Value: "server1"}},
 		},
 		{
 			Metric:    "number_of_req_served_metrics",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.NumberOfReqServerd},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: FormatFloat(serviceMetrics.NumberOfReqServerd)},
 			Labels:    []tstorage.Label{{Name: "host", Value: "server1"}},
 		},
 		{
 			Metric:    "goroutines_metrics",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.GoRoutines},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: FormatFloat(serviceMetrics.GoRoutines)},
 			Labels:    []tstorage.Label{{Name: "host", Value: "server1"}},
 		},
 		{
 			Metric:    "total_alloc_metrics",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.TotalAlloc},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: FormatFloat(serviceMetrics.TotalAlloc)},
 			Labels:    []tstorage.Label{{Name: "host", Value: "server1"}},
 		},
 		{
 			Metric:    "memory_alloc_sys_metrics",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.MemoryAllocSys},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: FormatFloat(serviceMetrics.MemoryAllocSys)},
 			Labels:    []tstorage.Label{{Name: "host", Value: "server1"}},
 		},
 		{
 			Metric:    "heap_alloc_metrics",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.HeapAlloc},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: FormatFloat(serviceMetrics.HeapAlloc)},
 			Labels:    []tstorage.Label{{Name: "host", Value: "server1"}},
 		},
 		{
 			Metric:    "heap_alloc_sys_metrics",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.HeapAllocSys},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: FormatFloat(serviceMetrics.HeapAllocSys)},
 			Labels:    []tstorage.Label{{Name: "host", Value: "server1"}},
 		},
 		{
 			Metric:    "total_duration_metrics",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: float64(serviceMetrics.TotalDurationTookByAPI.Seconds())},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: FormatFloat(serviceMetrics.TotalDurationTookByAPI.Seconds())},
 			Labels:    []tstorage.Label{{Name: "host", Value: "server1"}},
 		},
 	}
@@ -86,4 +87,9 @@ func GetDataPoints(metric string, labels []tstorage.Label, start, end int64) ([]
 		return nil, fmt.Errorf("error getting storage instance: %w", err)
 	}
 	return sto.Select(metric, labels, start, end)
+}
+
+// FormatFloat formats the float value to 2 decimal places.
+func FormatFloat(val float64) float64 {
+	return float64(int(val*100)) / 100
 }

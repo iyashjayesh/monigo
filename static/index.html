@@ -409,8 +409,6 @@
 
             let refreshInterval = intervalInMinutes * 60 * 1000;
 
-            // convert intervalInput in seconds 
-
             // Function to convert minutes to seconds
             function convertMinutesToSeconds(minutes) {
                 return minutes * 60;
@@ -420,33 +418,20 @@
             let refreshTimeout;
             let countdown = refreshInterval / 1000; // countdown in seconds
 
-            // Containers for displaying metrics
             const serviceInfoContainer = document.getElementById('service-container');
             const functionsContainer = document.getElementById('functions-container');
             const serviceMetricsContainer = document.getElementById('service-metrics-container');
             const memoryContainer = document.getElementById('runtime-metrics-container');
 
-            function fetchMetrics(unit) {
-                // Show loading indicator
-                serviceInfoContainer.innerHTML = `<div class="service-info">Fetching the data...</div>`;
-                serviceMetricsContainer.innerHTML = `<div class="service-info">Fetching the data...</div>`;
-                memoryContainer.innerHTML = `<div class="service-info">Fetching the data...</div>`;
-
-                fetch(`/metrics?unit=${unit}`)
-                    .then(response => response.text())
+            function fetchServiceInfo(){
+                fetch(`/service-info`)
+                    .then(response => response.json())
                     .then(data => {
-                        // Remove loading indicator and process data
                         serviceInfoContainer.innerHTML = '';
-                        serviceMetricsContainer.innerHTML = '';
-                        memoryContainer.innerHTML = '';
 
-                        const lines = data.split('\n');
-
-                        // Service Info Metrics Container
-                        // configureServiceInfoContainer(lines)
-                        const serviceName = lines[0].split(': ')[1];
-                        const goVersion = lines[12].split(': ')[1];
-                        const serviceStartTime = lines[1].split(': ')[1];
+                        const serviceName = data.service_name;
+                        const goVersion = data.go_version;
+                        serviceStartTime = data.service_start_time;
 
                         serviceInfoContainer.innerHTML = `
                             <div class="service-info">
@@ -461,28 +446,27 @@
                                 </div>
                             </div>
                         `;
-                        
+                    })
+            }
 
-                        // Metrics Overview Container
-                        const rcount = lines[3].split(': ')[1];
-                        let reqCountStr = lines[3].split(': ')[1];
-                        let totalDurationStr = lines[4].split(': ')[1];
-                        const load = lines[13].split(': ')[1] + '%';
-                        const cores = lines[14].split(': ')[1];
-                        const memoryUsed = lines[15].split(': ')[1] + '%';
+            function fetchMetrics(unit) {
+                serviceMetricsContainer.innerHTML = `<div class="service-info">Fetching the data...</div>`;
+                memoryContainer.innerHTML = `<div class="service-info">Fetching the data...</div>`;
 
-                        let currentTime = new Date();
-                        let serviceStartTimeDate = new Date(serviceStartTime);
-                        let uptime = currentTime - serviceStartTimeDate;
+                fetch(`/metrics?unit=${unit}`)
+                    .then(response => response.text())
+                    .then(data => {
+                        serviceMetricsContainer.innerHTML = '';
+                        memoryContainer.innerHTML = '';
 
-                        let uptimeStr = '';
-                        let uptimeSeconds = Math.floor(uptime / 1000);
-                        let uptimeMinutes = Math.floor(uptimeSeconds / 60);
-                        let uptimeHours = Math.floor(uptimeMinutes / 60);
-
-                        uptimeStr += uptimeHours + 'h ';
-                        uptimeStr += uptimeMinutes % 60 + 'm ';
-                        uptimeStr += uptimeSeconds % 60 + 's';
+                        const metrics = JSON.parse(data);
+                        const rcount = metrics.requests;
+                        let reqCountStr = metrics.requests;
+                        let totalDurationStr = metrics.total_duration;
+                        const load = metrics.load;
+                        const cores = metrics.cores;
+                        const memoryUsed = metrics.memory_used;
+                        let uptime = metrics.uptime; // 2.700655333s
 
                         serviceMetricsContainer.innerHTML = `
                         <div class="metrics-overview">
@@ -500,7 +484,7 @@
                             </div>
                             <div class="metric-box">
                                 <div class="metric-title">Uptime</div>
-                                <div class="metric-value">${uptimeStr}</div>
+                                <div class="metric-value">${uptime}</div>
                             </div>
                             <div class="metric-box">
                                 <div class="metric-title">Request Served <span class="info-icon"
@@ -514,12 +498,12 @@
                             </div>
                         </div>`;
 
-                        // Runtime Metrics Overview Container
-                        const goroutiuneCount = lines[2].split(': ')[1];
-                        const totalAlloc = lines[7].split(': ')[1];
-                        const memoryAllocatedBySystem = lines[8].split(': ')[1];
-                        const heapAlloc = lines[9].split(': ')[1];
-                        const heapSys = lines[10].split(': ')[1];
+                        const goroutiuneCount = metrics.goroutines;
+                        const totalAlloc = metrics.total_alloc;
+                        const memoryAllocatedBySystem = metrics.sys;
+                        const heapAlloc = metrics.heap_alloc;
+                        const heapSys = metrics.heap_sys;
+
 
                         let reqCount = parseInt(reqCountStr, 10);
                         let totalDuration = parseFloat(totalDurationStr.replace('ms', ''));
@@ -567,35 +551,13 @@
                         </div>`;
                             })   
                     .catch(error => {
-                        serviceInfoContainer.innerHTML = `<div class="error">Failed to load service information.</div>`;
+                        console.error('Error:', error);
                         serviceMetricsContainer.innerHTML = `<div class="error">Failed to load service metrics.</div>`;
                         memoryContainer.innerHTML = `<div class="error">Failed to load memory metrics.</div>`;
                     });
 
                     // Reset the countdown
                     countdown = refreshInterval / 1000;
-            }
-
-            function configureServiceInfoContainer(lines) {
-                
-
-                const serviceName = lines[0].split(': ')[1];
-                const goVersion = lines[12].split(': ')[1];
-                const serviceStartTime = lines[1].split(': ')[1];
-
-                serviceInfoContainer.innerHTML = `
-                            <div class="service-info">
-                                <div class="info-item">
-                                    <span class="label">Service Name:</span> ${serviceName}
-                                </div>
-                                <div class="info-item">
-                                    <span class="label">Go Version:</span> ${goVersion}
-                                </div>
-                                <div class="info-item">
-                                    <span class="label">Service Started at:</span> ${serviceStartTime}
-                                </div>
-                            </div>
-                        `;
             }
 
             function startCountdown() {
@@ -607,7 +569,6 @@
 
                     if (countdown <= 0) {
                         clearInterval(refreshTimeout);
-                        // fetchMetrics(); // Fetch metrics when countdown reaches 0
                         fetchAllMetrics(); // Fetch all metrics when countdown reaches 0
                         startCountdown(); // Restart countdown
                     }
@@ -693,8 +654,9 @@
 
             function fetchAllMetrics() {
                 const selectedUnit = Array.from(unitInputs).find(input => input.checked).value;
+                fetchServiceInfo();
                 fetchMetrics(selectedUnit);
-                fetchFunctionMetrics(selectedUnit); // Fetch function metrics in parallel
+                // fetchFunctionMetrics(selectedUnit); // Fetch function metrics in parallel
             }
 
             function onUnitChange() {
@@ -730,6 +692,7 @@
             setIntervalBtn.addEventListener('click', () => {
                 clearInterval(refreshTimeout); // Stop the current countdown
                 refreshInterval = parseInt(intervalInput.value, 10) * 1000; // Update interval
+                fetchServiceInfo(); // Fetch service info immediately
                 fetchMetrics(); // Fetch metrics immediately
                 startCountdown(); // Restart countdown with new interval
             });
@@ -761,6 +724,13 @@
                     },
                     series: [{
                         data: values,
+                        type: 'line',
+                        label: {
+                            show: true,
+                            position: 'top',
+                            color: '#333',
+                            fontSize: 18,
+                        },
                     }]
                 });
             }
