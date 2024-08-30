@@ -94,7 +94,26 @@ func serveHtmlSite(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		w.Write(file)
 		return
+	} else if r.URL.Path == "/stylesheets/main.css" {
+		file, err := staticFiles.ReadFile("static/stylesheets/main.css")
+		if err != nil {
+			http.Error(w, "Could not load main.css", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "text/css")
+		w.Write(file)
+		return
+	} else if r.URL.Path == "/js/main.js" {
+		file, err := staticFiles.ReadFile("static/js/main.js")
+		if err != nil {
+			http.Error(w, "Could not load main.js", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/javascript")
+		w.Write(file)
+		return
 	}
+
 	http.StripPrefix("/static/", http.FileServer(http.FS(staticFiles))).ServeHTTP(w, r)
 }
 
