@@ -71,17 +71,6 @@ func GetMetrics(w http.ResponseWriter, r *http.Request) {
 	// ProcMemPercent
 	memoryUsed := fmt.Sprintf("%.2f", serviceStat.ProcMemPercent)
 	runtimeGoRoutine := runtime.NumGoroutine()
-	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
-	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
-	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
-	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
-	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
-	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
-	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
-	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
-	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
-	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
-	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
 	serviceInfo := common.GetServiceInfo()
 
 	// 7.051466958s
