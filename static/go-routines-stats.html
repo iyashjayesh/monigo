@@ -38,12 +38,11 @@
             <div class="data-scrollbar" data-scroll="1">
                 <nav class="iq-sidebar-menu">
                     <ul id="iq-sidebar-toggle" class="iq-menu">
-                        <li class="active">
+                        <li class=" ">
                             <a href="./index.html" class="svg-icon">
-                                <svg class="svg-icon" id="p-dash1" width="20" height="20"
-                                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
+                                <svg class="svg-icon" id="p-dash1" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
                                     <path
                                         d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
                                     </path>
@@ -53,10 +52,11 @@
                                 <span class="ml-4">Dashboards</span>
                             </a>
                         </li>
-                        <li class=" ">
+                        <li class="active">
                             <a href="./go-routines-stats.html" class="">
-                                <svg class="svg-icon" id="p-dash1" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg class="svg-icon" id="p-dash1" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
                                     <path
                                         d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
                                     </path>
@@ -68,10 +68,8 @@
                         </li>
                         <li class=" ">
                             <a href="./function-metrics.html" class="">
-                                <svg class="svg-icon" id="p-dash1" width="20" height="20"
-                                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
+                                <svg class="svg-icon" id="p-dash1" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path
                                         d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
                                     </path>
@@ -83,10 +81,9 @@
                         </li>
                         <li class=" ">
                             <a href="./reports.html" class="">
-                                <svg class="svg-icon" id="p-dash7" width="20" height="20"
-                                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
+                                <svg class="svg-icon" id="p-dash7" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                     <polyline points="14 2 14 8 20 8"></polyline>
                                     <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -415,10 +412,14 @@
                     <div class="col-lg-4">
                         <div class="card card-transparent card-block card-stretch card-height border-none">
                             <div class="card-body p-0 mt-lg-2 mt-0">
-                                <h3 class="mb-3" id="greeting"></h3>
-                                <p class="mb-0 mr-4">Moni<strong><em>GO</em></strong> dashboard gives you runtime views
-                                    of key performance of your backend service process.
+                                <h3 class="mb-3">Go Routines Stats</h3>
+                                <p class="mb-0 mr-4">Using Moni<strong><em>GO</em></strong> you can easily track the
+                                    metrics of your functions and get the insights of your functions.
                                 </p>
+                                <!-- <h3 class="mb-3">Go Routines No:</h3>
+                                <p class="mb-0 mr-4"><span id="goroutine-count">0</span></p> -->
+                                <div class="num-goroutines">Total number of Go routines: <span id="goroutine-count">0</span></div>
+                                
                             </div>
                         </div>
                     </div>
@@ -427,308 +428,91 @@
                             <!--  -->
                         </div>
                     </div>
+
+                    <!-- Function Metrics  -->
                     <div class="col-lg-12">
-                        <div id="runtime-metrics-container">
-                            <!--  -->
-                        </div>
-                    </div>
-                    <div class="col-lg-12">
-                        <div class="card card-block card-stretch card-height">
-                            <div class="card-header d-flex align-items-center justify-content-between">
+                        <div class="card card-transparent card-block card-stretch card-height mb-4">
+                            <div class="card-header d-flex align-items-center justify-content-between p-0">
                                 <div class="header-title">
-                                    <h4 class="card-title">Charts</h4>
+                                    <h4 class="card-title mb-0">Runtime Function Metircs</h4>
                                 </div>
                                 <div class="card-header-toolbar d-flex align-items-center">
-                                    <!-- <div class="dropdown">
-                                        <span class="dropdown-toggle dropdown-bg btn" id="dropdownMenuButton006" data-toggle="dropdown">
-                                            This Month<i class="ri-arrow-down-s-line ml-1"></i>
-                                        </span>
-                                        <div class="dropdown-menu dropdown-menu-right shadow-none" aria-labelledby="dropdownMenuButton006">
-                                            <a class="dropdown-item" href="#">Year</a>
-                                            <a class="dropdown-item" href="#">Month</a>
-                                            <a class="dropdown-item" href="#">Week</a>
-                                        </div>
-                                    </div> -->
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="col-lg-12">
-                                    <div class="row">
-                                        <div class="col-lg-2 col-md-2">
-                                            <div class="card card-block card-stretch card-height">
-                                                <div class="card-body">
-                                                    <div class="d-flex align-items-center mb-4 card-total-sale">
-                                                        <!-- <div class="icon iq-icon-box-2 bg-success-light">
-                                                                                                    <img src="../assets/images/product/3.png" class="img-fluid" alt="image">
-                                                                                                </div> -->
-                                                        <div>
-                                                            <p class="mb-2">Product Sold</p>
-                                                            <h4>4589 M</h4>
-                                                        </div>
-                                                    </div>
-                                                    <div class="iq-progress-bar mt-2">
-                                                        <span class="bg-success iq-progress progress-1"
-                                                            data-percent="75">
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-2 col-md-2">
-                                            <div class="card card-block card-stretch card-height">
-                                                <div class="card-body">
-                                                    <div class="d-flex align-items-center mb-4 card-total-sale">
-                                                        <!-- <div class="icon iq-icon-box-2 bg-success-light">
-                                                                                                    <img src="../assets/images/product/3.png" class="img-fluid" alt="image">
-                                                                                                </div> -->
-                                                        <div>
-                                                            <p class="mb-2">Product Sold</p>
-                                                            <h4>4589 M</h4>
-                                                        </div>
-                                                    </div>
-                                                    <div class="iq-progress-bar mt-2">
-                                                        <span class="bg-success iq-progress progress-1"
-                                                            data-percent="75">
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-2 col-md-2">
-                                            <div class="card card-block card-stretch card-height">
-                                                <div class="card-body">
-                                                    <div class="d-flex align-items-center mb-4 card-total-sale">
-                                                        <!-- <div class="icon iq-icon-box-2 bg-success-light">
-                                                                                                    <img src="../assets/images/product/3.png" class="img-fluid" alt="image">
-                                                                                                </div> -->
-                                                        <div>
-                                                            <p class="mb-2">Product Sold</p>
-                                                            <h4>4589 M</h4>
-                                                        </div>
-                                                    </div>
-                                                    <div class="iq-progress-bar mt-2">
-                                                        <span class="bg-success iq-progress progress-1"
-                                                            data-percent="75">
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-2 col-md-2">
-                                            <div class="card card-block card-stretch card-height">
-                                                <div class="card-body">
-                                                    <div class="d-flex align-items-center mb-4 card-total-sale">
-                                                        <!-- <div class="icon iq-icon-box-2 bg-success-light">
-                                                                                                    <img src="../assets/images/product/3.png" class="img-fluid" alt="image">
-                                                                                                </div> -->
-                                                        <div>
-                                                            <p class="mb-2">Product Sold</p>
-                                                            <h4>4589 M</h4>
-                                                        </div>
-                                                    </div>
-                                                    <div class="iq-progress-bar mt-2">
-                                                        <span class="bg-success iq-progress progress-1"
-                                                            data-percent="75">
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-2 col-md-2">
-                                            <div class="card card-block card-stretch card-height">
-                                                <div class="card-body">
-                                                    <div class="d-flex align-items-center mb-4 card-total-sale">
-                                                        <!-- <div class="icon iq-icon-box-2 bg-success-light">
-                                                                                                                                    <img src="../assets/images/product/3.png" class="img-fluid" alt="image">
-                                                                                                                                </div> -->
-                                                        <div>
-                                                            <p class="mb-2">Product Sold</p>
-                                                            <h4>4589 M</h4>
-                                                        </div>
-                                                    </div>
-                                                    <div class="iq-progress-bar mt-2">
-                                                        <span class="bg-success iq-progress progress-1"
-                                                            data-percent="75">
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-2 col-md-2">
-                                            <div class="card card-block card-stretch card-height">
-                                                <div class="card-body">
-                                                    <div class="d-flex align-items-center mb-4 card-total-sale">
-                                                        <!-- <div class="icon iq-icon-box-2 bg-success-light">
-                                                                                                                                    <img src="../assets/images/product/3.png" class="img-fluid" alt="image">
-                                                                                                                                </div> -->
-                                                        <div>
-                                                            <p class="mb-2">Product Sold</p>
-                                                            <h4>4589 M</h4>
-                                                        </div>
-                                                    </div>
-                                                    <div class="iq-progress-bar mt-2">
-                                                        <span class="bg-success iq-progress progress-1"
-                                                            data-percent="75">
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <div><a href="#" class="btn btn-primary view-btn font-size-14">View All</a></div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                        
                     <div class="col-lg-12">
-                        <div class="card card-block card-stretch card-height">
-                            <div class="card-header d-flex align-items-center justify-content-between">
-                                <div class="header-title">
-                                    <h4 class="card-title">Runtime Charts</h4>
-                                </div>
-                                <div class="card-header-toolbar d-flex align-items-center">
-                                    <div class="dropdown">
-                                        <span class="dropdown-toggle dropdown-bg btn" id="dropdownMenuButton006"
-                                            data-toggle="dropdown">
-                                            This Month<i class="ri-arrow-down-s-line ml-1"></i>
-                                        </span>
-                                        <div class="dropdown-menu dropdown-menu-right shadow-none"
-                                            aria-labelledby="dropdownMenuButton006">
-                                            <a class="dropdown-item" href="#">Year</a>
-                                            <a class="dropdown-item" href="#">Month</a>
-                                            <a class="dropdown-item" href="#">Week</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="col-lg-12">
-                                    <div class="row">
-                                        <div class="col-lg-12 col-md-12 pt-3">
-                                            <h1> Metrics </h1>
-                                            <div class="card-body">
-                                                <div id="report-chart2" style="min-height: 340px;">
-                                                </div>
+                        <div id="goroutines-container"></div>
+                        <!-- <div class="row">
+                            <div class="col-lg-4 col-md-4">
+                                <div class="card card-block card-stretch card-height">
+                                    <div class="card-body  card-item-right">
+                                        <div class="d-flex align-items-top">
+                                            <div class="bg-warning-light rounded">
+                                                <img src="../assets/images/product/04.png" class="style-img img-fluid m-auto" alt="image">
                                             </div>
-                                        </div>
-                                        <div class="col-lg-6 col-md-6">
-                                            <h1>Load</h1>
-                                            <div class="card-body">
-                                                <div id="layout1-chart1"></div>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6 col-md-6">
-                                            <h1>Memory</h1>
-                                            <div class="card-body">
-                                                <div id="layout1-chart-2" style="min-height: 360px;"></div>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6 col-md-6 pt-3">
-                                            <h1>Load</h1>
-                                            <div class="card-body">
-                                                <div id="report-chart3"></div>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6 col-md-6 pt-3">
-                                            <h1>Memory</h1>
-                                            <div class="card-body">
-                                                <div id="report-chart4"></div>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-12 col-md-12 pt-3">
-                                            <h1>Memory</h1>
-                                            <div class="card-body pt-0">
-                                                <div id="layout1-chart-5"></div>
+                                            <div class="style-text text-left">
+                                                <h5 class="mb-2">Coffee Beans Packet</h5>
+                                                <p class="mb-2">Total Sell : 45897</p>
+                                                <p class="mb-0">Total Earned : $45,89 M</p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                            <div class="col-lg-4 col-md-4">
+                                <div class="card card-block card-stretch card-height">
+                                    <div class="card-body  card-item-right">
+                                        <div class="d-flex align-items-top">
+                                            <div class="bg-warning-light rounded">
+                                                <img src="../assets/images/product/04.png" class="style-img img-fluid m-auto" alt="image">
+                                            </div>
+                                            <div class="style-text text-left">
+                                                <h5 class="mb-2">Coffee Beans Packet</h5>
+                                                <p class="mb-2">Total Sell : 45897</p>
+                                                <p class="mb-0">Total Earned : $45,89 M</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-4">
+                                <div class="card card-block card-stretch card-height">
+                                    <div class="card-body  card-item-right">
+                                        <div class="d-flex align-items-top">
+                                            <div class="bg-warning-light rounded">
+                                                <img src="../assets/images/product/04.png" class="style-img img-fluid m-auto" alt="image">
+                                            </div>
+                                            <div class="style-text text-left">
+                                                <h5 class="mb-2">Coffee Beans Packet</h5>
+                                                <p class="mb-2">Total Sell : 45897</p>
+                                                <p class="mb-0">Total Earned : $45,89 M</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-4">
+                                <div class="card card-block card-stretch card-height">
+                                    <div class="card-body  card-item-right">
+                                        <div class="d-flex align-items-top">
+                                            <div class="bg-warning-light rounded">
+                                                <img src="../assets/images/product/04.png" class="style-img img-fluid m-auto" alt="image">
+                                            </div>
+                                            <div class="style-text text-left">
+                                                <h5 class="mb-2">Coffee Beans Packet</h5>
+                                                <p class="mb-2">Total Sell : 45897</p>
+                                                <p class="mb-0">Total Earned : $45,89 M</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> -->
                     </div>
-                    <div class="col-lg-12">
-                        <div class="card card-block card-stretch card-height">
-                            <div class="card-header d-flex align-items-center justify-content-between">
-                                <div class="header-title">
-                                    <h4 class="card-title">Top Products</h4>
-                                </div>
-                                <div class="card-header-toolbar d-flex align-items-center">
-                                    <div class="dropdown">
-                                        <span class="dropdown-toggle dropdown-bg btn" id="dropdownMenuButton006"
-                                            data-toggle="dropdown">
-                                            This Month<i class="ri-arrow-down-s-line ml-1"></i>
-                                        </span>
-                                        <div class="dropdown-menu dropdown-menu-right shadow-none"
-                                            aria-labelledby="dropdownMenuButton006">
-                                            <a class="dropdown-item" href="#">Year</a>
-                                            <a class="dropdown-item" href="#">Month</a>
-                                            <a class="dropdown-item" href="#">Week</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <ul class="list-unstyled row top-product mb-0">
-                                    <li class="col-lg-3">
-                                        <div class="card card-block card-stretch card-height mb-0">
-                                            <div class="card-body">
-                                                <div class="bg-warning-light rounded">
-                                                    <img src="../assets/images/product/01.png"
-                                                        class="style-img img-fluid m-auto p-3" alt="image">
-                                                </div>
-                                                <div class="style-text text-left mt-3">
-                                                    <h5 class="mb-1">Organic Cream</h5>
-                                                    <p class="mb-0">789 Item</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </li>
-                                    <li class="col-lg-3">
-                                        <div class="card card-block card-stretch card-height mb-0">
-                                            <div class="card-body">
-                                                <div class="bg-danger-light rounded">
-                                                    <img src="../assets/images/product/02.png"
-                                                        class="style-img img-fluid m-auto p-3" alt="image">
-                                                </div>
-                                                <div class="style-text text-left mt-3">
-                                                    <h5 class="mb-1">Rain Umbrella</h5>
-                                                    <p class="mb-0">657 Item</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </li>
-                                    <li class="col-lg-3">
-                                        <div class="card card-block card-stretch card-height mb-0">
-                                            <div class="card-body">
-                                                <div class="bg-info-light rounded">
-                                                    <img src="../assets/images/product/03.png"
-                                                        class="style-img img-fluid m-auto p-3" alt="image">
-                                                </div>
-                                                <div class="style-text text-left mt-3">
-                                                    <h5 class="mb-1">Serum Bottle</h5>
-                                                    <p class="mb-0">489 Item</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </li>
-                                    <li class="col-lg-3">
-                                        <div class="card card-block card-stretch card-height mb-0">
-                                            <div class="card-body">
-                                                <div class="bg-success-light rounded">
-                                                    <img src="../assets/images/product/02.png"
-                                                        class="style-img img-fluid m-auto p-3" alt="image">
-                                                </div>
-                                                <div class="style-text text-left mt-3">
-                                                    <h5 class="mb-1">Organic Cream</h5>
-                                                    <p class="mb-0">468 Item</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>       
-        </div>
+                </div>
                 <!-- Page end  -->
             </div>
         </div>
@@ -771,7 +555,6 @@
 
     <!-- app JavaScript -->
     <script src="../assets/js/app.js"></script>
-
     <!-- Main JavaScript -->
     <script src="../assets/js/main.js" defer></script>
 </body>

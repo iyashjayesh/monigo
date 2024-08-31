@@ -26117,3 +26117,33 @@ i {
     margin-left: 10px;
   }
 }
+
+
+
+.goroutine {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #f9f9f9;
+}
+
+.goroutine-header {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+pre {
+  white-space: pre-wrap;
+  /* Wraps text and respects new lines */
+  overflow-x: auto;
+  /* Enables horizontal scrolling */
+  background-color: #eee;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.num-goroutines {
+  font-size: 18px;
+  margin-bottom: 20px;
+}

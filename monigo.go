@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	//go:embed static/assets/* static/index.html static/function-metrics.html static/reports.html
+	//go:embed static/assets/* static/index.html static/function-metrics.html static/reports.html static/go-routines-stats.html
 	staticFiles      embed.FS
 	serviceStartTime time.Time = time.Now()
 	Once             sync.Once = sync.Once{}
@@ -40,6 +40,7 @@ type MonigoInt interface {
 	PurgeMonigoStorage()                    // Purge the monigo storage
 	SetDbSyncFrequency(frequency ...string) // Set the frequency to sync the metrics to the storage
 	StartDashboard()                        // Start the dashboard
+	PrintGoRoutinesStats() (int, []string)  // Print the Go routines stats
 }
 
 func (m *Monigo) StartDashboard() {
@@ -64,6 +65,10 @@ func (m *Monigo) SetDbSyncFrequency(frequency ...string) {
 	timeseries.SetDbSyncFrequency(frequency...)
 }
 
+func (m *Monigo) PrintGoRoutinesStats() (int, []string) {
+	return core.CollectGoRoutinesInfo()
+}
+
 func StartDashboard(addr int) {
 
 	log.Println("Starting the dashboard")
@@ -76,6 +81,7 @@ func StartDashboard(addr int) {
 	// API to fetch the service metrics
 	http.HandleFunc("/service-info", api.GetServiceInfoAPI)
 	http.HandleFunc("/service-metrics", api.GetServiceMetricsFromStorage)
+	http.HandleFunc("/go-routines-stats", api.GetGoRoutinesStats)
 
 	// /get-metrics?fields=service-info
 	http.HandleFunc("/get-metrics", api.GetMetricsInfo)
@@ -84,39 +90,6 @@ func StartDashboard(addr int) {
 		log.Panicf("Error starting the dashboard: %v\n", err)
 	}
 }
-
-// func serveHtmlSite(w http.ResponseWriter, r *http.Request) {
-// 	if r.URL.Path == "/" {
-// 		file, err := staticFiles.ReadFile("static/index.html")
-// 		if err != nil {
-// 			http.Error(w, "Could not load index.html", http.StatusInternalServerError)
-// 			return
-// 		}
-// 		w.Header().Set("Content-Type", "text/html")
-// 		w.Write(file)
-// 		return
-// 	} else if r.URL.Path == "/stylesheets/main.css" {
-// 		file, err := staticFiles.ReadFile("static/stylesheets/main.css")
-// 		if err != nil {
-// 			http.Error(w, "Could not load main.css", http.StatusInternalServerError)
-// 			return
-// 		}
-// 		w.Header().Set("Content-Type", "text/css")
-// 		w.Write(file)
-// 		return
-// 	} else if r.URL.Path == "/js/main.js" {
-// 		file, err := staticFiles.ReadFile("static/js/main.js")
-// 		if err != nil {
-// 			http.Error(w, "Could not load main.js", http.StatusInternalServerError)
-// 			return
-// 		}
-// 		w.Header().Set("Content-Type", "application/javascript")
-// 		w.Write(file)
-// 		return
-// 	}
-
-// 	http.StripPrefix("/static/", http.FileServer(http.FS(staticFiles))).ServeHTTP(w, r)
-// }
 
 func serveHtmlSite(w http.ResponseWriter, r *http.Request) {
 	filePath := "static" + r.URL.Path
@@ -130,6 +103,9 @@ func serveHtmlSite(w http.ResponseWriter, r *http.Request) {
 		contentType = "text/html"
 	case r.URL.Path == "/reports.html":
 		filePath = "static/reports.html"
+		contentType = "text/html"
+	case r.URL.Path == "/go-routines-stats.html":
+		filePath = "static/go-routines-stats.html"
 		contentType = "text/html"
 	case r.URL.Path == "/favicon.ico":
 		filePath = "static/assets/images/favicon.ico"

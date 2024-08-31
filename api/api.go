@@ -71,6 +71,17 @@ func GetMetrics(w http.ResponseWriter, r *http.Request) {
 	// ProcMemPercent
 	memoryUsed := fmt.Sprintf("%.2f", serviceStat.ProcMemPercent)
 	runtimeGoRoutine := runtime.NumGoroutine()
+	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
+	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
+	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
+	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
+	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
+	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
+	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
+	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
+	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
+	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
+	log.Println("runtimeGoRoutine: ", runtimeGoRoutine)
 	serviceInfo := common.GetServiceInfo()
 
 	// 7.051466958s
@@ -250,4 +261,18 @@ func GetMetricsInfo(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid fields parameter", http.StatusBadRequest)
 	}
 
+}
+
+func GetGoRoutinesStats(w http.ResponseWriter, r *http.Request) {
+	goRoutinesNumber, list := core.CollectGoRoutinesInfo()
+	jsonGoRoutinesStats, _ := json.Marshal(struct {
+		GoRoutines int      `json:"go_routines"`
+		List       []string `json:"list"`
+	}{
+		GoRoutines: goRoutinesNumber,
+		List:       list,
+	})
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(jsonGoRoutinesStats))
 }
