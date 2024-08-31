@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,7 +17,7 @@ import (
 )
 
 var (
-	//go:embed static/*
+	//go:embed static/assets/* static/index.html static/function-metrics.html static/reports.html
 	staticFiles      embed.FS
 	serviceStartTime time.Time = time.Now()
 	Once             sync.Once = sync.Once{}
@@ -84,37 +85,79 @@ func StartDashboard(addr int) {
 	}
 }
 
+// func serveHtmlSite(w http.ResponseWriter, r *http.Request) {
+// 	if r.URL.Path == "/" {
+// 		file, err := staticFiles.ReadFile("static/index.html")
+// 		if err != nil {
+// 			http.Error(w, "Could not load index.html", http.StatusInternalServerError)
+// 			return
+// 		}
+// 		w.Header().Set("Content-Type", "text/html")
+// 		w.Write(file)
+// 		return
+// 	} else if r.URL.Path == "/stylesheets/main.css" {
+// 		file, err := staticFiles.ReadFile("static/stylesheets/main.css")
+// 		if err != nil {
+// 			http.Error(w, "Could not load main.css", http.StatusInternalServerError)
+// 			return
+// 		}
+// 		w.Header().Set("Content-Type", "text/css")
+// 		w.Write(file)
+// 		return
+// 	} else if r.URL.Path == "/js/main.js" {
+// 		file, err := staticFiles.ReadFile("static/js/main.js")
+// 		if err != nil {
+// 			http.Error(w, "Could not load main.js", http.StatusInternalServerError)
+// 			return
+// 		}
+// 		w.Header().Set("Content-Type", "application/javascript")
+// 		w.Write(file)
+// 		return
+// 	}
+
+// 	http.StripPrefix("/static/", http.FileServer(http.FS(staticFiles))).ServeHTTP(w, r)
+// }
+
 func serveHtmlSite(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/" {
-		file, err := staticFiles.ReadFile("static/index.html")
-		if err != nil {
-			http.Error(w, "Could not load index.html", http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "text/html")
-		w.Write(file)
-		return
-	} else if r.URL.Path == "/stylesheets/main.css" {
-		file, err := staticFiles.ReadFile("static/stylesheets/main.css")
-		if err != nil {
-			http.Error(w, "Could not load main.css", http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "text/css")
-		w.Write(file)
-		return
-	} else if r.URL.Path == "/js/main.js" {
-		file, err := staticFiles.ReadFile("static/js/main.js")
-		if err != nil {
-			http.Error(w, "Could not load main.js", http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/javascript")
-		w.Write(file)
+	filePath := "static" + r.URL.Path
+	var contentType string
+	switch {
+	case r.URL.Path == "/":
+		filePath = "static/index.html"
+		contentType = "text/html"
+	case r.URL.Path == "/function-metrics.html":
+		filePath = "static/function-metrics.html"
+		contentType = "text/html"
+	case r.URL.Path == "/reports.html":
+		filePath = "static/reports.html"
+		contentType = "text/html"
+	case r.URL.Path == "/favicon.ico":
+		filePath = "static/assets/images/favicon.ico"
+		contentType = "image/x-icon"
+	case strings.HasPrefix(r.URL.Path, "/assets/css/"):
+		contentType = "text/css"
+	case strings.HasPrefix(r.URL.Path, "/assets/js/"):
+		contentType = "application/javascript"
+	case strings.HasSuffix(r.URL.Path, ".png"):
+		contentType = "image/png"
+	case strings.HasSuffix(r.URL.Path, ".jpg") || strings.HasSuffix(r.URL.Path, ".jpeg"):
+		contentType = "image/jpeg"
+	case strings.HasSuffix(r.URL.Path, ".svg"):
+		contentType = "image/svg+xml"
+	case strings.HasSuffix(r.URL.Path, ".woff") || strings.HasSuffix(r.URL.Path, ".woff2"):
+		contentType = "font/woff"
+	default:
+		contentType = "application/octet-stream"
+	}
+
+	file, err := staticFiles.ReadFile(filePath)
+	if err != nil {
+		http.Error(w, "Could not load "+filePath, http.StatusInternalServerError)
 		return
 	}
 
-	http.StripPrefix("/static/", http.FileServer(http.FS(staticFiles))).ServeHTTP(w, r)
+	w.Header().Set("Content-Type", contentType)
+	w.Write(file)
 }
 
 func MeasureExecutionTime(name string, f func()) {
