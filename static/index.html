@@ -283,17 +283,62 @@
         <div class="content-page">
             <div class="container-fluid">
                 <div class="row">
-                    <div class="col-lg-4">
+                    <div class="col-lg-8">
                         <div class="card card-transparent card-block card-stretch card-height border-none">
                             <div class="card-body p-0 mt-lg-2 mt-0">
-                                <h3 class="mb-3" id="greeting"></h3>
-                                <p class="mb-0 mr-4">Moni<strong><em>GO</em></strong> dashboard gives you runtime views
+                                <h4 class="mb-0 mr-4">Moni<strong><em>GO</em></strong> dashboard gives you runtime views
                                     of key performance of your backend service process.
-                                </p>
+                                </h4>
+                                <div class="row align-items-center">
+                                    <div class="col-lg-8 mx-auto">
+                                            <div class="gauge" id="g1">
+                                                <svg viewBox="0 0 60 25">
+                                                    <text x="50%" y="50%">20%</text>
+                                                </svg>
+                                            </div>
+                                            <div class="mt-3">
+                                                <h4 class="mb-0">Service Health</h4>
+                                                <p class="mb-0">Service health is at 70%</p>
+                                            </div>
+                                    </div>
+                                    <div class="col-lg-4">                                        
+                                        <div class="grid-container">
+                                            <div class="grid-item">
+                                                <div class="gauge" id="g2">
+                                                    <svg viewBox="0 0 60 25">
+                                                        <text x="50%" y="50%">70%</text>
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                            <div class="grid-item">
+                                                <div class="gauge" id="g3">
+                                                    <svg viewBox="0 0 60 25">
+                                                        <text x="50%" y="50%">30%</text>
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                            <div class="grid-item">
+                                                <div class="gauge" id="g4">
+                                                    <svg viewBox="0 0 60 25">
+                                                        <text x="50%" y="50%">40%</text>
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                            <div class="grid-item">
+                                                <div class="gauge" id="g5">
+                                                    <svg viewBox="0 0 60 25">
+                                                        <text x="50%" y="50%">50%</text>
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- <div id="load-service-health"></div> -->
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-8">
+                    <div class="col-lg-4">
                         <div id="service-container">
                             <!--  -->
                         </div>

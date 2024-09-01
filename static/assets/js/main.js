@@ -1,20 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
     
-    const greeting = document.getElementById('greeting');
     const serviceInfoContainer = document.getElementById('service-container');
     const runtimeMetricsContainer = document.getElementById('runtime-metrics-container');
     const goRoutinesNumber = document.getElementById('goroutine-count');
+    const serviceHealth = document.getElementById('load-service-health');
 
     if (serviceInfoContainer) {
         fetchServiceInfo();
     } else {
         console.error('Element with ID "service-container" not found.');
-    }
-
-    if (greeting) {
-        fetchGreetings();
-    } else {
-        console.error('Element with ID "greeting" not found.');
     }
 
     if (runtimeMetricsContainer) {
@@ -27,6 +21,12 @@ document.addEventListener('DOMContentLoaded', function() {
         fetchGoRoutines();
     } else {
         console.error('Element with ID "go-routines" not found.');
+    }
+
+    if (serviceHealth) {
+        fetchServiceHealth();
+    } else {
+        console.error('Element with ID "load-service-health" not found.');
     }
 
     function animateProgressBar(bar, targetWidth, duration) {
@@ -52,22 +52,10 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 serviceInfoContainer.innerHTML = '';
-                // greeting.innerHTML = '';
 
                 const serviceName = data.service_name;
                 const goVersion = data.go_version;
                 const serviceStartTime = data.service_start_time;
-                // const currentHour = new Date().getHours();
-                // let greetingText = '';
-                // if (currentHour >= 0 && currentHour < 12) {
-                //     greetingText = 'Hello, Good Morning';
-                // } else if (currentHour >= 12 && currentHour < 18) {
-                //     greetingText = 'Hello, Good Afternoon';
-                // } else {
-                //     greetingText = 'Hello, Good Evening';
-                // }
-
-                // greeting.innerHTML = `${greetingText}!`;
 
                 const date = new Date(serviceStartTime);
                 const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -76,8 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const formattedTime = date.toLocaleTimeString('en-US', timeOptions);
 
                 serviceInfoContainer.innerHTML = `
-                    <div class="row">
-                        <div class="col-lg-4 col-md-4">
+                    <div class="row pl-3 pr-3">
                             <div class="card card-block card-stretch card-height">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center mb-4 card-total-sale">
@@ -87,6 +74,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <div>
                                             <p class="mb-2">Service Name:</p>
                                             <h4>${serviceName}</h4>
+
+                                            <p class="mb-2">Go Version:</p>
+                                            <h4>${goVersion}</h4>
+                                            <p class="mb-2">Service Start Time:</p>
+                                            <h4>${formattedDate}<br/> ${formattedTime}</h4>
                                         </div>
                                     </div>
                                     <div class="iq-progress-bar mt-2">
@@ -94,43 +86,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-lg-4 col-md-4">
-                            <div class="card card-block card-stretch card-height">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center mb-4 card-total-sale">
-                                        <div class="icon iq-icon-box-2 bg-danger-light">
-                                            <img src="../assets/images/product/2.png" class="img-fluid" alt="image">
-                                        </div>
-                                        <div>
-                                            <p class="mb-2">Go Version:</p>
-                                            <h4>${goVersion}</h4>
-                                        </div>
-                                    </div>
-                                    <div class="iq-progress-bar mt-2">
-                                        <span class="bg-danger iq-progress progress-1" data-percent="70"></span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-4 col-md-4">
-                            <div class="card card-block card-stretch card-height">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center mb-4 card-total-sale">
-                                        <div class="icon iq-icon-box-2 bg-success-light">
-                                            <img src="../assets/images/product/3.png" class="img-fluid" alt="image">
-                                        </div>
-                                        <div>
-                                            <p class="mb-2">Service Start Time:</p>
-                                            <h4>${formattedDate}<br/> ${formattedTime}</h4>
-                                        </div>
-                                    </div>
-                                    <div class="iq-progress-bar mt-2">
-                                        <span class="bg-success iq-progress progress-1" data-percent="75"></span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>`;
 
                 const progressBars = serviceInfoContainer.querySelectorAll('.iq-progress');
@@ -268,22 +223,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    function fetchGreetings() {
-        greeting.innerHTML = '';
-
-        const currentHour = new Date().getHours();
-        let greetingText = '';
-        if (currentHour >= 0 && currentHour < 12) {
-            greetingText = 'Hello, Good Morning';
-        } else if (currentHour >= 12 && currentHour < 18) {
-            greetingText = 'Hello, Good Afternoon';
-        } else {
-            greetingText = 'Hello, Good Evening';
-        }
-
-        greeting.innerHTML = `${greetingText}!`;
-    }
-
     function fetchGoRoutines() {
         fetch(`/go-routines-stats`)
             .then(response => response.json())
@@ -319,4 +258,59 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error(error);
             });
     }
+
+    function fetchServiceHealth() {
+        fetch(`/service-health`)
+            .then(response => response.json())
+            .then(data => {
+                const serviceHealth = data.service_health;
+                const serviceHealthText = serviceHealth ? 'Service is healthy' : 'Service is unhealthy';
+                const serviceHealthClass = serviceHealth ? 'text-success' : 'text-danger';
+                document.getElementById('load-service-health').innerHTML = `<span class="${serviceHealthClass}">${serviceHealthText}</span>`;
+            }).catch(error => {
+                console.error(error);
+            });
+    }
+
+    function updateGauge(gaugeId, percentage) {
+                const gauge = document.getElementById(gaugeId);
+                const text = gauge.querySelector('text');
+
+                // Update the text inside the gauge
+                text.textContent = `${percentage}%`;
+
+                // Determine the fill color based on the percentage
+                let fillColor;
+                if (percentage >= 80) {
+                    fillColor = 'var(--red)';
+                } else if (percentage >= 60) {
+                    fillColor = 'var(--yellow)';
+                } else if (percentage >= 50) {
+                    fillColor = 'var(--orange)';
+                } else if (percentage >= 40) {
+                    fillColor = 'var(--lightgreen)';
+                } else {
+                    fillColor = 'var(--green)';
+                }
+
+                // Reset the --o property to 0 to restart the animation
+                gauge.style.setProperty('--o', 0);
+
+                // Trigger a reflow to reset the animation (forces a repaint)
+                void gauge.offsetWidth;
+
+                // Set the custom properties for the gauge
+                gauge.style.setProperty('--fill-percentage', percentage);
+                gauge.style.setProperty('--fill-color', fillColor);
+
+                // Now update --o to the target percentage to animate
+                gauge.style.setProperty('--o', percentage);
+            }
+
+            // Dynamically set the values
+            updateGauge('g1', 20); // Example for the first gauge
+            updateGauge('g2', 70); // Example for the second gauge
+            updateGauge('g3', 30); // Example for the second gauge
+            updateGauge('g4', 40); // Example for the second gauge
+            updateGauge('g5', 50); // Example for the second gauge
 });

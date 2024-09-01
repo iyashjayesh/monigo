@@ -26147,3 +26147,110 @@ pre {
   font-size: 18px;
   margin-bottom: 20px;
 }
+
+/* Guage CSS */
+* {
+  --green: #37872d;
+  --lightgreen: #56a64b;
+  --yellow: #eab839;
+  --orange: #ef843c;
+  --red: #f2495c;
+}
+
+@property --o {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+.container {
+  width: 100vmin;
+  display: flex;
+}
+
+.gauge {
+  margin: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  aspect-ratio: 2 / 1.5;
+  width: 50%;
+  --fill-color: var(--green);
+  --background-color: white;
+  --gauge-background-color: #333;
+  --lightgreen-deg: 70deg;
+  --yellow-deg: 60deg;
+  --orange-deg: 50deg;
+  --red-deg: 40deg;
+  color: var(--fill-color);
+
+  /* outer ring */
+  background: radial-gradient(circle at 50% 70%,
+      var(--background-color) 0 51%,
+      #0000 0 63%,
+      var(--background-color) 63.1%),
+    conic-gradient(from -115deg at 50% 70%,
+      var(--red) 0 var(--red-deg),
+      var(--orange) 0 var(--orange-deg),
+      var(--yellow) 0 var(--yellow-deg),
+      var(--lightgreen) 0 var(--lightgreen-deg),
+      var(--green) 0 230deg,
+      var(--background-color) 0);
+}
+
+.gauge>svg {
+  z-index: 1;
+  position: relative;
+  background: 0;
+  margin-top: 15%;
+  width: 100%;
+}
+
+.gauge>svg>text {
+  text-anchor: middle;
+  alignment-baseline: central;
+  fill: var(--fill-color);
+}
+
+.gauge::after {
+  content: ' ';
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  position: absolute;
+  --o: 0;
+  animation: roll-o-1 1s alternate ease-in-out both;
+
+  /* inner ring */
+  background: radial-gradient(circle at 50% 70%,
+      var(--background-color) 0 45%, #0000 45.1% 59%,
+      var(--background-color) 59.1%),
+    conic-gradient(from -115deg at 50% 70%,
+      var(--fill-color) 0 min(2.3deg * var(--o), 230deg),
+      var(--gauge-background-color) 0 230deg,
+      var(--background-color) 0);
+  clip-path: circle(50% at 50% 70%);
+}
+
+@keyframes roll-o-1 {
+  0% {
+    --o: 0;
+  }
+
+  100% {
+    --o: var(--fill-percentage);
+  }
+}
+
+/*  */
+.grid-container {
+  display: grid;
+  grid-template-columns: auto auto;
+}
+
+.grid-item {
+  border: 1px solid rgba(0, 0, 0, 0.8);
+  text-align: -webkit-center;
+}

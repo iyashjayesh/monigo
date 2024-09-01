@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/iyashjayesh/monigo/models"
+
 	"github.com/iyashjayesh/monigo/api"
 	"github.com/iyashjayesh/monigo/common"
 	"github.com/iyashjayesh/monigo/core"
@@ -37,10 +39,11 @@ type Monigo struct {
 }
 
 type MonigoInt interface {
-	PurgeMonigoStorage()                    // Purge the monigo storage
-	SetDbSyncFrequency(frequency ...string) // Set the frequency to sync the metrics to the storage
-	StartDashboard()                        // Start the dashboard
-	PrintGoRoutinesStats() (int, []string)  // Print the Go routines stats
+	PurgeMonigoStorage()                                                   // Purge the monigo storage
+	SetDbSyncFrequency(frequency ...string)                                // Set the frequency to sync the metrics to the storage
+	StartDashboard()                                                       // Start the dashboard
+	PrintGoRoutinesStats() (int, []string)                                 // Print the Go routines stats
+	SetServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) // Set the service thresholds to calculate the overall service health
 }
 
 func (m *Monigo) StartDashboard() {
@@ -67,6 +70,10 @@ func (m *Monigo) SetDbSyncFrequency(frequency ...string) {
 
 func (m *Monigo) PrintGoRoutinesStats() (int, []string) {
 	return core.CollectGoRoutinesInfo()
+}
+
+func (m *Monigo) SetServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) {
+	core.SetServiceThresholds(thresholdsValues)
 }
 
 func StartDashboard(addr int) {

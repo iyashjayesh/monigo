@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strconv"
 	"sync"
 	"time"
 
@@ -14,10 +15,24 @@ import (
 )
 
 var (
-	mu              sync.Mutex
-	requestCount    int64
-	totalDuration   time.Duration
-	functionMetrics = make(map[string]*models.FunctionMetrics)
+	mu                      sync.Mutex
+	requestCount            int64
+	totalDuration           time.Duration
+	functionMetrics         = make(map[string]*models.FunctionMetrics)
+	serviceHealthThresholds = models.ServiceHealthThresholds{ // Default thresholds
+		MaxGoroutines: models.Thresholds{
+			Value:  100,
+			Weight: 25,
+		},
+		MaxLoad: models.Thresholds{
+			Value:  75.0,
+			Weight: 25,
+		},
+		MaxMemory: models.Thresholds{
+			Value:  70.0,
+			Weight: 25,
+		},
+	}
 )
 
 func RecordRequestDuration(duration time.Duration) {
@@ -167,4 +182,70 @@ func GetServiceMetricsModel() models.ServiceMetrics {
 	}
 
 	return metrics
+}
+
+func CalculateServiceHealth(metrics models.ServiceMetrics) models.ServiceHealth {
+	goroutines := strconv.Itoa(int(metrics.GoRoutines))
+	requests := strconv.Itoa(int(metrics.NumberOfReqServerd))
+	memoryUsed := metrics.MemoryUsed
+	cpuLoad := metrics.Load
+
+	health := "Healthy"
+	healthy := true
+	if memoryUsed > 80.0 {
+		health = "Warning: High Memory Usage"
+		healthy = false
+	}
+	if memoryUsed > 80.0 || cpuLoad > 80.0 {
+		health = "Critical: Service Under Heavy Load"
+		healthy = false
+	}
+
+	// OverallHealthPercent
+	overallHealthPercent := CalculateOverallHealth(&metrics)
+
+	strToInt := func(s string) int {
+		i, _ := strconv.Atoi(s)
+		return i
+	}
+
+	return models.ServiceHealth{
+		Goroutines:           strToInt(goroutines),
+		Requests:             strToInt(requests),
+		MemoryUsed:           memoryUsed,
+		CPUPercent:           cpuLoad,
+		OverallHealthPercent: overallHealthPercent,
+		Health: models.Health{
+			Healthy: healthy,
+			Message: health,
+		},
+	}
+}
+
+// Example calculation in Go
+func CalculateOverallHealth(metrics *models.ServiceMetrics) float64 {
+
+	// Calculating the health score for each metric with a weight
+	loadScore := (serviceHealthThresholds.MaxLoad.Value - metrics.Load) / serviceHealthThresholds.MaxLoad.Value * serviceHealthThresholds.MaxLoad.Weight                                                         // 25% weight
+	memoryScore := (serviceHealthThresholds.MaxMemory.Value - metrics.MemoryUsed) / serviceHealthThresholds.MaxMemory.Value * serviceHealthThresholds.MaxMemory.Weight                                           // 25% weight
+	goroutineScore := (float64(serviceHealthThresholds.MaxGoroutines.Value) - float64(metrics.GoRoutines)) / float64(serviceHealthThresholds.MaxGoroutines.Value) * serviceHealthThresholds.MaxGoroutines.Weight // 20% weight
+	// requestScore := (float64(serviceHealthThresholds.MaxRequests.Value) - float64(requests)) / float64(serviceHealthThresholds.MaxRequests.Value) * serviceHealthThresholds.MaxRequests.Weight                   // 15% weight
+	// uptimeScore := (uptime / 1440.0) * 15                                                                                                                                                                        // 15% weight, normalized for uptime (example 1440 mins = 1 day)
+
+	// Combine into an overall health percentage
+	overallHealth := loadScore + memoryScore + goroutineScore
+	// + requestScore + uptimeScore
+
+	// Ensure the health percent is within 0-100%
+	if overallHealth > 100 {
+		overallHealth = 100
+	} else if overallHealth < 0 {
+		overallHealth = 0
+	}
+
+	return overallHealth
+}
+
+func SetServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) {
+	serviceHealthThresholds = *thresholdsValues
 }
