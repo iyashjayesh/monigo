@@ -3,7 +3,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const serviceInfoContainer = document.getElementById('service-container');
     const runtimeMetricsContainer = document.getElementById('runtime-metrics-container');
     const goRoutinesNumber = document.getElementById('goroutine-count');
-    const serviceHealth = document.getElementById('load-service-health');
+    const memValue = document.getElementById('mem-value');
+    const cpuValue = document.getElementById('cpu-value');
+    const serviceHealth = document.getElementById('load-service-health-guage');
+    
+
+    const memoryStatsContainer = document.getElementById('memory-stats');
+    const cpuStatsContainer = document.getElementById('cpu-stats');
+
 
     if (serviceInfoContainer) {
         fetchServiceInfo();
@@ -23,11 +30,20 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Element with ID "go-routines" not found.');
     }
 
-    if (serviceHealth) {
-        fetchServiceHealth();
+    if (memoryStatsContainer){
+        console.log('Memory and CPU stats found');
+        updateStats();
     } else {
-        console.error('Element with ID "load-service-health" not found.');
+        console.error('Element with ID "memory-stats" or "cpu-stats" not found.');
     }
+    
+    // if (serviceHealth) {
+    //     fetchServiceHealth();
+    // } else {
+    //     console.error('Element with ID "load-service-health" not found.');
+    // }
+
+    
 
     function animateProgressBar(bar, targetWidth, duration) {
         let start = null;
@@ -104,6 +120,56 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(metrics => {
 
                 console.log(metrics);
+
+                // cpuValue.innerHTML = metrics.cpu.system_used_cores;
+
+                cpuValue.innerHTML = `
+                            <div class="card card-block card-stretch card-height">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-between mb-4 card-total-sale">
+                                        <div class="d-flex align-items-center">
+                                            <div class="icon iq-icon-box-2 bg-info-light">
+                                                <img src="../assets/images/product/1.png" class="img-fluid" alt="CPU Usage IMG">
+                                            </div>
+                                            <div class="ml-3">
+                                                <p class="mb-2">CPU usage by service:</p>
+                                                <h4>${metrics.cpu.used_in_percent}</h4>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <button type="button" class="btn btn-primary mt-2"><i class="ri-heart-fill"></i>Buttons</button>
+                                        </div>
+                                    </div>
+                                    <div class="iq-progress-bar mt-2">
+                                        <span class="bg-info iq-progress progress-1" style="width: 0%;" data-percent="65"></span>
+                                    </div>
+                                </div>
+                            </div>`;
+
+                memValue.innerHTML = `
+                            <div class="card card-block card-stretch card-height">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-between mb-4 card-total-sale">
+                                        <div class="d-flex align-items-center">
+                                            <div class="icon iq-icon-box-2 bg-info-light">
+                                                <img src="../assets/images/product/1.png" class="img-fluid" alt="CPU Usage IMG">
+                                            </div>
+                                            <div class="ml-3">
+                                                <p class="mb-2">Memory usage by service:</p>
+                                                <h4>${metrics.memory.used_in_percent}</h4>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <button type="button" class="btn btn-primary mt-2"><i class="ri-heart-fill"></i>Buttons</button>
+                                        </div>
+                                    </div>
+                                    <div class="iq-progress-bar mt-2">
+                                        <span class="bg-info iq-progress progress-1" style="width: 0%;" data-percent="65"></span>
+                                    </div>
+                                </div>
+                            </div>`;
+
+
                 // alloc : "5.18" cores : "0.01PC / 4.00SC / 10LC / 10C" goroutines : 9 heap_alloc : "5.18" heap_sys : "11.41" load : "0.15%" memory_usage : "MB" memory_used : "0.14%" requests : 0 sys : "18.16" total_alloc : "6.62" total_duration : "0s" uptime : "12.83 s"
 
                 const listCont = [
@@ -259,19 +325,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    function fetchServiceHealth() {
-        fetch(`/service-health`)
-            .then(response => response.json())
-            .then(data => {
-                const serviceHealth = data.service_health;
-                const serviceHealthText = serviceHealth ? 'Service is healthy' : 'Service is unhealthy';
-                const serviceHealthClass = serviceHealth ? 'text-success' : 'text-danger';
-                document.getElementById('load-service-health').innerHTML = `<span class="${serviceHealthClass}">${serviceHealthText}</span>`;
-            }).catch(error => {
-                console.error(error);
-            });
-    }
-
     function updateGauge(gaugeId, percentage) {
                 const gauge = document.getElementById(gaugeId);
                 const text = gauge.querySelector('text');
@@ -306,6 +359,115 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Now update --o to the target percentage to animate
                 gauge.style.setProperty('--o', percentage);
             }
+
+    function updateStats() {
+        fetch(`/metrics`)
+            .then(response => response.json())
+            .then(data => {
+
+                console.log(data);
+                let preHtml = `
+                    <div class="card card-block card-stretch card-height mb-4">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-4 card-total-sale">
+                                <div class="icon iq-icon-box-2 bg-info-light">
+                                    <!-- Example image, replace as needed -->
+                                    <img src="https://via.placeholder.com/40" class="img-fluid" alt="Memory Image">
+                                </div>
+                `
+                
+                for (let [key, value] of Object.entries(data.memory)) {
+                    let name = '';
+                    if (key === "mem_stats_records") {
+                        console.log('Skipping mem_stats_records');
+                        continue;
+                    }
+
+                    if (key === "used_in_percent") {
+                        name = "Memory Usage";
+                    } else if (key === "total_memory") {
+                        name = "Total Memory";
+                        value = `${value} bytes`;
+                    } else if (key === "used_by_system") {
+                        name = "Used by System";
+                        value = `${value} bytes`;
+                    } else if (key === "used_by_process") {
+                        name = "Used by Process";
+                        value = `${value} bytes`;
+                    } else if (key === "free_memory") {
+                        name = "Free Memory";
+                        value = `${value} bytes`;
+                    } else if (key === "heap_alloc_by_process") {
+                        name = "Heap Alloc by Process";
+                        value = `${value} bytes`;
+                    } else if (key === "heap_sys_by_process") {
+                        name = "Heap Sys by Process";
+                        value = `${value} bytes`;
+                    } else if (key === "total_alloc_by_process") {
+                        name = "Total Alloc by Process";
+                        value = `${value} bytes`;
+                    } else if (key === "total_sys_by_process") {
+                        name = "Total Sys by Process";
+                        value = `${value} bytes`;
+                    } else {
+                        name = key;
+                    }
+
+                    // <div>
+                    //                         <p class="mb-2">Service Name:</p>
+                    //                         <h4>${serviceName}</h4>
+
+                    //                         <p class="mb-2">Go Version:</p>
+                    //                         <h4>${goVersion}</h4>
+                    //                         <p class="mb-2">Service Start Time:</p>
+                    //                         <h4>${formattedDate}<br/> ${formattedTime}</h4>
+                    //                     </div>
+
+                    memoryStatsContainer.innerHTML += `
+                                    <div>
+                                        <p class="mb-2">${name} : </p>
+                                        <h4>${value}</h4>
+                                    </div>
+                                    `;
+                                
+                }
+
+                let postHtml = `</div>
+                            </div>
+                        </div>
+                    `;
+
+                preHtml + memoryStatsContainer.innerHTML + postHtml;
+
+
+            // CPU Stats
+            cpuStatsContainer.innerHTML = `
+                <div class="card card-block card-stretch card-height mb-4">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-4 card-total-sale">
+                            <div class="icon iq-icon-box-2 bg-info-light">
+                                <!-- Example image, replace as needed -->
+                                <img src="https://via.placeholder.com/40" class="img-fluid" alt="CPU Image">
+                            </div>
+                            <div>
+                                <p class="mb-2">CPU Usage</p>
+                                <h4>${data.cpu.used_in_percent}</h4>
+                            </div>
+                        </div>
+                        <div class="iq-progress-bar mt-2">
+                            <span class="bg-info iq-progress progress-1" style="width: ${data.cpu.used_in_percent};"
+                                data-percent="${data.cpu.used_in_percent}">
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        })
+        .catch(error => {
+            console.error(error);
+        });
+    }
+
 
             // Dynamically set the values
             updateGauge('g1', 20); // Example for the first gauge

@@ -36,6 +36,7 @@ type Monigo struct {
 	DashboardPort    int
 	GoVersion        string
 	ServiceStartTime time.Time
+	ProcessId        int32
 }
 
 type MonigoInt interface {
@@ -48,10 +49,13 @@ type MonigoInt interface {
 
 func (m *Monigo) StartDashboard() {
 
-	common.SetServiceInfo(m.ServiceName, serviceStartTime, runtime.Version())
+	pid := common.GetProcessId()
+
+	common.SetServiceInfo(m.ServiceName, serviceStartTime, runtime.Version(), pid)
 
 	m.GoVersion = runtime.Version()
 	m.ServiceStartTime = serviceStartTime
+	m.ProcessId = pid
 
 	if m.DashboardPort == 0 {
 		m.DashboardPort = 8080
@@ -81,7 +85,8 @@ func StartDashboard(addr int) {
 	log.Println("Starting the dashboard")
 
 	http.HandleFunc("/", serveHtmlSite)
-	http.HandleFunc("/metrics", api.GetMetrics)
+	// http.HandleFunc("/metrics", api.GetMetrics)
+	http.HandleFunc("/metrics", api.GetCoreStats)
 	http.HandleFunc("/function-metrics", api.GetFunctionMetrics)
 	http.HandleFunc("/generate-function-metrics", api.ProfileHandler)
 

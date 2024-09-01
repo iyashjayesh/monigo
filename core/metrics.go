@@ -2,12 +2,14 @@ package core
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"runtime"
 	"strconv"
 	"sync"
 	"time"
 
+	"github.com/iyashjayesh/monigo/common"
 	"github.com/iyashjayesh/monigo/models"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/mem"
@@ -42,14 +44,10 @@ func RecordRequestDuration(duration time.Duration) {
 	totalDuration += duration
 }
 
-func GetServiceMetrics() (int64, time.Duration, *runtime.MemStats) {
+func GetServiceMetrics() (int64, time.Duration) {
 	mu.Lock()
 	defer mu.Unlock()
-
-	var memStats runtime.MemStats
-	runtime.ReadMemStats(&memStats)
-
-	return requestCount, totalDuration, &memStats
+	return requestCount, totalDuration
 }
 
 func GetFunctionMetrics(functionName string) *models.FunctionMetrics {
@@ -62,20 +60,16 @@ func GetProcessSats() models.ProcessStats {
 
 	pid, proc, err := GetProcessDetails()
 	if err != nil {
-		fmt.Printf("Error fetching process information: %v\n", err)
+		log.Panicf("Error fetching process information: %v\n", err)
 		return models.ProcessStats{}
 	}
 
-	// Getting system and process resource usage
-	sysCPUPercent, sysMemUsage, err := getSystemUsage()
-	if err != nil {
-		fmt.Printf("Error fetching system usage: %v\n", err)
-		return models.ProcessStats{}
-	}
+	sysCPUPercent := GetCPUPrecent()
+	memInfo := GetVirtualMemoryStats()
 
-	procCPUPercent, procMemPercent, err := getProcessUsage(proc, &sysMemUsage)
+	procCPUPercent, procMemPercent, err := getProcessUsage(proc, &memInfo)
 	if err != nil {
-		fmt.Printf("Error fetching process usage: %v\n", err)
+		log.Panicf("Error fetching process usage: %v\n", err)
 		return models.ProcessStats{}
 	}
 
@@ -85,13 +79,13 @@ func GetProcessSats() models.ProcessStats {
 	processUsedCores := (procCPUPercent / 100) * float64(totalLogicalCores)
 
 	return models.ProcessStats{
-		ProcessId:         pid,
-		SysCPUPercent:     sysCPUPercent,
-		ProcCPUPercent:    procCPUPercent,
-		ProcMemPercent:    procMemPercent,
-		TotalMemoryUsage:  sysMemUsage.TotalMemoryUsage,
-		FreeMemory:        sysMemUsage.FreeMemory,
-		UsedMemoryPercent: sysMemUsage.UsedPercent,
+		ProcessId:      pid,
+		SysCPUPercent:  sysCPUPercent,
+		ProcCPUPercent: procCPUPercent,
+		ProcMemPercent: procMemPercent,
+		// TotalMemoryUsage:  sysMemUsage.TotalMemoryUsage,
+		// FreeMemory:        sysMemUsage.FreeMemory,
+		// UsedMemoryPercent: sysMemUsage.UsedPercent,
 		TotalCores:        totalCores,
 		TotalLogicalCores: totalLogicalCores,
 		SystemUsedCores:   systemUsedCores,
@@ -108,47 +102,38 @@ func GetProcessDetails() (int32, *process.Process, error) {
 	return pid, proc, nil
 }
 
-// Fetches and returns system CPU and memory usage
-func getSystemUsage() (float64, models.Memory, error) {
+func GetCPUPrecent() float64 {
 	cpuPercent, err := cpu.Percent(time.Second, false)
 	if err != nil {
-		return 0, models.Memory{}, err
+		log.Panicf("Error fetching CPU usage: %v\n", err)
+		return 0
 	}
+	return cpuPercent[0]
+}
 
-	memUsage := models.Memory{}
+func GetVirtualMemoryStats() mem.VirtualMemoryStat {
 	memInfo, err := mem.VirtualMemory()
 	if err != nil {
-		return 0, models.Memory{}, err
+		log.Panicf("Error fetching memory usage: %v\n", err)
+		return mem.VirtualMemoryStat{}
 	}
 
-	memUsage = models.Memory{
-		TotalMemoryUsage: float64(memInfo.Total),
-		FreeMemory:       float64(memInfo.Free),
-		UsedPercent:      memInfo.UsedPercent,
-	}
-
-	return cpuPercent[0], memUsage, nil
+	return *memInfo
 }
 
 // Fetches and returns process CPU and memory usage
-func getProcessUsage(proc *process.Process, sysMemUsage *models.Memory) (float64, float64, error) {
+func getProcessUsage(proc *process.Process, memsStats *mem.VirtualMemoryStat) (float64, float64, error) {
 	procCPUPercent, err := proc.CPUPercent()
 	if err != nil {
 		return 0, 0, err
 	}
 
-	procMem, err := proc.MemoryInfo()
-	if err != nil {
-		return 0, 0, err
-	}
+	memStats := ReadMemStats()
 
-	if sysMemUsage.TotalMemoryUsage == 0 {
-		return 0, 0, fmt.Errorf("error fetching system memory usage")
-	}
+	// Calculate memory used by the process as a percentage of total system memory
+	processMemPercent := (float64(memStats.Alloc) / float64(memsStats.Total)) * 100
 
-	procMemPercent := float64(procMem.RSS) / sysMemUsage.TotalMemoryUsage * 100
-
-	return procCPUPercent, procMemPercent, nil
+	return procCPUPercent, processMemPercent, nil
 }
 
 func GetLocalFunctionMetrics() map[string]*models.FunctionMetrics {
@@ -157,13 +142,14 @@ func GetLocalFunctionMetrics() map[string]*models.FunctionMetrics {
 
 func GetServiceMetricsModel() models.ServiceMetrics {
 
-	requestCount, totalDuration, memStats := GetServiceMetrics()
+	requestCount, totalDuration := GetServiceMetrics()
 	serviceStat := GetProcessSats()
+	memStats := ReadMemStats()
 
 	// SystemUsedCoresToString := fmt.Sprintf("%.2f", serviceStat.SystemUsedCores)
 	// ProcessUsedCoresToString := fmt.Sprintf("%.2f", serviceStat.ProcessUsedCores)
 
-	// core := ProcessUsedCoresToString + "PC / " +
+	// cores := ProcessUsedCoresToString + "PC / " +
 	// 	SystemUsedCoresToString + "SC / " +
 	// 	strconv.Itoa(serviceStat.TotalLogicalCores) + "LC / " +
 	// 	strconv.Itoa(serviceStat.TotalCores) + "C"
@@ -246,6 +232,111 @@ func CalculateOverallHealth(metrics *models.ServiceMetrics) float64 {
 	return overallHealth
 }
 
+// SetServiceThresholds sets the service thresholds to calculate the overall service health.
 func SetServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) {
 	serviceHealthThresholds = *thresholdsValues
+}
+
+// ConstructMemStats constructs a list of memory statistics records.
+func ConstructMemStats(memStats *runtime.MemStats) models.MemStatsRecords {
+	memStatsRecords := models.MemStatsRecords{}
+	memStatsRecords.Records = []models.Record{
+		newRecord("Alloc", "Bytes of allocated heap objects.", memStats.Alloc),
+		newRecord("TotalAlloc", "Cumulative bytes allocated for heap objects.", memStats.TotalAlloc),
+		newRecord("Sys", "Total bytes of memory obtained from the OS.", memStats.Sys),
+		newRecord("Lookups", "Number of pointer lookups performed by the runtime.", memStats.Lookups),
+		newRecord("Mallocs", "Cumulative count of heap objects allocated.", memStats.Mallocs),
+		newRecord("Frees", "Cumulative count of heap objects freed.", memStats.Frees),
+		newRecord("HeapAlloc", "Bytes of allocated heap objects.", memStats.HeapAlloc),
+		newRecord("HeapSys", "Bytes of heap memory obtained from the OS.", memStats.HeapSys),
+		newRecord("HeapIdle", "Bytes in idle (unused) spans.", memStats.HeapIdle),
+		newRecord("HeapInuse", "Bytes in in-use spans.", memStats.HeapInuse),
+		newRecord("HeapReleased", "Bytes of physical memory returned to the OS.", memStats.HeapReleased),
+		newRecord("HeapObjects", "Number of allocated heap objects.", memStats.HeapObjects),
+		newRecord("StackInuse", "Bytes in stack spans.", memStats.StackInuse),
+		newRecord("StackSys", "Bytes of stack memory obtained from the OS.", memStats.StackSys),
+		newRecord("MSpanInuse", "Bytes of allocated mspan structures.", memStats.MSpanInuse),
+		newRecord("MSpanSys", "Bytes of memory obtained from the OS for mspan structures.", memStats.MSpanSys),
+		newRecord("MCacheInuse", "Bytes of allocated mcache structures.", memStats.MCacheInuse),
+		newRecord("MCacheSys", "Bytes of memory obtained from the OS for mcache structures.", memStats.MCacheSys),
+		newRecord("BuckHashSys", "Bytes of memory in profiling bucket hash tables.", memStats.BuckHashSys),
+		newRecord("GCSys", "Bytes of memory in garbage collection metadata.", memStats.GCSys),
+		newRecord("OtherSys", "Bytes of memory in miscellaneous off-heap runtime allocations.", memStats.OtherSys),
+		newRecord("NextGC", "Target heap size of the next GC cycle.", memStats.NextGC),
+		newRecord("LastGC", "Time the last garbage collection finished (nanoseconds since the UNIX epoch).", memStats.LastGC),
+		newRecord("PauseTotalNs", "Cumulative nanoseconds in GC stop-the-world pauses since program start.", memStats.PauseTotalNs),
+		newRecord("NumGC", "Number of completed GC cycles.", uint64(memStats.NumGC)),
+		newRecord("NumForcedGC", "Number of GC cycles that were forced by the application calling GC.", uint64(memStats.NumForcedGC)),
+		newRecord("GCCPUFraction", "Fraction of this program's available CPU time used by the GC.", memStats.GCCPUFraction),
+	}
+
+	return memStatsRecords
+}
+
+// newRecord creates a new Record with appropriate units and human-readable formats.
+func newRecord(name, description string, value interface{}) models.Record {
+	switch v := value.(type) {
+	case uint64:
+		size, unit := common.ConvertToReadableSize(v)
+		return models.Record{
+			Name:        name,
+			Description: description,
+			Value:       size,
+			Unit:        unit,
+		}
+	case float64:
+		return models.Record{
+			Name:        name,
+			Description: description,
+			Value:       v,
+			Unit:        "fraction",
+		}
+	default:
+		return models.Record{
+			Name:        name,
+			Description: description,
+			Value:       value,
+		}
+	}
+}
+
+func GetSystemCPUInfo() models.CPUStat {
+	numCPU := float64(runtime.NumCPU())
+	serviceStat := GetProcessSats()
+
+	processUsedCoresInPercent := (float64(serviceStat.ProcessUsedCores) / float64(serviceStat.TotalLogicalCores)) * 100
+
+	return models.CPUStat{
+		TotalCores:        float64(serviceStat.TotalCores),
+		TotalLogicalCores: float64(serviceStat.TotalLogicalCores),
+		SystemUsedCores:   serviceStat.SystemUsedCores,
+		ProcessUsedCores:  serviceStat.ProcessUsedCores,
+		Cores:             fmt.Sprintf("%.0f", numCPU),
+		UsedInPercent:     fmt.Sprintf("%.2f%%", processUsedCoresInPercent),
+	}
+}
+
+func GetSystemMemoryInfo() models.MemoryStat {
+
+	vm := GetVirtualMemoryStats() // Get the virtual memory statistics
+	memStats := ReadMemStats()    // Get the memory statistics
+
+	return models.MemoryStat{
+		TotalMemory:         float64(vm.Total),
+		UsedBySystem:        float64(vm.Used),
+		FreeMemory:          float64(vm.Free),
+		UsedByProcess:       float64(memStats.Alloc),
+		HeapAllocByProcess:  float64(memStats.HeapAlloc),
+		HeapSysByProcess:    float64(memStats.HeapSys),
+		TotalAllocByProcess: float64(memStats.TotalAlloc),
+		TotalSysByProcess:   float64(memStats.Sys),
+		UsedInPercent:       fmt.Sprintf("%.2f%%", (float64(memStats.Alloc)/float64(vm.Total))*100),
+		MemStatsRecords:     ConstructMemStats(memStats),
+	}
+}
+
+func ReadMemStats() *runtime.MemStats {
+	memStats := runtime.MemStats{}
+	runtime.ReadMemStats(&memStats)
+	return &memStats
 }

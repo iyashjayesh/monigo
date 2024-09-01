@@ -13,6 +13,7 @@ import (
 
 	"github.com/iyashjayesh/monigo/common"
 	"github.com/iyashjayesh/monigo/core"
+	"github.com/iyashjayesh/monigo/models"
 	"github.com/iyashjayesh/monigo/timeseries"
 	"github.com/nakabonne/tstorage"
 )
@@ -22,19 +23,7 @@ var (
 )
 
 func GetServiceInfoAPI(w http.ResponseWriter, r *http.Request) {
-
-	serviceInfo := common.GetServiceInfo()
-	jsonObj := struct {
-		ServiceName      string `json:"service_name"`
-		ServiceStartTime string `json:"service_start_time"`
-		GoVersion        string `json:"go_version"`
-	}{
-		ServiceName:      serviceInfo.ServiceName,
-		ServiceStartTime: serviceInfo.ServiceStartTime.Format(time.RFC3339),
-		GoVersion:        serviceInfo.GoVersion,
-	}
-
-	jsonObjStr, _ := json.Marshal(jsonObj)
+	jsonObjStr, _ := json.Marshal(common.GetServiceInfo())
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonObjStr)
 }
@@ -45,8 +34,10 @@ func GetMetrics(w http.ResponseWriter, r *http.Request) {
 		unit = "MB" // Default Unit
 	}
 
-	requestCount, totalDuration, memStats := core.GetServiceMetrics()
+	requestCount, totalDuration := core.GetServiceMetrics()
 	serviceStat := core.GetProcessSats()
+
+	memStats := core.ReadMemStats()
 
 	// Convert bytes to different units
 	bytesToUnit := func(bytes uint64) float64 {
@@ -117,6 +108,76 @@ func GetMetrics(w http.ResponseWriter, r *http.Request) {
 		Cores:         core,
 		MemoryUsed:    memoryUsed + "%",
 		Uptime:        uptimeStr,
+	}
+
+	jsonMetrics, _ := json.Marshal(metrics)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(jsonMetrics))
+}
+
+func GetCoreStats(w http.ResponseWriter, r *http.Request) {
+	unit := r.URL.Query().Get("unit")
+	if unit == "" {
+		unit = "MB" // Default Unit
+	}
+
+	requestCount, totalDuration := core.GetServiceMetrics()
+	serviceStat := core.GetProcessSats()
+	// memStats := core.ReadMemStats()
+	// memStatsRecord := core.ConstructMemStats(memStats)
+
+	// Convert bytes to different units
+	// bytesToUnit := func(bytes uint64) float64 {
+	// 	switch unit {
+	// 	case "KB":
+	// 		return float64(bytes) / 1024.0
+	// 	case "MB":
+	// 		return float64(bytes) / 1048576.0
+	// 	case "GB":
+	// 		return float64(bytes) / 1073741824.0
+	// 	default: // "bytes"
+	// 		return float64(bytes)
+	// 	}
+	// }
+
+	// SystemUsedCoresToString := fmt.Sprintf("%.2f", serviceStat.SystemUsedCores)
+	// ProcessUsedCoresToString := fmt.Sprintf("%.2f", serviceStat.ProcessUsedCores)
+
+	// coreStr := ProcessUsedCoresToString + "PC / " +
+	// 	SystemUsedCoresToString + "SC / " +
+	// 	strconv.Itoa(serviceStat.TotalLogicalCores) + "LC / " +
+	// 	strconv.Itoa(serviceStat.TotalCores) + "C"
+
+	// ProcMemPercent
+	// memoryUsed := fmt.Sprintf("%.2f", serviceStat.ProcMemPercent)
+	runtimeGoRoutine := runtime.NumGoroutine()
+	serviceInfo := common.GetServiceInfo()
+
+	// 7.051466958s
+	uptime := time.Since(serviceInfo.ServiceStartTime)
+	uptimeStr := fmt.Sprintf("%.2f s", uptime.Seconds())
+
+	if uptime.Seconds() > 60 {
+		uptimeStr = fmt.Sprintf("%.2f m", uptime.Minutes())
+	} else if uptime.Hours() > 60 {
+		uptimeStr = fmt.Sprintf("%.2f h", uptime.Hours())
+	} else if uptime.Hours() > 24 {
+		uptimeStr = fmt.Sprintf("%.2f d", uptime.Hours()/24)
+	} else if uptime.Hours() > 30*24 {
+		uptimeStr = fmt.Sprintf("%.2f m", uptime.Hours()/(30*24))
+	} else if uptime.Hours() > 12*30*24 {
+		uptimeStr = fmt.Sprintf("%.2f y", uptime.Hours()/(12*30*24))
+	}
+
+	metrics := models.ServiceCoreStats{
+		Goroutines:                 runtimeGoRoutine,
+		Requests:                   requestCount,
+		Load:                       fmt.Sprintf("%.2f", serviceStat.ProcCPUPercent) + "%",
+		Memory:                     core.GetSystemMemoryInfo(),
+		Uptime:                     uptimeStr,
+		TotalDurationTookbyRequest: totalDuration.Seconds(),
+		CPU:                        core.GetSystemCPUInfo(),
 	}
 
 	jsonMetrics, _ := json.Marshal(metrics)

@@ -36,6 +36,7 @@ type ServiceInfo struct {
 	ServiceName      string    `json:"service_name"`
 	ServiceStartTime time.Time `json:"service_start_time"`
 	GoVersion        string    `json:"go_version"`
+	ProcessId        int32     `json:"process_id"`
 }
 
 type ServiceMetrics struct {

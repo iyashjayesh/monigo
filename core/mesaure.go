@@ -15,8 +15,9 @@ var BasePath string = GetBasePath()
 func MeasureExecutionTime(name string, f func()) {
 
 	initialGoroutines := runtime.NumGoroutine() // Capturing the initial number of goroutines
-	var memStatsBefore, memStatsAfter runtime.MemStats
-	runtime.ReadMemStats(&memStatsBefore)
+	// var memStatsAfter runtime.MemStats
+	// runtime.ReadMemStats(&memStatsBefore)
+	memStatsBefore := ReadMemStats()
 
 	log.Printf("memStatsBefore = %v\n", memStatsBefore.Alloc)
 
@@ -33,7 +34,7 @@ func MeasureExecutionTime(name string, f func()) {
 
 	cpuProfileFile, err := StartCPUProfile(cpuProfFilePath)
 	if err != nil {
-		fmt.Printf("Error starting CPU profile for %s: %v\n", name, err)
+		log.Panicf("Error starting CPU profile for %s: %v\n", name, err)
 		return
 	}
 	defer StopCPUProfile(cpuProfileFile)
@@ -51,7 +52,8 @@ func MeasureExecutionTime(name string, f func()) {
 	}
 
 	// Capture final metrics
-	runtime.ReadMemStats(&memStatsAfter)
+	// runtime.ReadMemStats(&memStatsAfter)
+	memStatsAfter := ReadMemStats()
 	finalGoroutines := runtime.NumGoroutine() - initialGoroutines
 	if finalGoroutines < 0 {
 		finalGoroutines = 0
