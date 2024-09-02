@@ -32,44 +32,54 @@ func init() {
 
 // Monigo is the main struct to start the monigo service
 type Monigo struct {
-	ServiceName      string
-	DashboardPort    int
-	GoVersion        string
-	ServiceStartTime time.Time
-	ProcessId        int32
+	ServiceName        string    `json:"service_name"`
+	DashboardPort      int       `json:"dashboard_port"`
+	PurgeMonigoStorage bool      `json:"purge_monigo_storage"`
+	DbSyncFrequency    string    `json:"db_sync_frequency"`
+	RetentionPeriod    string    `json:"retention_period"`
+	GoVersion          string    `json:"go_version"`
+	ServiceStartTime   time.Time `json:"service_start_time"`
+	ProcessId          int32     `json:"process_id"`
 }
 
+// MonigoInt is the interface to start the monigo service
 type MonigoInt interface {
-	PurgeMonigoStorage()                                                   // Purge the monigo storage
+	Start()                                                                // Start the dashboard
+	DeleteMonigoStorage()                                                  // Purge the monigo storage
 	SetDbSyncFrequency(frequency ...string)                                // Set the frequency to sync the metrics to the storage
-	StartDashboard()                                                       // Start the dashboard
 	PrintGoRoutinesStats() (int, []string)                                 // Print the Go routines stats
 	SetServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) // Set the service thresholds to calculate the overall service health
 }
 
-func (m *Monigo) StartDashboard() {
+func (m *Monigo) Start() {
 
-	pid := common.GetProcessId()
-
-	common.SetServiceInfo(m.ServiceName, serviceStartTime, runtime.Version(), pid)
-
-	m.GoVersion = runtime.Version()
-	m.ServiceStartTime = serviceStartTime
-	m.ProcessId = pid
-
-	if m.DashboardPort == 0 {
-		m.DashboardPort = 8080
+	if m.ServiceName == "" {
+		log.Panic("service_name is required, please provide the service name")
 	}
 
+	if m.PurgeMonigoStorage {
+		m.DeleteMonigoStorage()
+	}
+
+	// Set the frequency to sync the metrics to the storage
+	m.SetDbSyncFrequency(m.DbSyncFrequency) // Default is 5 Minutes
+
+	//@TODO:  RetentionPeriod  Yet to be implemented
+
+	m.ProcessId = common.GetProcessId()
+	m.GoVersion = runtime.Version()
+	m.ServiceStartTime = serviceStartTime
+
+	common.SetServiceInfo(m.ServiceName, m.ServiceStartTime, m.GoVersion, m.ProcessId)
 	go StartDashboard(m.DashboardPort)
 }
 
-func (m *Monigo) PurgeMonigoStorage() {
+func (m *Monigo) DeleteMonigoStorage() {
 	timeseries.PurgeStorage()
 }
 
 func (m *Monigo) SetDbSyncFrequency(frequency ...string) {
-	timeseries.SetDbSyncFrequency(frequency...)
+	timeseries.SetDbSyncFrequency(m.DbSyncFrequency)
 }
 
 func (m *Monigo) PrintGoRoutinesStats() (int, []string) {
@@ -82,7 +92,11 @@ func (m *Monigo) SetServiceThresholds(thresholdsValues *models.ServiceHealthThre
 
 func StartDashboard(addr int) {
 
-	log.Println("Starting the dashboard")
+	if addr == 0 {
+		addr = 8080 // Default port for the dashboard
+	}
+
+	log.Println("Starting the dashboard at port:", addr)
 
 	http.HandleFunc("/", serveHtmlSite)
 	// http.HandleFunc("/metrics", api.GetMetrics)
@@ -91,7 +105,7 @@ func StartDashboard(addr int) {
 	http.HandleFunc("/generate-function-metrics", api.ProfileHandler)
 
 	// API to fetch the service metrics
-	http.HandleFunc("/service-info", api.GetServiceInfoAPI)
+	http.HandleFunc("/service-info", api.GetServiceInfoAPI) // Completed 
 	http.HandleFunc("/service-metrics", api.GetServiceMetricsFromStorage)
 	http.HandleFunc("/go-routines-stats", api.GetGoRoutinesStats)
 

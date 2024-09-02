@@ -96,3 +96,18 @@ For questions or feedback, please open an issue or contact me at iyashjayesh@gma
    Now on every time interval, do below things:
 1. Store Service Metrics
 1. Store Runtime Metrics -->
+
+<!-- List of Pages -->
+
+<!-- 1. Dashboard
+	1.1. Service Metrics
+	1.1.1 Guage Charts for (Service Health, Memory Health, CPU Health etc)
+	1.2 CPU Metrics (Detailed)
+	1.3 Memory Metrics (Detailed)
+	1.4. Go Routines Number Metrics
+	1.5. Charts for all the above metrics
+		1.5.1 Load Chart
+		1.5.2 CPU Chart
+<!-- 2. Go Routines Stats -->
+<!-- 3. Function Metrics -->
+<!-- 4. Performace Report -->

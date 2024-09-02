@@ -1,16 +1,11 @@
 document.addEventListener('DOMContentLoaded', function() {
-    
+
     const serviceInfoContainer = document.getElementById('service-container');
     const runtimeMetricsContainer = document.getElementById('runtime-metrics-container');
     const goRoutinesNumber = document.getElementById('goroutine-count');
     const memValue = document.getElementById('mem-value');
     const cpuValue = document.getElementById('cpu-value');
     const serviceHealth = document.getElementById('load-service-health-guage');
-    
-
-    const memoryStatsContainer = document.getElementById('memory-stats');
-    const cpuStatsContainer = document.getElementById('cpu-stats');
-
 
     if (serviceInfoContainer) {
         fetchServiceInfo();
@@ -30,20 +25,17 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Element with ID "go-routines" not found.');
     }
 
-    if (memoryStatsContainer){
-        console.log('Memory and CPU stats found');
-        updateStats();
+    if (serviceHealth) {
+        // Dynamically set the values
+        updateGauge('g1', 20); // Example for the first gauge
+        updateGauge('g2', 70); // Example for the second gauge
+        updateGauge('g3', 30); // Example for the second gauge
+        updateGauge('g4', 40); // Example for the second gauge
+        updateGauge('g5', 50); // Example for the second gauge
+        // fetchServiceHealth();
     } else {
-        console.error('Element with ID "memory-stats" or "cpu-stats" not found.');
+        console.error('Element with ID "load-service-health" not found.');
     }
-    
-    // if (serviceHealth) {
-    //     fetchServiceHealth();
-    // } else {
-    //     console.error('Element with ID "load-service-health" not found.');
-    // }
-
-    
 
     function animateProgressBar(bar, targetWidth, duration) {
         let start = null;
@@ -68,15 +60,18 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 serviceInfoContainer.innerHTML = '';
-
-                const serviceName = data.service_name;
-                const goVersion = data.go_version;
-                const serviceStartTime = data.service_start_time;
-
-                const date = new Date(serviceStartTime);
-                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                const date = new Date(data.service_start_time);
+                const options = {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                };
                 const formattedDate = date.toLocaleDateString('en-US', options);
-                const timeOptions = { hour: 'numeric', minute: 'numeric', hour12: true };
+                const timeOptions = {
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    hour12: true
+                };
                 const formattedTime = date.toLocaleTimeString('en-US', timeOptions);
 
                 serviceInfoContainer.innerHTML = `
@@ -88,13 +83,18 @@ document.addEventListener('DOMContentLoaded', function() {
                                             <img src="../assets/images/product/1.png" class="img-fluid" alt="image">
                                         </div>
                                         <div>
-                                            <p class="mb-2">Service Name:</p>
-                                            <h4>${serviceName}</h4>
-
-                                            <p class="mb-2">Go Version:</p>
-                                            <h4>${goVersion}</h4>
-                                            <p class="mb-2">Service Start Time:</p>
-                                            <h4>${formattedDate}<br/> ${formattedTime}</h4>
+                                            <p class="mb-2">Service Name: 
+                                                <h4>${data.service_name}</h4> 
+                                            </p>
+                                            <p class="mb-2">Go Version: 
+                                                <h4>${data.go_version}</h4>
+                                            </p>
+                                            <p class="mb-2">Service Start Time:
+                                                <h4>${formattedDate}<br/> ${formattedTime}</h4>
+                                            </p>
+                                            <p class="mb-2">Process ID:
+                                                <h4>${data.process_id}</h4>
+                                            </p>
                                         </div>
                                     </div>
                                     <div class="iq-progress-bar mt-2">
@@ -114,16 +114,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function fetchMetrics(unit) {
         runtimeMetricsContainer.innerHTML = `<div class="service-info">Fetching the data...</div>`;
-        
         fetch(`/metrics?unit=${unit}`)
-            .then(response => response.json())  // Assume the server returns JSON directly
+            .then(response => response.json())
             .then(metrics => {
-                let cpuLoopDetails = '';
 
+                let cpuLoopDetails = '';
                 for (let [key, value] of Object.entries(metrics.cpu)) {
                     let name = '';
                     if (key === "total_cores") {
-                        name = "Total Cores";   
+                        name = "Total Cores";
                     } else if (key === "total_logical_cores") {
                         name = "Total Logical Cores";
                     } else if (key === "system_used_cores") {
@@ -194,9 +193,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 for (let [key, value] of Object.entries(metrics.memory)) {
                     if (key === "mem_stats_records") {
-                        console.log('Value', value);
-                        console.log('Value Length', value.records.length);
-
                         value.records.forEach(item => {
                             memLoopDetails += `
                                 <div>
@@ -207,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                     }
                 }
-               
+
 
                 memValue.innerHTML = `
                             <div class="card card-block card-stretch card-height">
@@ -259,82 +255,93 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // alloc : "5.18" cores : "0.01PC / 4.00SC / 10LC / 10C" goroutines : 9 heap_alloc : "5.18" heap_sys : "11.41" load : "0.15%" memory_usage : "MB" memory_used : "0.14%" requests : 0 sys : "18.16" total_alloc : "6.62" total_duration : "0s" uptime : "12.83 s"
 
-                const listCont = [
-                    {
+                const listCont = [{
                         name: "Load",
                         image: "../assets/images/product/1.png",
+                        description: "Load took by the service",
                         value: metrics.load,
                         dataPercent: 85
                     },
                     {
-                        name: "Cores",
+                        name: "Cores Used",
                         image: "../assets/images/product/2.png",
+                        description: "Cores used by the service",
                         value: metrics.cores,
                         dataPercent: 70
                     },
                     {
                         name: "Memory Used",
                         image: "../assets/images/product/3.png",
+                        description: "Memory used by the service",
                         value: metrics.memory_used,
                         dataPercent: 75
                     },
                     {
                         name: "Requests",
                         image: "../assets/images/product/3.png",
+                        description: "Total requests served by the service",
                         value: metrics.requests,
                         dataPercent: 60
-                    },  
+                    },
                     {
                         name: "Goroutines",
                         image: "../assets/images/product/3.png",
+                        description: "Total running goroutines in the service",
                         value: metrics.goroutines,
                         dataPercent: 60
                     },
                     {
                         name: "Heap Alloc",
                         image: "../assets/images/product/3.png",
+                        description: "Heap Alloc is the value of memory allocated by the service",
                         value: metrics.heap_alloc,
                         dataPercent: 50
                     },
                     {
                         name: "Heap Sys",
                         image: "../assets/images/product/3.png",
+                        description: "Heap sys is the value of memory allocated by the system",
                         value: metrics.heap_sys,
                         dataPercent: 40
                     },
                     {
                         name: "Memory Usage",
                         image: "../assets/images/product/3.png",
+                        description: "Memory usage by the service",
                         value: metrics.memory_usage,
                         dataPercent: 30
                     },
                     {
                         name: "Sys",
                         image: "../assets/images/product/3.png",
+                        description: "Sys is the value of memory allocated by the system",
                         value: metrics.sys,
                         dataPercent: 20
                     },
                     {
                         name: "Total Alloc",
                         image: "../assets/images/product/3.png",
+                        description: "Total Alloc is the value of memory allocated by the service",
                         value: metrics.total_alloc,
                         dataPercent: 10
                     },
                     {
                         name: "Total Duration",
                         image: "../assets/images/product/3.png",
+                        description: "Total Duration is the time taken by the service to run",
                         value: metrics.total_duration,
                         dataPercent: 5
                     },
                     {
                         name: "Uptime",
                         image: "../assets/images/product/3.png",
+                        description: "Uptime is the time the service has been running",
                         value: metrics.uptime,
                         dataPercent: 2
                     }
                 ];
 
-                runtimeMetricsContainer.innerHTML = ''; 
+                runtimeMetricsContainer.innerHTML = '';
                 let rowHTML = `<div class="row">`;
 
                 listCont.forEach(item => {
@@ -413,153 +420,41 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateGauge(gaugeId, percentage) {
-                const gauge = document.getElementById(gaugeId);
-                const text = gauge.querySelector('text');
+        const gauge = document.getElementById(gaugeId);
+        const text = gauge.querySelector('text');
 
-                // Update the text inside the gauge
-                text.textContent = `${percentage}%`;
+        // Update the text inside the gauge
+        text.textContent = `${percentage}%`;
 
-                // Determine the fill color based on the percentage
-                let fillColor;
-                if (percentage >= 80) {
-                    fillColor = 'var(--red)';
-                } else if (percentage >= 60) {
-                    fillColor = 'var(--yellow)';
-                } else if (percentage >= 50) {
-                    fillColor = 'var(--orange)';
-                } else if (percentage >= 40) {
-                    fillColor = 'var(--lightgreen)';
-                } else {
-                    fillColor = 'var(--green)';
-                }
+        // Determine the fill color based on the percentage
+        let fillColor;
+        if (percentage >= 80) {
+            fillColor = 'var(--red)';
+        } else if (percentage >= 60) {
+            fillColor = 'var(--yellow)';
+        } else if (percentage >= 50) {
+            fillColor = 'var(--orange)';
+        } else if (percentage >= 40) {
+            fillColor = 'var(--lightgreen)';
+        } else {
+            fillColor = 'var(--green)';
+        }
 
-                // Reset the --o property to 0 to restart the animation
-                gauge.style.setProperty('--o', 0);
+        // Reset the --o property to 0 to restart the animation
+        gauge.style.setProperty('--o', 0);
 
-                // Trigger a reflow to reset the animation (forces a repaint)
-                void gauge.offsetWidth;
+        // Trigger a reflow to reset the animation (forces a repaint)
+        void gauge.offsetWidth;
 
-                // Set the custom properties for the gauge
-                gauge.style.setProperty('--fill-percentage', percentage);
-                gauge.style.setProperty('--fill-color', fillColor);
+        // Set the custom properties for the gauge
+        gauge.style.setProperty('--fill-percentage', percentage);
+        gauge.style.setProperty('--fill-color', fillColor);
 
-                // Now update --o to the target percentage to animate
-                gauge.style.setProperty('--o', percentage);
-            }
-
-    function updateStats() {
-        fetch(`/metrics`)
-            .then(response => response.json())
-            .then(data => {
-
-                console.log(data);
-                let preHtml = `
-                    <div class="card card-block card-stretch card-height mb-4">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center mb-4 card-total-sale">
-                                <div class="icon iq-icon-box-2 bg-info-light">
-                                    <!-- Example image, replace as needed -->
-                                    <img src="https://via.placeholder.com/40" class="img-fluid" alt="Memory Image">
-                                </div>
-                `
-                
-                for (let [key, value] of Object.entries(data.memory)) {
-                    let name = '';
-                    if (key === "mem_stats_records") {
-                        console.log('Skipping mem_stats_records');
-                        continue;
-                    }
-
-                    if (key === "used_in_percent") {
-                        name = "Memory Usage";
-                    } else if (key === "total_memory") {
-                        name = "Total Memory";
-                        value = `${value} bytes`;
-                    } else if (key === "used_by_system") {
-                        name = "Used by System";
-                        value = `${value} bytes`;
-                    } else if (key === "used_by_process") {
-                        name = "Used by Process";
-                        value = `${value} bytes`;
-                    } else if (key === "free_memory") {
-                        name = "Free Memory";
-                        value = `${value} bytes`;
-                    } else if (key === "heap_alloc_by_process") {
-                        name = "Heap Alloc by Process";
-                        value = `${value} bytes`;
-                    } else if (key === "heap_sys_by_process") {
-                        name = "Heap Sys by Process";
-                        value = `${value} bytes`;
-                    } else if (key === "total_alloc_by_process") {
-                        name = "Total Alloc by Process";
-                        value = `${value} bytes`;
-                    } else if (key === "total_sys_by_process") {
-                        name = "Total Sys by Process";
-                        value = `${value} bytes`;
-                    } else {
-                        name = key;
-                    }
-
-                    // <div>
-                    //                         <p class="mb-2">Service Name:</p>
-                    //                         <h4>${serviceName}</h4>
-
-                    //                         <p class="mb-2">Go Version:</p>
-                    //                         <h4>${goVersion}</h4>
-                    //                         <p class="mb-2">Service Start Time:</p>
-                    //                         <h4>${formattedDate}<br/> ${formattedTime}</h4>
-                    //                     </div>
-
-                    memoryStatsContainer.innerHTML += `
-                                    <div>
-                                        <p class="mb-2">${name} : </p>
-                                        <h4>${value}</h4>
-                                    </div>
-                                    `;
-                                
-                }
-
-                let postHtml = `</div>
-                            </div>
-                        </div>
-                    `;
-
-                preHtml + memoryStatsContainer.innerHTML + postHtml;
-
-
-            // CPU Stats
-            cpuStatsContainer.innerHTML = `
-                <div class="card card-block card-stretch card-height mb-4">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-4 card-total-sale">
-                            <div class="icon iq-icon-box-2 bg-info-light">
-                                <!-- Example image, replace as needed -->
-                                <img src="https://via.placeholder.com/40" class="img-fluid" alt="CPU Image">
-                            </div>
-                            <div>
-                                <p class="mb-2">CPU Usage</p>
-                                <h4>${data.cpu.used_in_percent}</h4>
-                            </div>
-                        </div>
-                        <div class="iq-progress-bar mt-2">
-                            <span class="bg-info iq-progress progress-1" style="width: ${data.cpu.used_in_percent};"
-                                data-percent="${data.cpu.used_in_percent}">
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        })
-        .catch(error => {
-            console.error(error);
-        });
+        // Now update --o to the target percentage to animate
+        gauge.style.setProperty('--o', percentage);
     }
 
 
-            // Dynamically set the values
-            updateGauge('g1', 20); // Example for the first gauge
-            updateGauge('g2', 70); // Example for the second gauge
-            updateGauge('g3', 30); // Example for the second gauge
-            updateGauge('g4', 40); // Example for the second gauge
-            updateGauge('g5', 50); // Example for the second gauge
+
+
 });
