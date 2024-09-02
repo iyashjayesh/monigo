@@ -118,6 +118,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(metrics => {
 
+                console.log(metrics);
+
                 let cpuLoopDetails = '';
                 for (let [key, value] of Object.entries(metrics.cpu)) {
                     let name = '';
@@ -354,7 +356,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                             <img src="${item.image}" class="img-fluid" alt="${item.name} Image">
                                         </div>
                                         <div>
-                                            <p class="mb-2">${item.name}</p>
+                                            <p class="mb-2">${item.name} <span class="info-icon" data-tooltip="${item.description}">i</span></p>
                                             <h4>${item.value}</h4>
                                         </div>
                                     </div>
@@ -453,8 +455,4 @@ document.addEventListener('DOMContentLoaded', function() {
         // Now update --o to the target percentage to animate
         gauge.style.setProperty('--o', percentage);
     }
-
-
-
-
 });

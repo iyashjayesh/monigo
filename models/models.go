@@ -39,43 +39,15 @@ type ServiceInfo struct {
 	ProcessId        int32     `json:"process_id"`
 }
 
-type ServiceMetrics struct {
-	Load                   float64       `json:"load"`
-	Cores                  float64       `json:"cores"`
-	MemoryUsed             float64       `json:"memory_used"`
-	NumberOfReqServerd     float64       `json:"number_of_req_served"`
-	GoRoutines             float64       `json:"go_routines"`
-	TotalAlloc             float64       `json:"total_alloc"`
-	MemoryAllocSys         float64       `json:"memory_alloc_sys"`
-	HeapAlloc              float64       `json:"heap_alloc"`
-	HeapAllocSys           float64       `json:"heap_alloc_sys"`
-	TotalDurationTookByAPI time.Duration `json:"total_duration_took_by_api"`
-	OverallHealth          ServiceHealth `json:"overall_health"`
-}
-
 type GetMetrics struct {
 	Name  string    `json:"name"`
 	Start time.Time `json:"start"`
 	End   time.Time `json:"end"`
 }
 
-type ServiceHealth struct {
-	Goroutines           int     `json:"goroutines"`
-	Requests             int     `json:"requests"`
-	MemoryUsed           float64 `json:"memory_used"`
-	CPUPercent           float64 `json:"cpu_percent"`
-	OverallHealthPercent float64 `json:"overall_health_percent"`
-	Health               Health  `json:"health"`
-}
-
-type Health struct {
-	Healthy bool   `json:"healthy"`
-	Message string `json:"message"`
-}
-
 type ServiceHealthThresholds struct {
 	MaxGoroutines Thresholds `json:"max_goroutines"`
-	MaxLoad       Thresholds `json:"max_load"`
+	MaxCPULoad    Thresholds `json:"max_cpu_load"`
 	MaxMemory     Thresholds `json:"max_memory"`
 }
 

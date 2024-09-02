@@ -100,12 +100,13 @@ func StartDashboard(addr int) {
 
 	http.HandleFunc("/", serveHtmlSite)
 	// http.HandleFunc("/metrics", api.GetMetrics)
-	http.HandleFunc("/metrics", api.GetCoreStats)
+	// http.HandleFunc("/metrics", api.GetCoreStats)
+	http.HandleFunc("/metrics", api.NewCoreStatistics)
 	http.HandleFunc("/function-metrics", api.GetFunctionMetrics)
 	http.HandleFunc("/generate-function-metrics", api.ProfileHandler)
 
 	// API to fetch the service metrics
-	http.HandleFunc("/service-info", api.GetServiceInfoAPI) // Completed 
+	http.HandleFunc("/service-info", api.GetServiceInfoAPI) // Completed
 	http.HandleFunc("/service-metrics", api.GetServiceMetricsFromStorage)
 	http.HandleFunc("/go-routines-stats", api.GetGoRoutinesStats)
 

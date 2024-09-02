@@ -19,13 +19,71 @@ import (
 )
 
 var (
-	mu sync.Mutex = sync.Mutex{}
+	mu               sync.Mutex = sync.Mutex{}
+	fieldDescription            = map[string]string{}
+	fieldDesOnce                = sync.Once{}
 )
+
+func init() {
+	fieldDesOnce.Do(func() {
+		fieldDescription = common.ConstructJsonFieldDescription()
+	}) // This will be called only once
+}
 
 func GetServiceInfoAPI(w http.ResponseWriter, r *http.Request) {
 	jsonObjStr, _ := json.Marshal(common.GetServiceInfo())
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonObjStr)
+}
+
+func NewCoreStatistics(w http.ResponseWriter, r *http.Request) {
+
+	startTime := time.Now()
+	if fieldDescription == nil {
+		log.Println("Field Description is nil")
+		fieldDescription = common.ConstructJsonFieldDescription()
+	}
+
+	unit := r.URL.Query().Get("unit")
+	if unit == "" {
+		unit = "MB" // Default Unit
+	}
+
+	// Convert bytes to different units
+	bytesToUnit := func(bytes uint64) float64 {
+		switch unit {
+		case "KB":
+			return float64(bytes) / 1024.0
+		case "MB":
+			return float64(bytes) / 1048576.0
+		default: // "bytes"
+			return float64(bytes)
+		}
+	}
+
+	var serviceStats models.NewServiceStats
+
+	serviceStats.CoreStatistics = core.GetCoreStatistics()
+	serviceStats.LoadStatistics = core.GetLoadStatistics()
+	serviceStats.CPUStatistics = core.GetCPUStatistics()
+	serviceStats.MemoryStatistics = core.GetMemoryStatistics()
+
+	memStats := core.ReadMemStats()
+	serviceStats.HeapAllocByService = bytesToUnit(memStats.HeapAlloc)
+	serviceStats.HeapAllocBySystem = bytesToUnit(memStats.HeapSys)
+	serviceStats.TotalAllocByService = bytesToUnit(memStats.TotalAlloc)
+	serviceStats.TotalMemoryByOS = bytesToUnit(memStats.Sys)
+	serviceStats.MemoryUsedInPercentByService = core.GetMemoryUsedInPercentByService()
+	serviceStats.CPUUsageByService = core.GetCPUUsageByService()
+	serviceStats.NetworkIO.BytesReceived, serviceStats.NetworkIO.BytesSent = core.GetNetworkIO()
+	serviceStats.OverallHealth = core.GetServiceHealth(&serviceStats.LoadStatistics)
+
+	// serviceStats.DiskIO = core.GetDiskIO()                                             // TODO: Need to implement this function
+
+	log.Println("Time taken to get the service stats: ", time.Since(startTime))
+	jsonMetrics, _ := json.Marshal(serviceStats)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(jsonMetrics))
 }
 
 func GetMetrics(w http.ResponseWriter, r *http.Request) {
@@ -123,7 +181,8 @@ func GetCoreStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	requestCount, totalDuration := core.GetServiceMetrics()
-	serviceStat := core.GetProcessSats()
+	// serviceStat := core.GetProcessSats()
+
 	// memStats := core.ReadMemStats()
 	// memStatsRecord := core.ConstructMemStats(memStats)
 
@@ -171,9 +230,9 @@ func GetCoreStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	metrics := models.ServiceCoreStats{
-		Goroutines:                 runtimeGoRoutine,
-		Requests:                   requestCount,
-		Load:                       fmt.Sprintf("%.2f", serviceStat.ProcCPUPercent) + "%",
+		Goroutines:   runtimeGoRoutine,
+		RequestCount: requestCount,
+		// Load:                       fmt.Sprintf("%.2f", serviceStat.ProcCPUPercent) + "%",
 		Memory:                     core.GetSystemMemoryInfo(),
 		Uptime:                     uptimeStr,
 		TotalDurationTookbyRequest: totalDuration.Seconds(),

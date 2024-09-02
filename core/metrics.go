@@ -1,11 +1,8 @@
 package core
 
 import (
-	"fmt"
 	"log"
-	"os"
 	"runtime"
-	"strconv"
 	"sync"
 	"time"
 
@@ -24,15 +21,15 @@ var (
 	serviceHealthThresholds = models.ServiceHealthThresholds{ // Default thresholds
 		MaxGoroutines: models.Thresholds{
 			Value:  100,
-			Weight: 25,
+			Weight: 0.2,
 		},
-		MaxLoad: models.Thresholds{
-			Value:  75.0,
-			Weight: 25,
+		MaxCPULoad: models.Thresholds{
+			Value:  85,
+			Weight: 0.7,
 		},
 		MaxMemory: models.Thresholds{
-			Value:  70.0,
-			Weight: 25,
+			Value:  85,
+			Weight: 0.7,
 		},
 	}
 )
@@ -58,12 +55,7 @@ func GetFunctionMetrics(functionName string) *models.FunctionMetrics {
 
 func GetProcessSats() models.ProcessStats {
 
-	pid, proc, err := GetProcessDetails()
-	if err != nil {
-		log.Panicf("Error fetching process information: %v\n", err)
-		return models.ProcessStats{}
-	}
-
+	pid, proc := common.GetProcessDetails()
 	sysCPUPercent := GetCPUPrecent()
 	memInfo := GetVirtualMemoryStats()
 
@@ -91,15 +83,6 @@ func GetProcessSats() models.ProcessStats {
 		SystemUsedCores:   systemUsedCores,
 		ProcessUsedCores:  processUsedCores,
 	}
-}
-
-func GetProcessDetails() (int32, *process.Process, error) {
-	pid := int32(os.Getpid())
-	proc, err := process.NewProcess(pid)
-	if err != nil {
-		return 0, nil, err
-	}
-	return pid, proc, nil
 }
 
 func GetCPUPrecent() float64 {
@@ -171,8 +154,8 @@ func GetServiceMetricsModel() models.ServiceMetrics {
 }
 
 func CalculateServiceHealth(metrics models.ServiceMetrics) models.ServiceHealth {
-	goroutines := strconv.Itoa(int(metrics.GoRoutines))
-	requests := strconv.Itoa(int(metrics.NumberOfReqServerd))
+	// goroutines := strconv.Itoa(int(metrics.GoRoutines))
+	// requests := strconv.Itoa(int(metrics.NumberOfReqServerd))
 	memoryUsed := metrics.MemoryUsed
 	cpuLoad := metrics.Load
 
@@ -188,19 +171,19 @@ func CalculateServiceHealth(metrics models.ServiceMetrics) models.ServiceHealth 
 	}
 
 	// OverallHealthPercent
-	overallHealthPercent := CalculateOverallHealth(&metrics)
+	// overallHealthPercent := CalculateOverallHealth(&metrics)
 
-	strToInt := func(s string) int {
-		i, _ := strconv.Atoi(s)
-		return i
-	}
+	// strToInt := func(s string) int {
+	// 	i, _ := strconv.Atoi(s)
+	// 	return i
+	// }
 
 	return models.ServiceHealth{
-		Goroutines:           strToInt(goroutines),
-		Requests:             strToInt(requests),
-		MemoryUsed:           memoryUsed,
-		CPUPercent:           cpuLoad,
-		OverallHealthPercent: overallHealthPercent,
+		// Goroutines:           strToInt(goroutines),
+		// Requests:             strToInt(requests),
+		// MemoryUsed:           memoryUsed,
+		// CPUPercent:           cpuLoad,
+		// OverallHealthPercent: overallHealthPercent,
 		Health: models.Health{
 			Healthy: healthy,
 			Message: health,
@@ -212,7 +195,7 @@ func CalculateServiceHealth(metrics models.ServiceMetrics) models.ServiceHealth 
 func CalculateOverallHealth(metrics *models.ServiceMetrics) float64 {
 
 	// Calculating the health score for each metric with a weight
-	loadScore := (serviceHealthThresholds.MaxLoad.Value - metrics.Load) / serviceHealthThresholds.MaxLoad.Value * serviceHealthThresholds.MaxLoad.Weight                                                         // 25% weight
+	loadScore := (serviceHealthThresholds.MaxCPULoad.Value - metrics.Load) / serviceHealthThresholds.MaxCPULoad.Value * serviceHealthThresholds.MaxCPULoad.Weight                                                // 25% weight
 	memoryScore := (serviceHealthThresholds.MaxMemory.Value - metrics.MemoryUsed) / serviceHealthThresholds.MaxMemory.Value * serviceHealthThresholds.MaxMemory.Weight                                           // 25% weight
 	goroutineScore := (float64(serviceHealthThresholds.MaxGoroutines.Value) - float64(metrics.GoRoutines)) / float64(serviceHealthThresholds.MaxGoroutines.Value) * serviceHealthThresholds.MaxGoroutines.Weight // 20% weight
 	// requestScore := (float64(serviceHealthThresholds.MaxRequests.Value) - float64(requests)) / float64(serviceHealthThresholds.MaxRequests.Value) * serviceHealthThresholds.MaxRequests.Weight                   // 15% weight
@@ -237,40 +220,8 @@ func SetServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) {
 	serviceHealthThresholds = *thresholdsValues
 }
 
-// ConstructMemStats constructs a list of memory statistics records.
-func ConstructMemStats(memStats *runtime.MemStats) models.MemStatsRecords {
-	memStatsRecords := models.MemStatsRecords{}
-	memStatsRecords.Records = []models.Record{
-		newRecord("Alloc", "Bytes of allocated heap objects.", memStats.Alloc),
-		newRecord("TotalAlloc", "Cumulative bytes allocated for heap objects.", memStats.TotalAlloc),
-		newRecord("Sys", "Total bytes of memory obtained from the OS.", memStats.Sys),
-		newRecord("Lookups", "Number of pointer lookups performed by the runtime.", memStats.Lookups),
-		newRecord("Mallocs", "Cumulative count of heap objects allocated.", memStats.Mallocs),
-		newRecord("Frees", "Cumulative count of heap objects freed.", memStats.Frees),
-		newRecord("HeapAlloc", "Bytes of allocated heap objects.", memStats.HeapAlloc),
-		newRecord("HeapSys", "Bytes of heap memory obtained from the OS.", memStats.HeapSys),
-		newRecord("HeapIdle", "Bytes in idle (unused) spans.", memStats.HeapIdle),
-		newRecord("HeapInuse", "Bytes in in-use spans.", memStats.HeapInuse),
-		newRecord("HeapReleased", "Bytes of physical memory returned to the OS.", memStats.HeapReleased),
-		newRecord("HeapObjects", "Number of allocated heap objects.", memStats.HeapObjects),
-		newRecord("StackInuse", "Bytes in stack spans.", memStats.StackInuse),
-		newRecord("StackSys", "Bytes of stack memory obtained from the OS.", memStats.StackSys),
-		newRecord("MSpanInuse", "Bytes of allocated mspan structures.", memStats.MSpanInuse),
-		newRecord("MSpanSys", "Bytes of memory obtained from the OS for mspan structures.", memStats.MSpanSys),
-		newRecord("MCacheInuse", "Bytes of allocated mcache structures.", memStats.MCacheInuse),
-		newRecord("MCacheSys", "Bytes of memory obtained from the OS for mcache structures.", memStats.MCacheSys),
-		newRecord("BuckHashSys", "Bytes of memory in profiling bucket hash tables.", memStats.BuckHashSys),
-		newRecord("GCSys", "Bytes of memory in garbage collection metadata.", memStats.GCSys),
-		newRecord("OtherSys", "Bytes of memory in miscellaneous off-heap runtime allocations.", memStats.OtherSys),
-		newRecord("NextGC", "Target heap size of the next GC cycle.", memStats.NextGC),
-		newRecord("LastGC", "Time the last garbage collection finished (nanoseconds since the UNIX epoch).", memStats.LastGC),
-		newRecord("PauseTotalNs", "Cumulative nanoseconds in GC stop-the-world pauses since program start.", memStats.PauseTotalNs),
-		newRecord("NumGC", "Number of completed GC cycles.", uint64(memStats.NumGC)),
-		newRecord("NumForcedGC", "Number of GC cycles that were forced by the application calling GC.", uint64(memStats.NumForcedGC)),
-		newRecord("GCCPUFraction", "Fraction of this program's available CPU time used by the GC.", memStats.GCCPUFraction),
-	}
-
-	return memStatsRecords
+func GetServiceHealthThresholdsModel() models.ServiceHealthThresholds {
+	return serviceHealthThresholds
 }
 
 // newRecord creates a new Record with appropriate units and human-readable formats.
@@ -301,37 +252,37 @@ func newRecord(name, description string, value interface{}) models.Record {
 }
 
 func GetSystemCPUInfo() models.CPUStat {
-	numCPU := float64(runtime.NumCPU())
+	// numCPU := float64(runtime.NumCPU())
 	serviceStat := GetProcessSats()
 
-	processUsedCoresInPercent := (float64(serviceStat.ProcessUsedCores) / float64(serviceStat.TotalLogicalCores)) * 100
+	// processUsedCoresInPercent := (float64(serviceStat.ProcessUsedCores) / float64(serviceStat.TotalLogicalCores)) * 100
 
 	return models.CPUStat{
 		TotalCores:        float64(serviceStat.TotalCores),
 		TotalLogicalCores: float64(serviceStat.TotalLogicalCores),
-		SystemUsedCores:   serviceStat.SystemUsedCores,
-		ProcessUsedCores:  serviceStat.ProcessUsedCores,
-		Cores:             fmt.Sprintf("%.0f", numCPU),
-		UsedInPercent:     fmt.Sprintf("%.2f%%", processUsedCoresInPercent),
+		// SystemUsedCores:   serviceStat.SystemUsedCores,
+		// ProcessUsedCores:  serviceStat.ProcessUsedCores,
+		// Cores:             fmt.Sprintf("%.0f", numCPU),
+		// UsedInPercent:     fmt.Sprintf("%.2f%%", processUsedCoresInPercent),
 	}
 }
 
 func GetSystemMemoryInfo() models.MemoryStat {
 
-	vm := GetVirtualMemoryStats() // Get the virtual memory statistics
-	memStats := ReadMemStats()    // Get the memory statistics
+	// vm := GetVirtualMemoryStats() // Get the virtual memory statistics
+	// memStats := ReadMemStats() // Get the memory statistics
 
 	return models.MemoryStat{
-		TotalMemory:         float64(vm.Total),
-		UsedBySystem:        float64(vm.Used),
-		FreeMemory:          float64(vm.Free),
-		UsedByProcess:       float64(memStats.Alloc),
-		HeapAllocByProcess:  float64(memStats.HeapAlloc),
-		HeapSysByProcess:    float64(memStats.HeapSys),
-		TotalAllocByProcess: float64(memStats.TotalAlloc),
-		TotalSysByProcess:   float64(memStats.Sys),
-		UsedInPercent:       fmt.Sprintf("%.2f%%", (float64(memStats.Alloc)/float64(vm.Total))*100),
-		MemStatsRecords:     ConstructMemStats(memStats),
+		// TotalMemory:         float64(vm.Total),
+		// UsedBySystem:        float64(vm.Used),
+		// FreeMemory:          float64(vm.Free),
+		// UsedByProcess:       float64(memStats.Alloc),
+		// HeapAllocByProcess:  float64(memStats.HeapAlloc),
+		// HeapSysByProcess:    float64(memStats.HeapSys),
+		// TotalAllocByProcess: float64(memStats.TotalAlloc),
+		// TotalSysByProcess:   float64(memStats.Sys),
+		// UsedInPercent:   fmt.Sprintf("%.2f%%", (float64(memStats.Alloc)/float64(vm.Total))*100),
+		// MemStatsRecords: ConstructMemStats(memStats),
 	}
 }
 
