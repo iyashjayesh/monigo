@@ -118,10 +118,32 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(`/metrics?unit=${unit}`)
             .then(response => response.json())  // Assume the server returns JSON directly
             .then(metrics => {
+                let cpuLoopDetails = '';
 
-                console.log(metrics);
+                for (let [key, value] of Object.entries(metrics.cpu)) {
+                    let name = '';
+                    if (key === "total_cores") {
+                        name = "Total Cores";   
+                    } else if (key === "total_logical_cores") {
+                        name = "Total Logical Cores";
+                    } else if (key === "system_used_cores") {
+                        name = "System Used Cores";
+                    } else if (key === "process_used_cores") {
+                        name = "Process Used Cores";
+                    } else if (key === "cores") {
+                        name = "Cores";
+                    } else if (key === "used_in_percent") {
+                        name = "Used in Percent";
+                    }
 
-                // cpuValue.innerHTML = metrics.cpu.system_used_cores;
+                    cpuLoopDetails += `
+                        <div>
+                            <p class="mb-2">${name} : </p>
+                            <h4>${value}</h4>
+                        </div>
+                    `;
+                }
+
 
                 cpuValue.innerHTML = `
                             <div class="card card-block card-stretch card-height">
@@ -137,7 +159,29 @@ document.addEventListener('DOMContentLoaded', function() {
                                             </div>
                                         </div>
                                         <div>
-                                            <button type="button" class="btn btn-primary mt-2"><i class="ri-heart-fill"></i>Buttons</button>
+                                            <button type="button" class="btn btn-primary mt-2" data-toggle="modal" data-target="#exampleModalCenteredScrollable">
+                                                View Details<i class="fa fa-external-link pl-2" aria-hidden="true"></i>
+                                            </button>
+                                            <div id="exampleModalCenteredScrollable" class="modal fade" tabindex="-1" role="dialog"
+                                                aria-labelledby="exampleModalCenteredScrollableTitle" aria-hidden="true">
+                                                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="exampleModalCenteredScrollableTitle">Modal title</h5>
+                                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                <span aria-hidden="true">×</span>
+                                                            </button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            ${cpuLoopDetails}
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                            <button type="button" class="btn btn-primary">Save changes</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="iq-progress-bar mt-2">
@@ -145,6 +189,25 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </div>
                                 </div>
                             </div>`;
+
+                let memLoopDetails = '';
+
+                for (let [key, value] of Object.entries(metrics.memory)) {
+                    if (key === "mem_stats_records") {
+                        console.log('Value', value);
+                        console.log('Value Length', value.records.length);
+
+                        value.records.forEach(item => {
+                            memLoopDetails += `
+                                <div>
+                                    <p class="mb-2">${item.record_name} : </p>
+                                    <h4>${item.record_value} ${item.record_unit}</h4>
+                                </div>
+                            `;
+                        });
+                    }
+                }
+               
 
                 memValue.innerHTML = `
                             <div class="card card-block card-stretch card-height">
@@ -160,7 +223,31 @@ document.addEventListener('DOMContentLoaded', function() {
                                             </div>
                                         </div>
                                         <div>
-                                            <button type="button" class="btn btn-primary mt-2"><i class="ri-heart-fill"></i>Buttons</button>
+                                            <!-- Button trigger modal -->
+                                            <button type="button" class="btn btn-primary mt-2" data-toggle="modal" data-target="#mem-statstics">
+                                                View Details<i class="fa fa-external-link pl-2" aria-hidden="true"></i>
+                                            </button>
+                                            <!-- Modal -->
+                                            <div id="mem-statstics" class="modal fade" tabindex="-1" role="dialog"
+                                                aria-labelledby="mem-statsticsTitle" aria-hidden="true">
+                                                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title" id="mem-statsticsTitle">Modal title</h5>
+                                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                <span aria-hidden="true">×</span>
+                                                            </button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            ${memLoopDetails}
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                            <button type="button" class="btn btn-primary"><i class="fa fa-download" aria-hidden="true"></i>Download Excel</a></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="iq-progress-bar mt-2">

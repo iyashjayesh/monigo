@@ -43,7 +43,7 @@ type MemStatsRecords struct {
 // Record represents a single memory statistic record.
 type Record struct {
 	Name        string      `json:"record_name"`
-	Description string      `json:"record_des"`
+	Description string      `json:"record_description"`
 	Value       interface{} `json:"record_value"`
 	Unit        string      `json:"record_unit,omitempty"` // Added Unit to support different units like bytes, MB, GB, etc.
 }
