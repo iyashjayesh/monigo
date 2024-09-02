@@ -59,6 +59,7 @@ func GetServiceInfo() models.ServiceInfo {
 	return serviceInfo
 }
 
+// BytesToGB converts bytes to GB.
 func BytesToGB(bytes uint64) float64 {
 	return float64(bytes) / 1024 / 1024 / 1024
 }
@@ -143,8 +144,16 @@ func ConstructJsonFieldDescription() map[string]string {
 	return serviceInfo
 }
 
+// ParseStringToFloat64 converts string to float64.
 func ParseStringToFloat64(value string) float64 {
 	var result float64
 	fmt.Sscanf(value, "%f", &result)
+	return result
+}
+
+// RoundFloat64 rounds the float64 value to the specified precision.
+func RoundFloat64(value float64, precision int) float64 {
+	output := fmt.Sprintf("%."+fmt.Sprintf("%d", precision)+"f", value)
+	result := ParseStringToFloat64(output)
 	return result
 }

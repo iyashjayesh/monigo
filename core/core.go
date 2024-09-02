@@ -160,32 +160,25 @@ func CalculateHealthScore(serviceCPU, systemCPU, totalCPU float64, serviceMem, s
 func GetCPUStatistics() models.CPUStatistics {
 	var cpuStats models.CPUStatistics
 
-	// Get total number of CPU cores and logical cores
-	cpuCounts, err := cpu.Counts(true)
+	sysCPUPercent := GetCPUPrecent()
+	memInfo := GetVirtualMemoryStats()
+
+	procCPUPercent, _, err := getProcessUsage(common.GetProcessObject(), &memInfo)
 	if err != nil {
-		log.Fatalf("Error fetching CPU counts: %v", err)
-	}
-	cpuStats.TotalLogicalCores = float64(cpuCounts)
-
-	cpuCounts, err = cpu.Counts(false)
-	if err != nil {
-		log.Fatalf("Error fetching CPU counts: %v", err)
-	}
-	cpuStats.TotalCores = float64(cpuCounts)
-
-	// Get CPU usage statistics for the system and service (mocked here)
-	cpuPercent, err := cpu.Percent(0, true)
-	if err != nil {
-		log.Fatalf("Error fetching CPU percent: %v", err)
+		log.Panicf("Error fetching process usage: %v\n", err)
 	}
 
-	// For this example, we'll use the first CPU percentage as a placeholder
-	if len(cpuPercent) > 0 {
-		cpuStats.CoresUsedBySystem = cpuPercent[0]
-		cpuStats.CoresUsedByService = cpuPercent[0] // This would be different in a real service
-	}
+	totalLogicalCores, _ := cpu.Counts(true)
+	totalCores, _ := cpu.Counts(false)
+	systemUsedCores := (sysCPUPercent / 100) * float64(totalLogicalCores)
+	processUsedCores := (procCPUPercent / 100) * float64(totalLogicalCores)
 
-	// Convert CPU usage to percentage strings
+	cpuStats.TotalCores = float64(totalCores)
+	cpuStats.TotalLogicalCores = float64(totalLogicalCores)
+	cpuStats.CoresUsedBySystem = common.RoundFloat64(systemUsedCores, 3)
+	cpuStats.CoresUsedByService = common.RoundFloat64(processUsedCores, 3)
+
+	// Converting CPU usage to percentage strings
 	cpuStats.CoresUsedBySystemInPercent = strconv.FormatFloat(cpuStats.CoresUsedBySystem, 'f', 2, 64) + "%"
 	cpuStats.CoresUsedByServiceInPercent = strconv.FormatFloat(cpuStats.CoresUsedByService, 'f', 2, 64) + "%"
 
