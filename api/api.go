@@ -73,8 +73,6 @@ func NewCoreStatistics(w http.ResponseWriter, r *http.Request) {
 	serviceStats.HeapAllocBySystem = bytesToUnit(memStats.HeapSys)
 	serviceStats.TotalAllocByService = bytesToUnit(memStats.TotalAlloc)
 	serviceStats.TotalMemoryByOS = bytesToUnit(memStats.Sys)
-	serviceStats.MemoryUsedInPercentByService = core.GetMemoryUsedInPercentByService()
-	serviceStats.CPUUsageByService = core.GetCPUUsageByService()
 	serviceStats.NetworkIO.BytesReceived, serviceStats.NetworkIO.BytesSent = core.GetNetworkIO()
 	serviceStats.OverallHealth = core.GetServiceHealth(&serviceStats.LoadStatistics)
 

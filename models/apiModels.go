@@ -14,11 +14,8 @@ type NewServiceStats struct {
 	HeapAllocBySystem   float64 `json:"heap_alloc_by_system"`
 	TotalAllocByService float64 `json:"total_alloc_by_service"`
 	TotalMemoryByOS     float64 `json:"total_memory_by_os"`
-
-	MemoryUsedInPercentByService float64 `json:"memory_used_in_percent_by_service"`
-	CPUUsageByService            float64 `json:"cpu_usage_by_service"`
-	DiskIO                       float64 `json:"disk_io"`
-	NetworkIO                    struct {
+	// DiskIO            float64 `json:"disk_io"` @TODO: Need to work on this
+	NetworkIO struct {
 		BytesSent     float64 `json:"bytes_sent"`
 		BytesReceived float64 `json:"bytes_received"`
 	} `json:"network_io"`
