@@ -62,3 +62,31 @@
     height: 300px;
     padding: 10px;
 }
+
+.card-header-toolbar {
+    padding: 1rem;
+}
+
+.dropdown {
+    display: flex;
+    align-items: center;
+}
+
+.dropdown-label {
+    margin-right: 0.5rem;
+    font-weight: bold;
+}
+
+.dropdown-select {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 0.4rem;
+    background-color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.chart-container {
+    margin-left: 1rem;
+    flex-grow: 1;
+}

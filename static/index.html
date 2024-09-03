@@ -527,6 +527,45 @@
                         <div class="card card-block card-stretch card-height">
                             <div class="card-header d-flex align-items-center justify-content-between">
                                 <div class="header-title">
+                                    <h4 class="card-title">Statistics Overview</h4>
+                                </div>
+                                <div class="card-header-toolbar d-flex align-items-center">
+                                    <div class="controls d-flex">
+                                        <div class="dropdown">
+                                            <label for="metric-select" class="dropdown-label">Select Metric:</label>
+                                            <select id="metric-select" class="dropdown-select">
+                                                <option value="heap">Heap Memory Usage</option>
+                                                <option value="stack">Stack Memory Usage</option>
+                                                <option value="gc">Garbage Collection</option>
+                                                <option value="misc">Miscellaneous System Memory</option>
+                                            </select>
+                                        </div>
+                                        <div class="dropdown ml-3">
+                                            <label for="time-select" class="dropdown-label">Select Time Range:</label>
+                                            <select id="time-select" class="dropdown-select">
+                                                <option value="15m">15 Minutes</option>
+                                                <option value="30m">30 Minutes</option>
+                                                <option value="1h">1 Hour</option>
+                                                <option value="6h">6 Hours</option>
+                                                <option value="1d">1 Day</option>
+                                                <option value="3d">3 Days</option>
+                                                <option value="1m">1 Month</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="col-lg-12">
+                                    <div id="chart" class="chart-container"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-12">
+                        <div class="card card-block card-stretch card-height">
+                            <div class="card-header d-flex align-items-center justify-content-between">
+                                <div class="header-title">
                                     <h4 class="card-title">Top Products</h4>
                                 </div>
                                 <div class="card-header-toolbar d-flex align-items-center">

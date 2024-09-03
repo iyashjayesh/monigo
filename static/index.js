@@ -425,4 +425,187 @@ document.addEventListener('DOMContentLoaded', () => {
             }]
         });
     }
+
+
+    const chart = echarts.init(document.getElementById('chart'));
+
+    const timeRanges = {
+        '15m': 15,
+        '30m': 30,
+        '1h': 60,
+        '6h': 360,
+        '1d': 1440,
+        '3d': 4320,
+        '1m': 43200 // Approximate minutes in a month
+    };
+
+    // Generate mock time-series data
+    function generateMockData(metric, durationInMinutes) {
+        const dataPoints = [];
+        const now = new Date();
+        const interval = Math.floor(durationInMinutes / 60); // Generate data points every minute
+        const totalPoints = durationInMinutes;
+
+        for (let i = totalPoints; i >= 0; i--) {
+            const timestamp = new Date(now.getTime() - i * 60000); // Subtract i minutes
+            dataPoints.push({
+                time: timestamp,
+                value: getRandomValue(metric)
+            });
+        }
+        return dataPoints;
+    }
+
+    // Function to get random values based on metric type
+    function getRandomValue(metric) {
+        switch (metric) {
+            case 'heap':
+                return {
+                    HeapAlloc: getRandomArbitrary(4, 8),
+                        HeapSys: getRandomArbitrary(10, 15),
+                        HeapInuse: getRandomArbitrary(5, 10),
+                        HeapIdle: getRandomArbitrary(3, 7),
+                        HeapReleased: getRandomArbitrary(2, 5)
+                };
+            case 'stack':
+                return {
+                    StackInuse: getRandomArbitrary(600, 800),
+                        StackSys: getRandomArbitrary(600, 800)
+                };
+            case 'gc':
+                return {
+                    PauseTotalNs: getRandomArbitrary(50, 150),
+                        NumGC: getRandomInt(1, 10),
+                        GCCPUFraction: getRandomArbitrary(0.0001, 0.005)
+                };
+            case 'misc':
+                return {
+                    MSpanInuse: getRandomArbitrary(80, 120),
+                        MSpanSys: getRandomArbitrary(100, 130),
+                        MCacheInuse: getRandomArbitrary(10, 20),
+                        MCacheSys: getRandomArbitrary(12, 25),
+                        BuckHashSys: getRandomArbitrary(1, 2),
+                        GCSys: getRandomArbitrary(2, 5),
+                        OtherSys: getRandomArbitrary(1, 3)
+                };
+            default:
+                return {};
+        }
+    }
+
+    // Utility functions to generate random numbers
+    function getRandomArbitrary(min, max) {
+        return +(Math.random() * (max - min) + min).toFixed(2);
+    }
+
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // Function to prepare chart options based on selected metric and time range
+    function getChartOptions(metric, timeRange) {
+        const durationInMinutes = timeRanges[timeRange];
+        const rawData = generateMockData(metric, durationInMinutes);
+
+        const seriesData = {};
+        rawData.forEach(dataPoint => {
+            const timeLabel = dataPoint.time.toLocaleString();
+            for (let key in dataPoint.value) {
+                if (!seriesData[key]) {
+                    seriesData[key] = [];
+                }
+                seriesData[key].push([timeLabel, dataPoint.value[key]]);
+            }
+        });
+
+        const series = [];
+        for (let key in seriesData) {
+            series.push({
+                name: key,
+                type: 'line',
+                data: seriesData[key],
+                smooth: true
+            });
+        }
+
+        return {
+            title: {
+                text: getMetricTitle(metric),
+                left: 'center'
+            },
+            tooltip: {
+                trigger: 'axis'
+            },
+            legend: {
+                top: 30,
+                data: Object.keys(seriesData)
+            },
+            xAxis: {
+                type: 'category',
+                boundaryGap: false,
+                data: rawData.map(d => d.time.toLocaleString()),
+                axisLabel: {
+                    formatter: function(value) {
+                        return value.split(' ')[1]; // Show only time
+                    }
+                }
+            },
+            yAxis: {
+                type: 'value',
+                axisLabel: {
+                    formatter: function(value) {
+                        return formatYAxisLabel(metric, value);
+                    }
+                }
+            },
+            series: series
+        };
+    }
+
+    // Helper function to get chart title based on metric
+    function getMetricTitle(metric) {
+        switch (metric) {
+            case 'heap':
+                return 'Heap Memory Usage Over Time';
+            case 'stack':
+                return 'Stack Memory Usage Over Time';
+            case 'gc':
+                return 'Garbage Collection Over Time';
+            case 'misc':
+                return 'Miscellaneous System Memory Over Time';
+            default:
+                return '';
+        }
+    }
+
+    // Helper function to format Y-axis labels
+    function formatYAxisLabel(metric, value) {
+        if (metric === 'heap' || metric === 'misc') {
+            return `${value} MB`;
+        } else if (metric === 'stack' || (metric === 'gc' && value > 1)) {
+            return `${value} KB`;
+        } else if (metric === 'gc' && value <= 1) {
+            return value.toFixed(4);
+        } else {
+            return value;
+        }
+    }
+
+    // Function to update chart based on selections
+    function updateChart() {
+        const metricSelect = document.getElementById('metric-select').value;
+        const timeSelect = document.getElementById('time-select').value;
+        const options = getChartOptions(metricSelect, timeSelect);
+        chart.setOption(options);
+    }
+
+    // Event listeners for dropdown changes
+    document.getElementById('metric-select').addEventListener('change', updateChart);
+    document.getElementById('time-select').addEventListener('change', updateChart);
+    updateChart();
+
+    // Responsive behavior
+    window.addEventListener('resize', function() {
+        chart.resize();
+    });
 });
