@@ -285,8 +285,13 @@
                         <div class="card card-transparent card-block card-stretch card-height border-none">
                             <div class="card-body p-0 mt-lg-2 mt-0">
                                 <h3 class="mb-3">Go Routines Stats</h3>
-                                <p class="mb-0 mr-4">Using Moni<strong><em>GO</em></strong> you can easily track the
-                                    metrics of your functions and get the insights of your functions.
+                                <p class="mb-0 mr-4">
+                                    Check out this dashboard to see how many Go routines are churning away in your Go app. Want to dive deeper? 
+                                    <br/>
+                                    You can also peek at the stack trace for each Go routine. If you spot any bugs or hiccups, don't hesitate to give us a shout on
+                                    GitHub! 
+                                    <br/>And if you’ve got any ideas for new features, hit us up with a feature-req issue on GitHub. We love adding
+                                    cool stuff! 🚀
                                 </p>
                                 <!-- <h3 class="mb-3">Go Routines No:</h3>
                                 <p class="mb-0 mr-4"><span id="goroutine-count">0</span></p> -->
@@ -295,6 +300,7 @@
                             </div>
                         </div>
                     </div>
+                    <div id="goroutines-page"></div>
                     <div class="col-lg-8">
                         <div id="service-container">
                             <!--  -->
@@ -306,10 +312,10 @@
                         <div class="card card-transparent card-block card-stretch card-height mb-4">
                             <div class="card-header d-flex align-items-center justify-content-between p-0">
                                 <div class="header-title">
-                                    <h4 class="card-title mb-0">Runtime Function Metircs</h4>
+                                    <h4 class="card-title mb-0">Go Routines Stack View</h4>
                                 </div>
                                 <div class="card-header-toolbar d-flex align-items-center">
-                                    <div><a href="#" class="btn btn-primary view-btn font-size-14">View All</a></div>
+                                    <div><a href="#" class="btn btn-primary view-btn font-size-14"><i class="fa fa-download" aria-hidden="true"></i>Download</a></div>
                                 </div>
                             </div>
                         </div>
@@ -362,7 +368,8 @@
     <!-- app JavaScript -->
     <script src="../assets/js/app.js"></script>
     <!-- Main JavaScript -->
-    <script src="../assets/js/main.js" defer></script>
+    <!-- <script src="../assets/js/main.js" defer></script> -->
+    <script src="./index.js" defer></script>
 </body>
 
 </html>
