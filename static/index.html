@@ -10,6 +10,7 @@
     <link rel="shortcut icon" href="../assets/images/favicon.ico" />
     <link rel="stylesheet" href="../assets/css/backend-plugin.min.css">
     <link rel="stylesheet" href="../assets/css/backend.css?v=1.0.0">
+    <link rel="stylesheet" href="../assets/css/monigo-styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 
@@ -359,163 +360,118 @@
                             <!--  -->
                         </div>
                     </div>
-                    
-                    <div class="col-lg-12">
+
+                    <div class="col-lg-12" id="dashboard">
+
+                                            <div class="health-status">
+                                                <span id="health-indicator" class="health-indicator"></span>
+                                                <span id="health-message" class="health-message"></span>
+                                            </div>
                         <div class="row">
-                            <div class="col-lg-6 col-md-6">
-                                <div id="mem-value"></div>
-                            </div>
-                            <div class="col-lg-6 col-md-6">
-                                <div id="cpu-value"></div>
-                            </div>
-                        </div>   
-                    </div>
-                    <div class="col-lg-12">
-                        <div id="runtime-metrics-container">
-                            <!--  -->
-                        </div>
-                    </div>
-                    <div class="col-lg-12">
-                        <div class="card card-block card-stretch card-height">
-                            <div class="card-header d-flex align-items-center justify-content-between">
-                                <div class="header-title">
-                                    <h4 class="card-title">Charts</h4>
-                                </div>
-                                <div class="card-header-toolbar d-flex align-items-center">
-                                    <!-- <div class="dropdown">
-                                        <span class="dropdown-toggle dropdown-bg btn" id="dropdownMenuButton006" data-toggle="dropdown">
-                                            This Month<i class="ri-arrow-down-s-line ml-1"></i>
-                                        </span>
-                                        <div class="dropdown-menu dropdown-menu-right shadow-none" aria-labelledby="dropdownMenuButton006">
-                                            <a class="dropdown-item" href="#">Year</a>
-                                            <a class="dropdown-item" href="#">Month</a>
-                                            <a class="dropdown-item" href="#">Week</a>
+                            <!-- GoROutines, Load, Cores, Memory,CPU Usage, Uptime, -->
+                            <div class="col-lg-4 col-md-4">
+                                <div class="card card-block card-stretch card-height">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-4 card-total-sale">
+                                            <div class="icon iq-icon-box-2 bg-info-light">
+                                                <img src="../assets/images/product/1.png" class="img-fluid" alt="GoRoutines Image">
+                                            </div>
+                                            <div id="goroutines">
+
+                                            </div>
+                                            <!-- <div>
+                                                                            <p class="mb-2">${item.name} <span class="info-icon" data-tooltip="${item.description}">i</span></p>
+                                                                            <h4>${item.value}</h4>
+                                                                        </div> -->
                                         </div>
-                                    </div> -->
+                                        <div class="iq-progress-bar mt-2">
+                                            <span class="bg-info iq-progress progress-1" style="width: 0%;" data-percent="100">
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="card-body">
-                                <div class="col-lg-12">
-                                    <div class="row">
-                                        <div class="col-lg-2 col-md-2">
-                                            <div class="card card-block card-stretch card-height">
-                                                <div class="card-body">
-                                                    <div class="d-flex align-items-center mb-4 card-total-sale">
-                                                        <!-- <div class="icon iq-icon-box-2 bg-success-light">
-                                                                                                    <img src="../assets/images/product/3.png" class="img-fluid" alt="image">
-                                                                                                </div> -->
-                                                        <div>
-                                                            <p class="mb-2">Product Sold</p>
-                                                            <h4>4589 M</h4>
-                                                        </div>
-                                                    </div>
-                                                    <div class="iq-progress-bar mt-2">
-                                                        <span class="bg-success iq-progress progress-1"
-                                                            data-percent="75">
-                                                        </span>
-                                                    </div>
-                                                </div>
+                            <div class="col-lg-4 col-md-4">
+                                <div class="card card-block card-stretch card-height">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-4 card-total-sale">
+                                            <div class="icon iq-icon-box-2 bg-info-light">
+                                                <img src="../assets/images/product/2.png" class="img-fluid" alt="Load Image">
+                                            </div>
+                                            <div id="service-load">
                                             </div>
                                         </div>
-                                        <div class="col-lg-2 col-md-2">
-                                            <div class="card card-block card-stretch card-height">
-                                                <div class="card-body">
-                                                    <div class="d-flex align-items-center mb-4 card-total-sale">
-                                                        <!-- <div class="icon iq-icon-box-2 bg-success-light">
-                                                                                                    <img src="../assets/images/product/3.png" class="img-fluid" alt="image">
-                                                                                                </div> -->
-                                                        <div>
-                                                            <p class="mb-2">Product Sold</p>
-                                                            <h4>4589 M</h4>
-                                                        </div>
-                                                    </div>
-                                                    <div class="iq-progress-bar mt-2">
-                                                        <span class="bg-success iq-progress progress-1"
-                                                            data-percent="75">
-                                                        </span>
-                                                    </div>
-                                                </div>
+                                        <div class="iq-progress-bar mt-2">
+                                            <span class="bg-info iq-progress progress-1" style="width: 0%;" data-percent="100">
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-4">
+                                <div class="card card-block card-stretch card-height">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-4 card-total-sale">
+                                            <div class="icon iq-icon-box-2 bg-info-light">
+                                                <img src="../assets/images/product/3.png" class="img-fluid" alt="Cores Image">
+                                            </div>
+                                            <div id="cores">
                                             </div>
                                         </div>
-                                        <div class="col-lg-2 col-md-2">
-                                            <div class="card card-block card-stretch card-height">
-                                                <div class="card-body">
-                                                    <div class="d-flex align-items-center mb-4 card-total-sale">
-                                                        <!-- <div class="icon iq-icon-box-2 bg-success-light">
-                                                                                                    <img src="../assets/images/product/3.png" class="img-fluid" alt="image">
-                                                                                                </div> -->
-                                                        <div>
-                                                            <p class="mb-2">Product Sold</p>
-                                                            <h4>4589 M</h4>
-                                                        </div>
-                                                    </div>
-                                                    <div class="iq-progress-bar mt-2">
-                                                        <span class="bg-success iq-progress progress-1"
-                                                            data-percent="75">
-                                                        </span>
-                                                    </div>
-                                                </div>
+                                        <div class="iq-progress-bar mt-2">
+                                            <span class="bg-info iq-progress progress-1" style="width: 0%;" data-percent="100">
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-4">
+                                <div class="card card-block card-stretch card-height">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-4 card-total-sale">
+                                            <div class="icon iq-icon-box-2 bg-info-light">
+                                                <img src="../assets/images/product/1.png" class="img-fluid" alt="Memory Image">
+                                            </div>
+                                            <div id="memory">
                                             </div>
                                         </div>
-                                        <div class="col-lg-2 col-md-2">
-                                            <div class="card card-block card-stretch card-height">
-                                                <div class="card-body">
-                                                    <div class="d-flex align-items-center mb-4 card-total-sale">
-                                                        <!-- <div class="icon iq-icon-box-2 bg-success-light">
-                                                                                                    <img src="../assets/images/product/3.png" class="img-fluid" alt="image">
-                                                                                                </div> -->
-                                                        <div>
-                                                            <p class="mb-2">Product Sold</p>
-                                                            <h4>4589 M</h4>
-                                                        </div>
-                                                    </div>
-                                                    <div class="iq-progress-bar mt-2">
-                                                        <span class="bg-success iq-progress progress-1"
-                                                            data-percent="75">
-                                                        </span>
-                                                    </div>
-                                                </div>
+                                        <div class="iq-progress-bar mt-2">
+                                            <span class="bg-info iq-progress progress-1" style="width: 0%;" data-percent="100">
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-4">
+                                <div class="card card-block card-stretch card-height">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-4 card-total-sale">
+                                            <div class="icon iq-icon-box-2 bg-info-light">
+                                                <img src="../assets/images/product/2.png" class="img-fluid" alt="CPU Usage Image">
+                                            </div>
+                                            <div id="cpu-usage">
                                             </div>
                                         </div>
-                                        <div class="col-lg-2 col-md-2">
-                                            <div class="card card-block card-stretch card-height">
-                                                <div class="card-body">
-                                                    <div class="d-flex align-items-center mb-4 card-total-sale">
-                                                        <!-- <div class="icon iq-icon-box-2 bg-success-light">
-                                                                                                                                    <img src="../assets/images/product/3.png" class="img-fluid" alt="image">
-                                                                                                                                </div> -->
-                                                        <div>
-                                                            <p class="mb-2">Product Sold</p>
-                                                            <h4>4589 M</h4>
-                                                        </div>
-                                                    </div>
-                                                    <div class="iq-progress-bar mt-2">
-                                                        <span class="bg-success iq-progress progress-1"
-                                                            data-percent="75">
-                                                        </span>
-                                                    </div>
-                                                </div>
+                                        <div class="iq-progress-bar mt-2">
+                                            <span class="bg-info iq-progress progress-1" style="width: 0%;" data-percent="100">
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-4">
+                                <div class="card card-block card-stretch card-height">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-4 card-total-sale">
+                                            <div class="icon iq-icon-box-2 bg-info-light">
+                                                <img src="../assets/images/product/3.png" class="img-fluid" alt="Uptime Image">
+                                            </div>
+                                            <div id="uptime">
                                             </div>
                                         </div>
-                                        <div class="col-lg-2 col-md-2">
-                                            <div class="card card-block card-stretch card-height">
-                                                <div class="card-body">
-                                                    <div class="d-flex align-items-center mb-4 card-total-sale">
-                                                        <!-- <div class="icon iq-icon-box-2 bg-success-light">
-                                                                                                                                    <img src="../assets/images/product/3.png" class="img-fluid" alt="image">
-                                                                                                                                </div> -->
-                                                        <div>
-                                                            <p class="mb-2">Product Sold</p>
-                                                            <h4>4589 M</h4>
-                                                        </div>
-                                                    </div>
-                                                    <div class="iq-progress-bar mt-2">
-                                                        <span class="bg-success iq-progress progress-1"
-                                                            data-percent="75">
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                        <div class="iq-progress-bar mt-2">
+                                            <span class="bg-info iq-progress progress-1" style="width: 0%;" data-percent="100">
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -526,9 +482,9 @@
                         <div class="card card-block card-stretch card-height">
                             <div class="card-header d-flex align-items-center justify-content-between">
                                 <div class="header-title">
-                                    <h4 class="card-title">Runtime Charts</h4>
+                                    <h4 class="card-title">Runtime View</h4>
                                 </div>
-                                <div class="card-header-toolbar d-flex align-items-center">
+                                <!-- <div class="card-header-toolbar d-flex align-items-center">
                                     <div class="dropdown">
                                         <span class="dropdown-toggle dropdown-bg btn" id="dropdownMenuButton006"
                                             data-toggle="dropdown">
@@ -541,47 +497,26 @@
                                             <a class="dropdown-item" href="#">Week</a>
                                         </div>
                                     </div>
-                                </div>
+                                </div> -->
                             </div>
                             <div class="card-body">
                                 <div class="col-lg-12">
                                     <div class="row">
-                                        <div class="col-lg-12 col-md-12 pt-3">
-                                            <h1> Metrics </h1>
-                                            <div class="card-body">
-                                                <div id="report-chart2" style="min-height: 340px;">
-                                                </div>
-                                            </div>
+                                        <div class="col-lg-6 col-md-6">
+                                            <h2>Load Statistics</h2>
+                                            <div class="chart-container" id="load-chart"></div>
                                         </div>
                                         <div class="col-lg-6 col-md-6">
-                                            <h1>Load</h1>
-                                            <div class="card-body">
-                                                <div id="layout1-chart1"></div>
-                                            </div>
+                                            <h2>CPU Statistics</h2>
+                                            <div class="chart-container" id="cpu-chart"></div>
                                         </div>
                                         <div class="col-lg-6 col-md-6">
-                                            <h1>Memory</h1>
-                                            <div class="card-body">
-                                                <div id="layout1-chart-2" style="min-height: 360px;"></div>
-                                            </div>
+                                            <h2>Memory Statistics</h2>
+                                            <div class="chart-container" id="memory-pie-chart"></div>
                                         </div>
-                                        <div class="col-lg-6 col-md-6 pt-3">
-                                            <h1>Load</h1>
-                                            <div class="card-body">
-                                                <div id="report-chart3"></div>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6 col-md-6 pt-3">
-                                            <h1>Memory</h1>
-                                            <div class="card-body">
-                                                <div id="report-chart4"></div>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-12 col-md-12 pt-3">
-                                            <h1>Memory</h1>
-                                            <div class="card-body pt-0">
-                                                <div id="layout1-chart-5"></div>
-                                            </div>
+                                        <div class="col-lg-6 col-md-6">
+                                            <h2>Heap Memory Usage</h2>
+                                            <div class="chart-container" id="heap-memory-chart"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -716,7 +651,11 @@
     <script src="../assets/js/app.js"></script>
 
     <!-- Main JavaScript -->
-    <script src="../assets/js/main.js" defer></script>
+    <!-- <script src="../assets/js/main.js" defer></script> -->
+    <script src="./index.js" defer></script>
+
+    <!-- ECharts JS -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
 </body>
 
 </html>

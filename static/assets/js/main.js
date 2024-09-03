@@ -1,17 +1,17 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    const serviceInfoContainer = document.getElementById('service-container');
+    // const serviceInfoContainer = document.getElementById('service-container');
     const runtimeMetricsContainer = document.getElementById('runtime-metrics-container');
     const goRoutinesNumber = document.getElementById('goroutine-count');
     const memValue = document.getElementById('mem-value');
     const cpuValue = document.getElementById('cpu-value');
     const serviceHealth = document.getElementById('load-service-health-guage');
 
-    if (serviceInfoContainer) {
-        fetchServiceInfo();
-    } else {
-        console.error('Element with ID "service-container" not found.');
-    }
+    // if (serviceInfoContainer) {
+    //     fetchServiceInfo();
+    // } else {
+    //     console.error('Element with ID "service-container" not found.');
+    // }
 
     if (runtimeMetricsContainer) {
         fetchMetrics("MB");
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         </div>
                                     </div>
                                     <div class="iq-progress-bar mt-2">
-                                        <span class="bg-info iq-progress progress-1" data-percent="85"></span>
+                                        <span class="bg-info iq-progress progress-1" data-percent="100"></span>
                                     </div>
                                 </div>
                             </div>
@@ -114,11 +114,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function fetchMetrics(unit) {
         runtimeMetricsContainer.innerHTML = `<div class="service-info">Fetching the data...</div>`;
-        fetch(`/metrics?unit=${unit}`)
+        fetch(`/metrics`)
             .then(response => response.json())
             .then(metrics => {
 
                 console.log(metrics);
+
+                
+                
 
                 let cpuLoopDetails = '';
                 for (let [key, value] of Object.entries(metrics.cpu)) {
@@ -186,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         </div>
                                     </div>
                                     <div class="iq-progress-bar mt-2">
-                                        <span class="bg-info iq-progress progress-1" style="width: 0%;" data-percent="65"></span>
+                                        <span class="bg-info iq-progress progress-1" style="width: 0%;" data-percent="100"></span>
                                     </div>
                                 </div>
                             </div>`;
@@ -249,7 +252,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         </div>
                                     </div>
                                     <div class="iq-progress-bar mt-2">
-                                        <span class="bg-info iq-progress progress-1" style="width: 0%;" data-percent="65"></span>
+                                        <span class="bg-info iq-progress progress-1" style="width: 0%;" data-percent="100"></span>
                                     </div>
                                 </div>
                             </div>`;

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"path/filepath"
 	"runtime"
-	"strings"
 	"sync"
 	"time"
 
@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	//go:embed static/assets/* static/index.html static/function-metrics.html static/reports.html static/go-routines-stats.html
+	//go:embed static/*
 	staticFiles      embed.FS
 	serviceStartTime time.Time = time.Now()
 	Once             sync.Once = sync.Once{}
@@ -119,37 +119,31 @@ func StartDashboard(addr int) {
 }
 
 func serveHtmlSite(w http.ResponseWriter, r *http.Request) {
-	filePath := "static" + r.URL.Path
-	var contentType string
-	switch {
-	case r.URL.Path == "/":
-		filePath = "static/index.html"
-		contentType = "text/html"
-	case r.URL.Path == "/function-metrics.html":
-		filePath = "static/function-metrics.html"
-		contentType = "text/html"
-	case r.URL.Path == "/reports.html":
-		filePath = "static/reports.html"
-		contentType = "text/html"
-	case r.URL.Path == "/go-routines-stats.html":
-		filePath = "static/go-routines-stats.html"
-		contentType = "text/html"
-	case r.URL.Path == "/favicon.ico":
-		filePath = "static/assets/images/favicon.ico"
-		contentType = "image/x-icon"
-	case strings.HasPrefix(r.URL.Path, "/assets/css/"):
-		contentType = "text/css"
-	case strings.HasPrefix(r.URL.Path, "/assets/js/"):
-		contentType = "application/javascript"
-	case strings.HasSuffix(r.URL.Path, ".png"):
-		contentType = "image/png"
-	case strings.HasSuffix(r.URL.Path, ".jpg") || strings.HasSuffix(r.URL.Path, ".jpeg"):
-		contentType = "image/jpeg"
-	case strings.HasSuffix(r.URL.Path, ".svg"):
-		contentType = "image/svg+xml"
-	case strings.HasSuffix(r.URL.Path, ".woff") || strings.HasSuffix(r.URL.Path, ".woff2"):
-		contentType = "font/woff"
-	default:
+	baseDir := "static"
+	// Map of content types based on file extensions
+	contentTypes := map[string]string{
+		".html":  "text/html",
+		".ico":   "image/x-icon",
+		".css":   "text/css",
+		".js":    "application/javascript",
+		".png":   "image/png",
+		".jpg":   "image/jpeg",
+		".jpeg":  "image/jpeg",
+		".svg":   "image/svg+xml",
+		".woff":  "font/woff",
+		".woff2": "font/woff2",
+	}
+
+	filePath := baseDir + r.URL.Path
+	if r.URL.Path == "/" {
+		filePath = baseDir + "/index.html"
+	} else if r.URL.Path == "/favicon.ico" {
+		filePath = baseDir + "/assets/images/favicon.ico"
+	}
+
+	ext := filepath.Ext(filePath) // getting the file extension
+	contentType, ok := contentTypes[ext]
+	if !ok {
 		contentType = "application/octet-stream"
 	}
 

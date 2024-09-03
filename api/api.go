@@ -46,23 +46,6 @@ func NewCoreStatistics(w http.ResponseWriter, r *http.Request) {
 		fieldDescription = common.ConstructJsonFieldDescription()
 	}
 
-	unit := r.URL.Query().Get("unit")
-	if unit == "" {
-		unit = "MB" // Default Unit
-	}
-
-	// Convert bytes to different units
-	// bytesToUnit := func(bytes uint64) float64 {
-	// 	switch unit {
-	// 	case "KB":
-	// 		return float64(bytes) / 1024.0
-	// 	case "MB":
-	// 		return float64(bytes) / 1048576.0
-	// 	default: // "bytes"
-	// 		return float64(bytes)
-	// 	}
-	// }
-
 	var serviceStats models.NewServiceStats
 
 	timeNow := time.Now()
