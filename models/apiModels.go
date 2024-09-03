@@ -10,10 +10,10 @@ type NewServiceStats struct {
 	MemoryStatistics MemoryStatistics `json:"memory_statistics"` // Memory Statistics
 
 	// Additional Metrics
-	HeapAllocByService  float64 `json:"heap_alloc_by_service"`
-	HeapAllocBySystem   float64 `json:"heap_alloc_by_system"`
-	TotalAllocByService float64 `json:"total_alloc_by_service"`
-	TotalMemoryByOS     float64 `json:"total_memory_by_os"`
+	HeapAllocByService  string `json:"heap_alloc_by_service"`
+	HeapAllocBySystem   string `json:"heap_alloc_by_system"`
+	TotalAllocByService string `json:"total_alloc_by_service"`
+	TotalMemoryByOS     string `json:"total_memory_by_os"`
 	// DiskIO            float64 `json:"disk_io"` @TODO: Need to work on this
 	NetworkIO struct {
 		BytesSent     float64 `json:"bytes_sent"`
@@ -54,14 +54,14 @@ type CPUStatistics struct {
 }
 
 type MemoryStatistics struct {
-	TotalSystemMemory   float64  `json:"total_system_memory"`
-	MemoryUsedBySystem  float64  `json:"memory_used_by_system"`
-	MemoryUsedByService float64  `json:"memory_used_by_service"`
-	AvailableMemory     float64  `json:"available_memory"`
-	GCPauseDuration     float64  `json:"gc_pause_duration"`
-	StackMemoryUsage    float64  `json:"stack_memory_usage"`
-	TotalSwapMemory     float64  `json:"total_swap_memory"`
-	FreeSwapMemory      float64  `json:"free_swap_memory"`
+	TotalSystemMemory   string   `json:"total_system_memory"`
+	MemoryUsedBySystem  string   `json:"memory_used_by_system"`
+	MemoryUsedByService string   `json:"memory_used_by_service"`
+	AvailableMemory     string   `json:"available_memory"`
+	GCPauseDuration     string   `json:"gc_pause_duration"`
+	StackMemoryUsage    string   `json:"stack_memory_usage"`
+	TotalSwapMemory     string   `json:"total_swap_memory"`
+	FreeSwapMemory      string   `json:"free_swap_memory"`
 	MemStatsRecords     []Record `json:"mem_stats_records"` // List of memory statistic records.
 }
 
@@ -167,4 +167,9 @@ type FieldName struct {
 	FreeSwapMemory               float64
 	DiskIO                       float64
 	NetworkIO                    float64
+}
+
+type GoRoutinesStatistic struct {
+	NumberOfGoroutines int      `json:"number_of_goroutines"`
+	StackView          []string `json:"stack_view"`
 }

@@ -5,6 +5,8 @@ import (
 	"runtime"
 	"runtime/pprof"
 	"strings"
+
+	"github.com/iyashjayesh/monigo/models"
 )
 
 // StartCPUProfile starts the CPU profile and writes it to the specified file.
@@ -34,7 +36,7 @@ func WriteHeapProfile(filename string) error {
 }
 
 // CollectGoRoutinesInfo returns the number of running Go routines and their stack traces split into separate goroutine blocks.
-func CollectGoRoutinesInfo() (int, []string) {
+func CollectGoRoutinesInfo() models.GoRoutinesStatistic {
 	// Creating a buffer to hold the stack trace
 	stackBuffer := make([]byte, 1<<20)
 	stackSize := runtime.Stack(stackBuffer, true)
@@ -44,7 +46,10 @@ func CollectGoRoutinesInfo() (int, []string) {
 	goroutineBlocks := SplitGoroutines(stackTrace)           // splitting the stack trace into separate goroutine blocks
 	totalNumberOfRunningGoRoutines := runtime.NumGoroutine() // getting the total number of running goroutines
 
-	return totalNumberOfRunningGoRoutines, goroutineBlocks
+	return models.GoRoutinesStatistic{
+		NumberOfGoroutines: totalNumberOfRunningGoRoutines,
+		StackView:          goroutineBlocks,
+	}
 }
 
 // SplitGoroutines splits the input stack trace into separate goroutine blocks based on new lines and "goroutine" identifiers.

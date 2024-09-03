@@ -30,12 +30,14 @@ func init() {
 	}) // This will be called only once
 }
 
+// GetServiceInfoAPI returns the service information
 func GetServiceInfoAPI(w http.ResponseWriter, r *http.Request) {
 	jsonObjStr, _ := json.Marshal(common.GetServiceInfo())
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonObjStr)
 }
 
+// GetServiceInfoAPI returns the service metrics detailed information
 func NewCoreStatistics(w http.ResponseWriter, r *http.Request) {
 
 	startTime := time.Now()
@@ -50,38 +52,74 @@ func NewCoreStatistics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Convert bytes to different units
-	bytesToUnit := func(bytes uint64) float64 {
-		switch unit {
-		case "KB":
-			return float64(bytes) / 1024.0
-		case "MB":
-			return float64(bytes) / 1048576.0
-		default: // "bytes"
-			return float64(bytes)
-		}
-	}
+	// bytesToUnit := func(bytes uint64) float64 {
+	// 	switch unit {
+	// 	case "KB":
+	// 		return float64(bytes) / 1024.0
+	// 	case "MB":
+	// 		return float64(bytes) / 1048576.0
+	// 	default: // "bytes"
+	// 		return float64(bytes)
+	// 	}
+	// }
 
 	var serviceStats models.NewServiceStats
 
+	timeNow := time.Now()
 	serviceStats.CoreStatistics = core.GetCoreStatistics()
-	serviceStats.LoadStatistics = core.GetLoadStatistics()
-	serviceStats.CPUStatistics = core.GetCPUStatistics()
-	serviceStats.MemoryStatistics = core.GetMemoryStatistics()
+	log.Println("Time taken to get the core statistics: ", time.Since(timeNow))
 
-	memStats := core.ReadMemStats()
-	serviceStats.HeapAllocByService = bytesToUnit(memStats.HeapAlloc)
-	serviceStats.HeapAllocBySystem = bytesToUnit(memStats.HeapSys)
-	serviceStats.TotalAllocByService = bytesToUnit(memStats.TotalAlloc)
-	serviceStats.TotalMemoryByOS = bytesToUnit(memStats.Sys)
-	serviceStats.NetworkIO.BytesReceived, serviceStats.NetworkIO.BytesSent = core.GetNetworkIO()
+	var wg sync.WaitGroup
+	wg.Add(5)
+
+	go func() {
+		defer wg.Done()
+		timeNow := time.Now()
+		serviceStats.LoadStatistics = core.GetLoadStatistics()
+		log.Println("Time taken to get the load statistics: ", time.Since(timeNow))
+	}()
+
+	go func() {
+		defer wg.Done()
+		timeNow := time.Now()
+		serviceStats.MemoryStatistics = core.GetMemoryStatistics()
+		log.Println("Time taken to get the memory statistics: ", time.Since(timeNow))
+	}()
+
+	go func() {
+		defer wg.Done()
+		timeNow := time.Now()
+		serviceStats.CPUStatistics = core.GetCPUStatistics()
+		log.Println("Time taken to get the CPU statistics: ", time.Since(timeNow))
+	}()
+
+	go func() {
+		defer wg.Done()
+		timeNow := time.Now()
+		memStats := core.ReadMemStats()
+		serviceStats.HeapAllocByService = common.BytesToUnit(memStats.HeapAlloc)
+		serviceStats.HeapAllocBySystem = common.BytesToUnit(memStats.HeapSys)
+		serviceStats.TotalAllocByService = common.BytesToUnit(memStats.TotalAlloc)
+		serviceStats.TotalMemoryByOS = common.BytesToUnit(memStats.Sys)
+		log.Println("Time taken to get the memory stats: ", time.Since(timeNow))
+	}()
+
+	go func() {
+		defer wg.Done()
+		timeNow := time.Now()
+		serviceStats.NetworkIO.BytesReceived, serviceStats.NetworkIO.BytesSent = core.GetNetworkIO()
+		log.Println("Time taken to get the network stats: ", time.Since(timeNow))
+	}()
+
+	wg.Wait()
+
 	serviceStats.OverallHealth = core.GetServiceHealth(&serviceStats.LoadStatistics)
-
 	// serviceStats.DiskIO = core.GetDiskIO()                                             // TODO: Need to implement this function
 
-	log.Println("Time taken to get the service stats: ", time.Since(startTime))
 	jsonMetrics, _ := json.Marshal(serviceStats)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(jsonMetrics))
+	log.Println("Time taken to get the service stats Final: ", time.Since(startTime))
 }
 
 func GetMetrics(w http.ResponseWriter, r *http.Request) {
@@ -371,15 +409,7 @@ func GetMetricsInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetGoRoutinesStats(w http.ResponseWriter, r *http.Request) {
-	goRoutinesNumber, list := core.CollectGoRoutinesInfo()
-	jsonGoRoutinesStats, _ := json.Marshal(struct {
-		GoRoutines int      `json:"go_routines"`
-		List       []string `json:"list"`
-	}{
-		GoRoutines: goRoutinesNumber,
-		List:       list,
-	})
-
+	jsonGoRoutinesStats, _ := json.Marshal(core.CollectGoRoutinesInfo())
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(jsonGoRoutinesStats))
 }

@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"time"
 
@@ -114,9 +116,9 @@ func ConstructJsonFieldDescription() map[string]string {
 		"service_cpu_load": "Service CPU Load is the CPU usage of the service",
 		"system_cpu_load": "System CPU Load is the CPU usage of the system",
 		"total_cpu_load": "Total CPU Load is the CPU usage of the system and the service",
-		"service_memory_load": "Service Memory Load is the memory usage of the service",
-		"system_memory_load": "System Memory Load is the memory usage of the system",
-		"total_memory_load": "Total Memory Load is the memory usage of the system and the service",
+		"service_memory_load": "Service Memory[RAM] Load is the memory usage of the service",
+		"system_memory_load": "System Memory[RAM] Load is the memory usage of the system",
+		"total_memory_load": "Total Memory[RAM] Load is the memory usage of the system and the service",
 		"service_disk_load": "Service Disk Load is the disk usage of the service",
 		"system_disk_load": "System Disk Load is the disk usage of the system",
 		"total_disk_load": "Total Disk Load is the disk usage of the system and the service",
@@ -127,10 +129,10 @@ func ConstructJsonFieldDescription() map[string]string {
 		"cores_used_by_service": "Cores Used by Service is the number of cores the service is using",
 		"cores_used_by_service_in_percentage": "Cores Used by Service in Percentage is the percentage of cores the service is using",
 		"cores_used_by_system_in_percentage": "Cores Used by System in Percentage is the percentage of cores the system is using",
-		"total_system_memory": "Total System Memory is the total memory the system has",
-		"memory_used_by_system": "Memory Used by System is the memory the system is using",
-		"memory_used_by_service": "Memory Used by Service is the memory the service is using",
-		"available_memory": "Available Memory is the memory available on the system",
+		"total_system_memory": "Total System Memory[RAM] is the total memory the system has",
+		"memory_used_by_system": "Memory[RAM] Used by System is the memory the system is using",
+		"memory_used_by_service": "Memory[RAM] Used by Service is the memory the service is using",
+		"available_memory": "Available Memory[RAM] is the memory available on the system",
 		"uptime": "Uptime is the time the service has been running",
 		"timestamp": "Timestamp is the time the data was collected"
 	}`
@@ -156,4 +158,72 @@ func RoundFloat64(value float64, precision int) float64 {
 	output := fmt.Sprintf("%."+fmt.Sprintf("%d", precision)+"f", value)
 	result := ParseStringToFloat64(output)
 	return result
+}
+
+// ConvertToReadableUnit converts the input value to a more human-readable unit.
+func ConvertToReadableUnit(value interface{}) string {
+	var num float64
+
+	switch v := reflect.ValueOf(value); v.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		num = float64(v.Int())
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		num = float64(v.Uint())
+	case reflect.Float32, reflect.Float64:
+		num = v.Float()
+	case reflect.String:
+		num = ParseStringToFloat64(v.String())
+	default:
+		log.Panic("unsupported type: ", v.Kind())
+		return ""
+	}
+
+	// Now determine the appropriate unit
+	var unit string
+	switch {
+	case num < 1024:
+		unit = "B" // Bytes
+	case num < math.Pow(1024, 2): // Less than 1 MB
+		unit = "KB" // Kilobytes
+		num = num / 1024
+	case num < math.Pow(1024, 3): // Less than 1 GB
+		unit = "MB" // Megabytes
+		num = num / math.Pow(1024, 2)
+	case num < math.Pow(1024, 4): // Less than 1 TB
+		unit = "GB" // Gigabytes
+		num = num / math.Pow(1024, 3)
+	case num < math.Pow(1024, 5): // Less than 1 PB
+		unit = "TB" // Terabytes
+		num = num / math.Pow(1024, 4)
+	default:
+		unit = "PB" // Petabytes
+		num = num / math.Pow(1024, 5)
+	}
+
+	return fmt.Sprintf("%.2f %s", num, unit)
+}
+
+// BytesToUnit converts a float64 value (representing bytes) to a human-readable unit (KB, MB, GB, TB) based on its magnitude
+func BytesToUnit(value uint64) string {
+	var num float64
+	num = float64(value)
+	var unit string
+	switch {
+	case num < 1024:
+		unit = "B" // Bytes
+	case num < math.Pow(1024, 2): // Less than 1 MB
+		unit = "KB" // Kilobytes
+		num = num / 1024
+	case num < math.Pow(1024, 3): // Less than 1 GB
+		unit = "MB" // Megabytes
+		num = num / math.Pow(1024, 2)
+	case num < math.Pow(1024, 4): // Less than 1 TB
+		unit = "GB" // Gigabytes
+		num = num / math.Pow(1024, 3)
+	default:
+		unit = "TB" // Terabytes
+		num = num / math.Pow(1024, 4)
+	}
+
+	return fmt.Sprintf("%.2f %s", num, unit)
 }

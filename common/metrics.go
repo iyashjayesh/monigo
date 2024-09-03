@@ -12,44 +12,44 @@ import (
 )
 
 // GetCPULoad calculates the CPU load for the service, system, and total.
-func GetCPULoad() (serviceCPU, systemCPU, totalCPU float64) {
+func GetCPULoad() (serviceCPU, systemCPU, totalCPU string) {
+
+	proc := GetProcessObject()            // Getting process details
+	serviceCPUF, err := proc.CPUPercent() // 	Measure CPU percent for the current process
+	if err != nil {
+		log.Panicf("Error fetching CPU load for the service: %v\n", err)
+	}
+	serviceCPU = ParseFloat64ToString(serviceCPUF) + "%" // This is the service CPU usage percentage.
 
 	cpuPercents, err := cpu.Percent(time.Second, false) // Get total system CPU percentage
 	if err != nil {
 		log.Panicf("Error fetching CPU load for the system: %v\n", err)
 	}
 	if len(cpuPercents) > 0 {
-		systemCPU = cpuPercents[0] // This is the overall system CPU usage percentage.
+		systemCPU = ParseFloat64ToString(cpuPercents[0]-serviceCPUF) + "%" // This is the system CPU usage percentage.
 	}
 
-	proc := GetProcessObject() // Getting process details
-
-	serviceCPU, err = proc.CPUPercent() // 	Measure CPU percent for the current process
-	if err != nil {
-		log.Panicf("Error fetching CPU load for the service: %v\n", err)
-	}
-
-	totalCPU = systemCPU
-
+	totalCPU = ParseFloat64ToString(serviceCPUF+cpuPercents[0]) + "%" // This is the total CPU usage percentage.
 	return serviceCPU, systemCPU, totalCPU
 }
 
 // GetMemoryLoad calculates the memory load for the service, system, and total.
-func GetMemoryLoad() (serviceMem, systemMem, totalMem float64) {
+func GetMemoryLoad() (serviceMem, systemMem, totalMem string) {
 	// Get system memory statistics
 	vmStat, err := mem.VirtualMemory()
 	if err != nil {
 		log.Panicf("Error fetching memory load for the system: %v\n", err)
 	}
-	systemMem = vmStat.UsedPercent
+	systemMem = ParseFloat64ToString(vmStat.UsedPercent) + "%"          // Calculate system memory as a percentage of total memory
+	totalMem = ParseFloat64ToString(ParseUint64ToFloat64(vmStat.Total)) // Total memory in bytes Total amount of RAM on this system
 
-	totalMem = ParseUint64ToFloat64(vmStat.Total)
 	proc := GetProcessObject()
 	memInfo, err := proc.MemoryInfo()
 	if err != nil {
 		log.Panicf("Error fetching memory load for the service: %v\n", err)
 	}
-	serviceMem = float64(memInfo.RSS) / float64(vmStat.Total) * 100 // Calculate service memory as a percentage of total memory
+
+	serviceMem = ParseFloat64ToString(float64(memInfo.RSS)/float64(vmStat.Total)*100) + "%" // Calculate service memory as a percentage of total memory
 
 	return serviceMem, systemMem, totalMem
 }

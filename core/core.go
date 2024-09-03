@@ -62,12 +62,12 @@ func GetLoadStatistics() models.LoadStatistics {
 	// fmt.Printf("Total Disk Capacity: %.2f GB\n", totalDisk/1024/1024/1024)
 
 	return models.LoadStatistics{
-		ServiceCPULoad:       common.ParseFloat64ToString(serviceCPU),
-		SystemCPULoad:        common.ParseFloat64ToString(systemCPU),
-		TotalCPULoad:         common.ParseFloat64ToString(totalCPU),
-		ServiceMemLoad:       common.ParseFloat64ToString(serviceMem),
-		SystemMemLoad:        common.ParseFloat64ToString(systemMem),
-		TotalMemLoad:         common.ParseFloat64ToString(totalMem),
+		ServiceCPULoad:       serviceCPU,
+		SystemCPULoad:        systemCPU,
+		TotalCPULoad:         totalCPU,
+		ServiceMemLoad:       serviceMem,
+		SystemMemLoad:        systemMem,
+		TotalMemLoad:         common.ConvertToReadableUnit(totalMem),
 		OverallLoadOfService: CalculateOverallLoad(serviceCPU, serviceMem),
 		// ServiceDiskLoad: common.ParseFloat64ToString(serviceDisk),
 		// SystemDiskLoad:  common.ParseFloat64ToString(systemDisk),
@@ -76,12 +76,16 @@ func GetLoadStatistics() models.LoadStatistics {
 }
 
 // Function to calculate overall load
-func CalculateOverallLoad(serviceCPU, serviceMem float64) string {
+func CalculateOverallLoad(serviceCPU, serviceMem string) string {
+
+	// string to float64 conversion
+	serviceCPUF := common.ParseStringToFloat64(serviceCPU)
+	serviceMemF := common.ParseStringToFloat64(serviceMem)
+
 	cpuWeight := 0.5 // Weight for CPU load
 	memWeight := 0.5 // Weight for memory usage
 
-	// Calculate overall load using weighted average
-	overallLoad := (cpuWeight * serviceCPU) + (memWeight * serviceMem)
+	overallLoad := (cpuWeight * serviceCPUF) + (memWeight * serviceMemF) // Calculate overall load using weighted average
 
 	if overallLoad > 100 {
 		overallLoad = 100
@@ -200,14 +204,14 @@ func GetMemoryStatistics() models.MemoryStatistics {
 
 	m := ReadMemStats() // Get the memory statistics for the service
 	return models.MemoryStatistics{
-		TotalSystemMemory:   float64(memInfo.Total),
-		MemoryUsedBySystem:  float64(memInfo.Used),
-		AvailableMemory:     float64(memInfo.Available),
-		TotalSwapMemory:     float64(swapInfo.Total),
-		FreeSwapMemory:      float64(swapInfo.Free),
-		MemoryUsedByService: float64(m.Alloc), // Example metric
-		StackMemoryUsage:    float64(m.StackInuse),
-		GCPauseDuration:     float64(m.PauseTotalNs) / float64(time.Millisecond), // Convert to milliseconds
+		TotalSystemMemory:   common.BytesToUnit(memInfo.Total),
+		MemoryUsedBySystem:  common.BytesToUnit(memInfo.Used),
+		AvailableMemory:     common.BytesToUnit(memInfo.Available),
+		TotalSwapMemory:     common.BytesToUnit(swapInfo.Total),
+		FreeSwapMemory:      common.BytesToUnit(swapInfo.Free),
+		MemoryUsedByService: common.BytesToUnit(m.Alloc), // Example metric
+		StackMemoryUsage:    common.BytesToUnit(m.StackInuse),
+		GCPauseDuration:     fmt.Sprintf("%.2f ms", float64(m.PauseTotalNs)/float64(time.Millisecond)), // Convert nanoseconds to milliseconds
 		MemStatsRecords:     ConstructMemStats(m),
 	}
 }

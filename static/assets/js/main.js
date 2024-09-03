@@ -389,12 +389,13 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(`/go-routines-stats`)
             .then(response => response.json())
             .then(data => {
-                goRoutinesNumber.innerHTML = data.go_routines;
+                console.log(data);
+                goRoutinesNumber.innerHTML = data.number_of_goroutines;
                 const container = document.getElementById('goroutines-container');
                 const countElement = document.getElementById('goroutine-count');
 
                 let goroutines = [];
-                data.list.forEach((item, index) => {
+                data.stack_view.forEach((item, index) => {
                     const goroutine = {
                         id: index + 1,
                         stackTrace: item

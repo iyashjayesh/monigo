@@ -47,7 +47,7 @@ type MonigoInt interface {
 	Start()                                                                // Start the dashboard
 	DeleteMonigoStorage()                                                  // Purge the monigo storage
 	SetDbSyncFrequency(frequency ...string)                                // Set the frequency to sync the metrics to the storage
-	PrintGoRoutinesStats() (int, []string)                                 // Print the Go routines stats
+	PrintGoRoutinesStats() models.GoRoutinesStatistic                      // Print the Go routines stats
 	SetServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) // Set the service thresholds to calculate the overall service health
 }
 
@@ -82,7 +82,7 @@ func (m *Monigo) SetDbSyncFrequency(frequency ...string) {
 	timeseries.SetDbSyncFrequency(m.DbSyncFrequency)
 }
 
-func (m *Monigo) PrintGoRoutinesStats() (int, []string) {
+func (m *Monigo) PrintGoRoutinesStats() models.GoRoutinesStatistic {
 	return core.CollectGoRoutinesInfo()
 }
 
