@@ -227,3 +227,25 @@ func BytesToUnit(value uint64) string {
 
 	return fmt.Sprintf("%.2f %s", num, unit)
 }
+
+// ConvertBytesToUnit converts bytes to the specified unit and returns the result as a float64.
+func ConvertBytesToUnit(bytes float64, unit string) float64 {
+	var result float64
+	base := float64(1000)
+	unit = strings.ToUpper(unit)
+	switch unit {
+	case "KB":
+		result = bytes / base
+	case "MB":
+		result = bytes / (base * base)
+	case "GB":
+		result = bytes / (base * base * base)
+	case "TB":
+		result = bytes / (base * base * base * base)
+	default:
+		fmt.Println("Unknown unit")
+		return 0
+	}
+
+	return result
+}

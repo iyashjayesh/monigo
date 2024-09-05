@@ -102,8 +102,10 @@ func StartDashboard(addr int) {
 	// http.HandleFunc("/metrics", api.GetMetrics)
 	// http.HandleFunc("/metrics", api.GetCoreStats)
 	http.HandleFunc("/metrics", api.NewCoreStatistics)
+	
 	http.HandleFunc("/function-metrics", api.GetFunctionMetrics)
-	http.HandleFunc("/generate-function-metrics", api.ProfileHandler)
+
+	// http.HandleFunc("/generate-function-metrics", api.ProfileHandler)
 
 	// API to fetch the service metrics
 	http.HandleFunc("/service-info", api.GetServiceInfoAPI) // Completed
@@ -111,7 +113,7 @@ func StartDashboard(addr int) {
 	http.HandleFunc("/go-routines-stats", api.GetGoRoutinesStats)
 
 	// /get-metrics?fields=service-info
-	http.HandleFunc("/get-metrics", api.GetMetricsInfo)
+	// http.HandleFunc("/get-metrics", api.GetMetricsInfo)
 
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", addr), nil); err != nil {
 		log.Panicf("Error starting the dashboard: %v\n", err)

@@ -144,7 +144,8 @@
                                     <a href="#" class="search-toggle dropdown-toggle btn border add-btn"
                                         id="dropdownMenuButton02" data-toggle="dropdown" aria-haspopup="true"
                                         aria-expanded="false">
-                                        <i style="font-size:18px" class="fa pl-1">&#xf021;</i>Refrsshing in 60s...
+                                        <span id="refresh-countdown">Refreshing in 5m 0s</span>
+                                        <!-- <i style="font-size:18px" class="fa pl-1">&#xf021;</i>Refrsshing in 60s... -->
                                     </a>
                                     
                                 </li>
@@ -263,16 +264,18 @@
                 <div class="modal-content">
                     <div class="modal-body">
                         <div class="popup text-left">
-                            <h4 class="mb-3">Set Dashboard Interval</h4>
+                            <h4 class="mb-3">Set Refresh Interval</h4>
                             <div class="content create-workform bg-body">
                                 <div class="pb-3">
-                                    <label class="mb-2">Email</label>
-                                    <input type="text" class="form-control" placeholder="Enter Name or Email">
+                                    <label for="refresh-interval" class="mb-2">Refresh Interval (mins):</label>
+                                    <input type="number" id="refresh-interval" name="refresh-interval" class="form-control"
+                                        min="1" max="60" value="5">
                                 </div>
                                 <div class="col-lg-12 mt-4">
-                                    <div class="d-flex flex-wrap align-items-ceter justify-content-center">
-                                        <div class="btn btn-primary mr-4" data-dismiss="modal">Cancel</div>
-                                        <div class="btn btn-outline-primary" data-dismiss="modal">Create</div>
+                                    <div class="d-flex flex-wrap align-items-center justify-content-center">
+                                        <button id="cancel-interval" class="btn btn-primary mr-4"
+                                            data-dismiss="modal">Cancel</button>
+                                        <button id="set-interval" class="btn btn-outline-primary">Set</button>
                                     </div>
                                 </div>
                             </div>

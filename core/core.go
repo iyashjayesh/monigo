@@ -5,6 +5,7 @@ import (
 	"log"
 	"runtime"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/iyashjayesh/monigo/common"
@@ -13,6 +14,63 @@ import (
 	"github.com/shirou/gopsutil/mem"
 	"github.com/shirou/gopsutil/net"
 )
+
+func GetNewServiceStats() models.NewServiceStats {
+
+	var serviceStats models.NewServiceStats
+	timeNow := time.Now()
+	serviceStats.CoreStatistics = GetCoreStatistics()
+	log.Println("Time taken to get the core statistics: ", time.Since(timeNow))
+
+	var wg sync.WaitGroup
+	wg.Add(5)
+
+	go func() {
+		defer wg.Done()
+		timeNow := time.Now()
+		serviceStats.LoadStatistics = GetLoadStatistics()
+		log.Println("Time taken to get the load statistics: ", time.Since(timeNow))
+	}()
+
+	go func() {
+		defer wg.Done()
+		timeNow := time.Now()
+		serviceStats.MemoryStatistics = GetMemoryStatistics()
+		log.Println("Time taken to get the memory statistics: ", time.Since(timeNow))
+	}()
+
+	go func() {
+		defer wg.Done()
+		timeNow := time.Now()
+		serviceStats.CPUStatistics = GetCPUStatistics()
+		log.Println("Time taken to get the CPU statistics: ", time.Since(timeNow))
+	}()
+
+	go func() {
+		defer wg.Done()
+		timeNow := time.Now()
+		memStats := ReadMemStats()
+		serviceStats.HeapAllocByService = common.BytesToUnit(memStats.HeapAlloc)
+		serviceStats.HeapAllocBySystem = common.BytesToUnit(memStats.HeapSys)
+		serviceStats.TotalAllocByService = common.BytesToUnit(memStats.TotalAlloc)
+		serviceStats.TotalMemoryByOS = common.BytesToUnit(memStats.Sys)
+		log.Println("Time taken to get the memory stats: ", time.Since(timeNow))
+	}()
+
+	go func() {
+		defer wg.Done()
+		timeNow := time.Now()
+		serviceStats.NetworkIO.BytesReceived, serviceStats.NetworkIO.BytesSent = GetNetworkIO()
+		log.Println("Time taken to get the network stats: ", time.Since(timeNow))
+	}()
+
+	wg.Wait()
+
+	serviceStats.OverallHealth = GetServiceHealth(&serviceStats.LoadStatistics)
+	// serviceStats.DiskIO = GetDiskIO()                                             // TODO: Need to implement this function
+
+	return serviceStats
+}
 
 func GetCoreStatistics() models.CoreStatistics {
 	rcount, durationTook := GetServiceMetrics()
@@ -213,6 +271,7 @@ func GetMemoryStatistics() models.MemoryStatistics {
 		StackMemoryUsage:    common.BytesToUnit(m.StackInuse),
 		GCPauseDuration:     fmt.Sprintf("%.2f ms", float64(m.PauseTotalNs)/float64(time.Millisecond)), // Convert nanoseconds to milliseconds
 		MemStatsRecords:     ConstructMemStats(m),
+		RawMemStatsRecords:  ConstructRawMemStats(m),
 	}
 }
 
@@ -307,5 +366,49 @@ func GetServiceHealth(loadStats *models.LoadStatistics) models.ServiceHealth {
 			Healthy: healthy,
 			Message: message,
 		},
+	}
+}
+
+// ConstructRawMemStats constructs a list of raw memory statistics records.
+func ConstructRawMemStats(memStats *runtime.MemStats) []models.RawMemStatsRecords {
+	r := []models.RawMemStatsRecords{
+		newRawRecord("alloc", float64(memStats.Alloc)),
+		newRawRecord("total_alloc", float64(memStats.TotalAlloc)),
+		newRawRecord("sys", float64(memStats.Sys)),
+		newRawRecord("sys", float64(memStats.Sys)),
+		newRawRecord("lookups", float64(memStats.Lookups)),
+		newRawRecord("mallocs", float64(memStats.Mallocs)),
+		newRawRecord("frees", float64(memStats.Frees)),
+		newRawRecord("heap_alloc", float64(memStats.HeapAlloc)),
+		newRawRecord("heap_sys", float64(memStats.HeapSys)),
+		newRawRecord("heap_idle", float64(memStats.HeapIdle)),
+		newRawRecord("heap_inuse", float64(memStats.HeapInuse)),
+		newRawRecord("heap_released", float64(memStats.HeapReleased)),
+		newRawRecord("heap_objects", float64(memStats.HeapObjects)),
+		newRawRecord("stack_inuse", float64(memStats.StackInuse)),
+		newRawRecord("stack_sys", float64(memStats.StackSys)),
+		newRawRecord("m_span_inuse", float64(memStats.MSpanInuse)),
+		newRawRecord("m_span_sys", float64(memStats.MSpanSys)),
+		newRawRecord("m_cache_inuse", float64(memStats.MCacheInuse)),
+		newRawRecord("m_cache_sys", float64(memStats.MCacheSys)),
+		newRawRecord("buck_hash_sys", float64(memStats.BuckHashSys)),
+		newRawRecord("gc_sys", float64(memStats.GCSys)),
+		newRawRecord("other_sys", float64(memStats.OtherSys)),
+		newRawRecord("next_gc", float64(memStats.NextGC)),
+		newRawRecord("last_gc", float64(memStats.LastGC)),
+		newRawRecord("pause_total_ns", float64(memStats.PauseTotalNs)),
+		newRawRecord("num_gc", float64(memStats.NumGC)),
+		newRawRecord("num_forced_gc", float64(memStats.NumForcedGC)),
+		newRawRecord("gc_cpu_fraction", float64(memStats.GCCPUFraction)),
+	}
+
+	return r
+}
+
+// newRawRecord creates a new Record with appropriate units and human-readable formats.
+func newRawRecord(name string, value float64) models.RawMemStatsRecords {
+	return models.RawMemStatsRecords{
+		RecordName:  name,
+		RecordValue: common.ConvertBytesToUnit(value, "KB"),
 	}
 }

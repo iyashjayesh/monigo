@@ -12,6 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         </div>`;
 
+         let countdownInterval;
+        let refreshIntervalId;
+        let refreshInterval; // To store the refresh interval in minutes
+        let remainingTime;
     const elements = {
         goroutines: document.getElementById('goroutines'),
         serviceLoad: document.getElementById('service-load'),
@@ -31,12 +35,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (GOROUTINES_PAGE) {
         fetchServiceInfo();
         fetchGoRoutines();
+        startCountdown();
     } else if (DASHBOARD) {
         fetchMetrics();
         fetchServiceInfo();
+        startCountdown();
     } else {
         console.warn('No valid page found');
     }
+
+    
 
     function animateProgressBar(bar, targetWidth, duration) {
         let start = null;
@@ -608,4 +616,66 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', function() {
         chart.resize();
     });
+
+
+    //////// Refreesh 
+   
+
+        // // Function to fetch data and update the chart
+        // function updateChart() {
+        //     startCountdown(); // Restart countdown after updating chart
+        // }
+
+        // Function to start the countdown
+        function startCountdown() {
+            clearInterval(countdownInterval); // Clear any existing countdown
+            const countdownDisplay = document.getElementById('refresh-countdown');
+            remainingTime = refreshInterval * 60; // Convert minutes to seconds
+
+            countdownInterval = setInterval(() => {
+                const minutes = Math.floor(remainingTime / 60);
+                const seconds = remainingTime % 60;
+                countdownDisplay.textContent = `Refreshing in ${minutes}m ${seconds}s`;
+                remainingTime--;
+
+                if (remainingTime < 0) {
+                    clearInterval(countdownInterval);
+                }
+            }, 1000);
+        }
+
+        // Function to start auto-refresh with the set interval
+        function startAutoRefresh() {
+            clearInterval(refreshIntervalId); // Clear any existing interval
+            refreshIntervalId = setInterval(updateChart, refreshInterval * 60 * 1000); // Convert minutes to milliseconds
+            startCountdown(); // Start the countdown immediately after setting the interval
+        }
+
+        // Enable the "Set" button when the input is changed
+        document.getElementById('refresh-interval').addEventListener('input', function () {
+            document.getElementById('set-interval').disabled = false;
+        });
+
+        // Apply the refresh interval when "Set" is clicked
+        document.getElementById('set-interval').addEventListener('click', function () {
+            refreshInterval = parseInt(document.getElementById('refresh-interval').value, 10) || 5;
+            refreshInterval = Math.max(1, Math.min(60, refreshInterval)); // Enforce min 1, max 60
+            localStorage.setItem('refreshInterval', refreshInterval); // Store the value in localStorage
+            startAutoRefresh();
+            this.disabled = true; // Disable the button again until the next input change
+        });
+
+        // Load the refresh interval from localStorage or use default
+        function loadRefreshInterval() {
+            const storedInterval = localStorage.getItem('refreshInterval');
+            if (storedInterval) {
+                refreshInterval = parseInt(storedInterval, 10);
+            } else {
+                refreshInterval = 5; // Default value if nothing is stored
+            }
+            document.getElementById('refresh-interval').value = refreshInterval; // Update the input field
+        }
+
+        loadRefreshInterval();
+        startAutoRefresh();
 });

@@ -123,35 +123,35 @@ func GetLocalFunctionMetrics() map[string]*models.FunctionMetrics {
 	return functionMetrics
 }
 
-func GetServiceMetricsModel() models.ServiceMetrics {
+// func GetServiceMetricsModel() models.ServiceMetrics {
 
-	requestCount, totalDuration := GetServiceMetrics()
-	serviceStat := GetProcessSats()
-	memStats := ReadMemStats()
+// 	requestCount, totalDuration := GetServiceMetrics()
+// 	serviceStat := GetProcessSats()
+// 	memStats := ReadMemStats()
 
-	// SystemUsedCoresToString := fmt.Sprintf("%.2f", serviceStat.SystemUsedCores)
-	// ProcessUsedCoresToString := fmt.Sprintf("%.2f", serviceStat.ProcessUsedCores)
+// 	// SystemUsedCoresToString := fmt.Sprintf("%.2f", serviceStat.SystemUsedCores)
+// 	// ProcessUsedCoresToString := fmt.Sprintf("%.2f", serviceStat.ProcessUsedCores)
 
-	// cores := ProcessUsedCoresToString + "PC / " +
-	// 	SystemUsedCoresToString + "SC / " +
-	// 	strconv.Itoa(serviceStat.TotalLogicalCores) + "LC / " +
-	// 	strconv.Itoa(serviceStat.TotalCores) + "C"
+// 	// cores := ProcessUsedCoresToString + "PC / " +
+// 	// 	SystemUsedCoresToString + "SC / " +
+// 	// 	strconv.Itoa(serviceStat.TotalLogicalCores) + "LC / " +
+// 	// 	strconv.Itoa(serviceStat.TotalCores) + "C"
 
-	metrics := models.ServiceMetrics{
-		Load:                   serviceStat.ProcCPUPercent,
-		Cores:                  serviceStat.ProcessUsedCores,
-		MemoryUsed:             float64(memStats.Alloc),
-		NumberOfReqServerd:     float64(requestCount),
-		GoRoutines:             float64(runtime.NumGoroutine()),
-		TotalAlloc:             float64(memStats.TotalAlloc),
-		MemoryAllocSys:         float64(memStats.Sys),
-		HeapAlloc:              float64(memStats.HeapAlloc),
-		HeapAllocSys:           float64(memStats.HeapSys),
-		TotalDurationTookByAPI: totalDuration,
-	}
+// 	metrics := models.ServiceMetrics{
+// 		Load:                   serviceStat.ProcCPUPercent,
+// 		Cores:                  serviceStat.ProcessUsedCores,
+// 		MemoryUsed:             float64(memStats.Alloc),
+// 		NumberOfReqServerd:     float64(requestCount),
+// 		GoRoutines:             float64(runtime.NumGoroutine()),
+// 		TotalAlloc:             float64(memStats.TotalAlloc),
+// 		MemoryAllocSys:         float64(memStats.Sys),
+// 		HeapAlloc:              float64(memStats.HeapAlloc),
+// 		HeapAllocSys:           float64(memStats.HeapSys),
+// 		TotalDurationTookByAPI: totalDuration,
+// 	}
 
-	return metrics
-}
+// 	return metrics
+// }
 
 func CalculateServiceHealth(metrics models.ServiceMetrics) models.ServiceHealth {
 	// goroutines := strconv.Itoa(int(metrics.GoRoutines))

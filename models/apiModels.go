@@ -54,15 +54,26 @@ type CPUStatistics struct {
 }
 
 type MemoryStatistics struct {
-	TotalSystemMemory   string   `json:"total_system_memory"`
-	MemoryUsedBySystem  string   `json:"memory_used_by_system"`
-	MemoryUsedByService string   `json:"memory_used_by_service"`
-	AvailableMemory     string   `json:"available_memory"`
-	GCPauseDuration     string   `json:"gc_pause_duration"`
-	StackMemoryUsage    string   `json:"stack_memory_usage"`
-	TotalSwapMemory     string   `json:"total_swap_memory"`
-	FreeSwapMemory      string   `json:"free_swap_memory"`
-	MemStatsRecords     []Record `json:"mem_stats_records"` // List of memory statistic records.
+	TotalSystemMemory   string               `json:"total_system_memory"`
+	MemoryUsedBySystem  string               `json:"memory_used_by_system"`
+	MemoryUsedByService string               `json:"memory_used_by_service"`
+	AvailableMemory     string               `json:"available_memory"`
+	GCPauseDuration     string               `json:"gc_pause_duration"`
+	StackMemoryUsage    string               `json:"stack_memory_usage"`
+	TotalSwapMemory     string               `json:"total_swap_memory"`
+	FreeSwapMemory      string               `json:"free_swap_memory"`
+	MemStatsRecords     []Record             `json:"mem_stats_records"`     // List of memory statistic records.
+	RawMemStatsRecords  []RawMemStatsRecords `json:"raw_mem_stats_records"` // RawMemStatsRecords holds a list of raw memory statistic records.
+}
+
+type ServiceHealth struct {
+	OverallHealthPercent string `json:"overall_health_percent"`
+	Health               Health `json:"health"`
+}
+
+type Health struct {
+	Healthy bool   `json:"healthy"`
+	Message string `json:"message"`
 }
 
 ////////////////////
@@ -121,6 +132,11 @@ type MemStatsRecords struct {
 	Records []Record `json:"records"`
 }
 
+type RawMemStatsRecords struct {
+	RecordName  string  `json:"record_name"`
+	RecordValue float64 `json:"record_value"`
+}
+
 // Record represents a single memory statistic record.
 type Record struct {
 	Name        string      `json:"record_name"`
@@ -141,16 +157,6 @@ type ServiceMetrics struct {
 	HeapAllocSys           float64       `json:"heap_alloc_sys"`
 	TotalDurationTookByAPI time.Duration `json:"total_duration_took_by_api"`
 	OverallHealth          ServiceHealth `json:"overall_health"`
-}
-
-type ServiceHealth struct {
-	OverallHealthPercent string `json:"overall_health_percent"`
-	Health               Health `json:"health"`
-}
-
-type Health struct {
-	Healthy bool   `json:"healthy"`
-	Message string `json:"message"`
 }
 
 type FieldName struct {
