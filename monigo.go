@@ -2,9 +2,13 @@ package monigo
 
 import (
 	"embed"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"runtime"
 	"sync"
@@ -51,6 +55,10 @@ type MonigoInt interface {
 	SetServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) // Set the service thresholds to calculate the overall service health
 }
 
+type Cache struct {
+	Data map[string]time.Time
+}
+
 func (m *Monigo) Start() {
 
 	if m.ServiceName == "" {
@@ -58,25 +66,44 @@ func (m *Monigo) Start() {
 	}
 
 	if m.PurgeMonigoStorage {
-		log.Panic("PurgeMonigoStorage is set to true, please set it to false to start the service")
 		m.DeleteMonigoStorage()
 	}
 
 	// Set the frequency to sync the metrics to the storage
 	m.SetDbSyncFrequency(m.DbSyncFrequency) // Default is 5 Minutes
 
-	//@TODO:  RetentionPeriod  Yet to be implemented
+	// TODO: Correct the logs
 
 	m.ProcessId = common.GetProcessId()
 	m.GoVersion = runtime.Version()
 	m.ServiceStartTime = serviceStartTime
 
-	common.SetServiceInfo(m.ServiceName, m.ServiceStartTime, m.GoVersion, m.ProcessId)
+	cachePath := BasePath + "/cache.dat"
+	cache := Cache{Data: make(map[string]time.Time)}
+
+	err := cache.LoadFromFile(cachePath)
+	if err != nil {
+		log.Println("Could not load cache, starting fresh")
+	}
+
+	if _, ok := cache.Data[m.ServiceName]; ok {
+		m.ServiceStartTime = cache.Data[m.ServiceName]
+	}
+
+	cache.Data[m.ServiceName] = m.ServiceStartTime
+
+	log.Println("Service start time updated in cache, new start time:", m.ServiceStartTime)
+
+	err = cache.SaveToFile(cachePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	common.SetServiceInfo(m.ServiceName, m.ServiceStartTime, m.GoVersion, m.ProcessId, m.RetentionPeriod)
 	go StartDashboard(m.DashboardPort)
 }
 
 func (m *Monigo) DeleteMonigoStorage() {
-	log.Panic("PurgeMonigoStorage is set to true, please set it to false to start the service")
 	timeseries.PurgeStorage()
 }
 
@@ -166,4 +193,49 @@ func MeasureExecutionTime(name string, f func()) {
 
 func RecordRequestDuration(duration time.Duration) {
 	core.RecordRequestDuration(duration)
+}
+
+func (c *Cache) SaveToFile(filename string) error {
+	// Encode the data as JSON
+	jsonData, err := json.Marshal(c.Data)
+	if err != nil {
+		return err
+	}
+
+	// Encode the JSON data as Base64
+	base64Data := base64.StdEncoding.EncodeToString(jsonData)
+
+	// Save the Base64 encoded data to the file
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.WriteString(base64Data)
+	return err
+}
+
+func (c *Cache) LoadFromFile(filename string) error {
+	// Open the file
+	file, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Read the Base64 encoded data from the file
+	base64Data, err := ioutil.ReadAll(file)
+	if err != nil {
+		return err
+	}
+
+	// Decode the Base64 data
+	jsonData, err := base64.StdEncoding.DecodeString(string(base64Data))
+	if err != nil {
+		return err
+	}
+
+	// Decode the JSON data into the cache
+	return json.Unmarshal(jsonData, &c.Data)
 }

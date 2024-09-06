@@ -263,10 +263,19 @@ func GetServiceMetricsFromStorage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("Request Fields: ", req.FieldName)
-	log.Println("Start Time: ", startTime)
-	log.Println("End Time: ", endTime)
+	serviceStartTime := common.GetServiceStartTime()
 
+	if startTime.Before(serviceStartTime) {
+		log.Println("Start time is before service start time, setting start time to service start time")
+		log.Println("Service Start Time: " + serviceStartTime.String() + " Requested Start Time: " + startTime.String())
+		startTime = serviceStartTime
+	}
+
+	log.Println("\n")
+	log.Println("Request Fields: ", req.FieldName)
+	log.Println("Start Time: " + startTime.String() + " End Time: " + endTime.String())
+	log.Println("Start Time Unix: ", startTime.Unix(), " End Time Unix: ", endTime.Unix())
+	log.Println("\n")
 
 	labelName := "host"
 	labelValue := "server1"
@@ -287,10 +296,10 @@ func GetServiceMetricsFromStorage(w http.ResponseWriter, r *http.Request) {
 			// AcctualfieldName := NameMap[fieldName]
 
 			if _, ok := NameMap[fieldName]; ok {
-				log.Println("Field Name Found in Map")
+				// log.Println("Field Name Found in Map")
 				dataByTimestamp[dp.Timestamp][NameMap[fieldName]] = dp.Value
 			} else {
-				log.Println("Field Name Not Found in Map")
+				// log.Println("Field Name Not Found in Map")
 				dataByTimestamp[dp.Timestamp][fieldName] = dp.Value
 			}
 		}

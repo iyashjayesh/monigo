@@ -561,7 +561,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let StartTime = new Date();
         let EndTime = new Date();
 
-        if (timeRange == "15m") {
+        if (timeRange == "5m") {
+            StartTime = new Date(new Date().getTime() - 5 * 60000); // Subtract 5 minutes
+        } else if (timeRange == "15m") {
             StartTime = new Date(new Date().getTime() - 15 * 60000); // Subtract 15 minutes
         } else if (timeRange == "30m") {
             StartTime = new Date(new Date().getTime() - 30 * 60000); // Subtract 30 minutes
@@ -571,6 +573,12 @@ document.addEventListener('DOMContentLoaded', () => {
             StartTime = new Date(new Date().getTime() - 360 * 60000); // Subtract 6 hours
         } else if (timeRange == "1d") {
             StartTime = new Date(new Date().getTime() - 1440 * 60000); // Subtract 1 day
+        } else if (timeRange == "3d") {
+            StartTime = new Date(new Date().getTime() - 4320 * 60000); // Subtract 3 days
+        } else if (timeRange == "7d") {
+            StartTime = new Date(new Date().getTime() - 10080 * 60000); // Subtract 7 days
+        } else if (timeRange == "1m") {
+            StartTime = new Date(new Date().getTime() - 43200 * 60000); // Subtract 1 month
         }
         
 

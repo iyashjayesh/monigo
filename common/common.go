@@ -16,7 +16,10 @@ import (
 
 const monigoFolder string = "monigo"
 
-var serviceInfo models.ServiceInfo
+var (
+	serviceInfo      models.ServiceInfo
+	rententionPeriod string
+)
 
 // GetBasePath returns the base path for storage.
 func GetBasePath() string {
@@ -49,11 +52,12 @@ func GetDirSize(folderPath string) string {
 }
 
 // sets the service info.
-func SetServiceInfo(serviceName string, serviceStartTime time.Time, goVersion string, processId int32) {
+func SetServiceInfo(serviceName string, serviceStartTime time.Time, goVersion string, processId int32, rentainPeriod string) {
 	serviceInfo.ServiceName = serviceName
 	serviceInfo.ServiceStartTime = serviceStartTime
 	serviceInfo.GoVersion = goVersion
 	serviceInfo.ProcessId = processId
+	rententionPeriod = rentainPeriod
 }
 
 // GetServiceInfo returns the service info.
@@ -248,4 +252,25 @@ func ConvertBytesToUnit(bytes float64, unit string) float64 {
 	}
 
 	return result
+}
+
+// GetServiceStartTime returns the service start time.
+func GetServiceStartTime() time.Time {
+	return serviceInfo.ServiceStartTime
+}
+
+// GetRetentionPeriod returns the retention period.
+func GetRetentionPeriod() time.Duration {
+
+	if rententionPeriod == "" {
+		rententionPeriod = "7d"
+	}
+
+	rententionPeriod, err := time.ParseDuration(rententionPeriod)
+	if err != nil {
+		log.Printf("Invalid retention period format: %v. Using default of 7d.\n", err)
+		rententionPeriod = 7 * 24 * time.Hour
+	}
+
+	return rententionPeriod
 }
