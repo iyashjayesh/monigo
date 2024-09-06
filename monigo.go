@@ -58,6 +58,7 @@ func (m *Monigo) Start() {
 	}
 
 	if m.PurgeMonigoStorage {
+		log.Panic("PurgeMonigoStorage is set to true, please set it to false to start the service")
 		m.DeleteMonigoStorage()
 	}
 
@@ -75,6 +76,7 @@ func (m *Monigo) Start() {
 }
 
 func (m *Monigo) DeleteMonigoStorage() {
+	log.Panic("PurgeMonigoStorage is set to true, please set it to false to start the service")
 	timeseries.PurgeStorage()
 }
 
@@ -99,17 +101,16 @@ func StartDashboard(addr int) {
 	log.Println("Starting the dashboard at port:", addr)
 
 	http.HandleFunc("/", serveHtmlSite)
-	// http.HandleFunc("/metrics", api.GetMetrics)
-	// http.HandleFunc("/metrics", api.GetCoreStats)
 	http.HandleFunc("/metrics", api.NewCoreStatistics)
-	
+
 	http.HandleFunc("/function-metrics", api.GetFunctionMetrics)
 
 	// http.HandleFunc("/generate-function-metrics", api.ProfileHandler)
 
 	// API to fetch the service metrics
 	http.HandleFunc("/service-info", api.GetServiceInfoAPI) // Completed
-	http.HandleFunc("/service-metrics", api.GetServiceMetricsFromStorage)
+
+	http.HandleFunc("/service-metrics", api.GetServiceMetricsFromStorage) // API to fetch DATA points
 	http.HandleFunc("/go-routines-stats", api.GetGoRoutinesStats)
 
 	// /get-metrics?fields=service-info

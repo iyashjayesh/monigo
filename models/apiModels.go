@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/nakabonne/tstorage"
+)
 
 // NewServiceStats represents the final statistics of the service.
 type NewServiceStats struct {
@@ -179,3 +183,21 @@ type GoRoutinesStatistic struct {
 	NumberOfGoroutines int      `json:"number_of_goroutines"`
 	StackView          []string `json:"stack_view"`
 }
+
+/// API MODELS
+
+type FetchDataPoints struct {
+	FieldName []string `json:"field_name"`
+	StartTime string   `json:"start_time"` // "2006-01-02T15:04:05Z07:00"
+	EndTime   string   `json:"end_time"`   // "2006-01-02T15:04:05Z07:00"
+}
+
+type DataPointsInfo struct {
+	FieldName string                `json:"field_name"`
+	Data      []*tstorage.DataPoint `json:"data_points"`
+}
+
+// type DataPointsInfo struct {
+// 	DataPointTime time.Time            `json:"time"`
+// 	Value         []map[string]float64 `json:"value"`
+// }

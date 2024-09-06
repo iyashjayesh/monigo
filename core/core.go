@@ -18,50 +18,50 @@ import (
 func GetNewServiceStats() models.NewServiceStats {
 
 	var serviceStats models.NewServiceStats
-	timeNow := time.Now()
+	// timeNow := time.Now()
 	serviceStats.CoreStatistics = GetCoreStatistics()
-	log.Println("Time taken to get the core statistics: ", time.Since(timeNow))
+	// log.Println("Time taken to get the core statistics: ", time.Since(timeNow))
 
 	var wg sync.WaitGroup
 	wg.Add(5)
 
 	go func() {
 		defer wg.Done()
-		timeNow := time.Now()
+		// timeNow := time.Now()
 		serviceStats.LoadStatistics = GetLoadStatistics()
-		log.Println("Time taken to get the load statistics: ", time.Since(timeNow))
+		// log.Println("Time taken to get the load statistics: ", time.Since(timeNow))
 	}()
 
 	go func() {
 		defer wg.Done()
-		timeNow := time.Now()
+		// timeNow := time.Now()
 		serviceStats.MemoryStatistics = GetMemoryStatistics()
-		log.Println("Time taken to get the memory statistics: ", time.Since(timeNow))
+		// log.Println("Time taken to get the memory statistics: ", time.Since(timeNow))
 	}()
 
 	go func() {
 		defer wg.Done()
-		timeNow := time.Now()
+		// timeNow := time.Now()
 		serviceStats.CPUStatistics = GetCPUStatistics()
-		log.Println("Time taken to get the CPU statistics: ", time.Since(timeNow))
+		// log.Println("Time taken to get the CPU statistics: ", time.Since(timeNow))
 	}()
 
 	go func() {
 		defer wg.Done()
-		timeNow := time.Now()
+		// timeNow := time.Now()
 		memStats := ReadMemStats()
 		serviceStats.HeapAllocByService = common.BytesToUnit(memStats.HeapAlloc)
 		serviceStats.HeapAllocBySystem = common.BytesToUnit(memStats.HeapSys)
 		serviceStats.TotalAllocByService = common.BytesToUnit(memStats.TotalAlloc)
 		serviceStats.TotalMemoryByOS = common.BytesToUnit(memStats.Sys)
-		log.Println("Time taken to get the memory stats: ", time.Since(timeNow))
+		// log.Println("Time taken to get the memory stats: ", time.Since(timeNow))
 	}()
 
 	go func() {
 		defer wg.Done()
-		timeNow := time.Now()
+		// timeNow := time.Now()
 		serviceStats.NetworkIO.BytesReceived, serviceStats.NetworkIO.BytesSent = GetNetworkIO()
-		log.Println("Time taken to get the network stats: ", time.Since(timeNow))
+		// log.Println("Time taken to get the network stats: ", time.Since(timeNow))
 	}()
 
 	wg.Wait()

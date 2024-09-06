@@ -320,6 +320,9 @@ func StoreNewServiceMetrics(serviceMetrics *models.NewServiceStats) error {
 	var rows []tstorage.Row
 	timestamp := time.Now().Unix()
 
+	log.Println("time.Now() ", time.Now())
+	log.Println("timestamp Unix()", timestamp)
+
 	labelName := "host"
 	labelValue := "server1"
 
@@ -337,9 +340,6 @@ func StoreNewServiceMetrics(serviceMetrics *models.NewServiceStats) error {
 			Labels:    []tstorage.Label{{Name: labelName, Value: labelValue}},
 		},
 	}
-
-	log.Println("serviceMetrics.CoreStatistics.Goroutines ", serviceMetrics.CoreStatistics.Goroutines)
-	log.Println("overall_load_of_service ", serviceMetrics.LoadStatistics.OverallLoadOfService)
 
 	// LoadStatistics
 	// overall_load_of_service, service_cpu_load, service_memory_load,

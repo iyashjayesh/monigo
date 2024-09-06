@@ -163,8 +163,6 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch(`/metrics`)
             .then(response => response.json())
             .then(data => {
-                console.log("Dashboard metrics: ", data);
-
                 const {
                     core_statistics,
                     load_statistics,
@@ -196,6 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
+    // KB
     function renderCharts(data) {
         const charts = {
             loadChart: echarts.init(elements.loadChart),
@@ -510,65 +509,175 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    // Function to prepare chart options based on selected metric and time range
-    function getChartOptions(metric, timeRange) {
-        const durationInMinutes = timeRanges[timeRange];
-        const rawData = generateMockData(metric, durationInMinutes);
+    // Function to get the local ISO string with timezone offset
+    function toLocalISOString(date) {
+        const tzOffset = -date.getTimezoneOffset(); // in minutes
+        const diff = tzOffset >= 0 ? '+' : '-';
+        const pad = (num) => `${Math.floor(Math.abs(num))}`.padStart(2, '0');
 
-        const seriesData = {};
-        rawData.forEach(dataPoint => {
-            const timeLabel = dataPoint.time.toLocaleString();
-            for (let key in dataPoint.value) {
-                if (!seriesData[key]) {
-                    seriesData[key] = [];
-                }
-                seriesData[key].push([timeLabel, dataPoint.value[key]]);
-            }
-        });
+        const offsetHours = pad(tzOffset / 60);
+        const offsetMinutes = pad(tzOffset % 60);
 
-        const series = [];
-        for (let key in seriesData) {
-            series.push({
-                name: key,
-                type: 'line',
-                data: seriesData[key],
-                smooth: true
-            });
+        return date.getFullYear() +
+            '-' + pad(date.getMonth() + 1) +
+            '-' + pad(date.getDate()) +
+            'T' + pad(date.getHours()) +
+            ':' + pad(date.getMinutes()) +
+            ':' + pad(date.getSeconds()) +
+            '.' + String((date.getMilliseconds() / 1000).toFixed(3)).slice(2, 5) +
+            diff + offsetHours + ':' + offsetMinutes;
+    }
+
+    function fetchDataPointsFromServer(metricName, timeRange){
+        // const dataPoints = [];
+        // let StartTime = new Date();
+        // let EndTime = new Date();
+        // if (timeRange == "15m") {
+        //     StartTime = new Date(new Date().getTime() - 15 * 60000); // Subtract i minutes
+        // } else if (timeRange == "30m") {
+        //     StartTime = new Date(new Date().getTime() - 30 * 60000); // Subtract i minutes
+        // } else if (timeRange == "1h") {
+        //     StartTime = new Date(new Date().getTime() - 60 * 60000); // Subtract i minutes
+        // }
+
+        // let metricList = [];
+        // if (metricName == "heap") {
+        //     metricList = ["heap_alloc", "heap_sys", "heap_inuse", "heap_idle", "heap_released"];
+        // } else if (metricName == "stack") {
+        //     metricList = ["stack_inuse", "stack_sys"];
+        // } else if (metricName == "gc") {
+        //     metricList = ["pause_total_ns", "num_gc", "gc_cpu_fraction"];
+        // } else if (metricName == "misc") {
+        //     metricList = ["m_span_inuse", "m_span_sys", "m_cache_inuse", "m_cache_sys", "buck_hash_sys", "gc_sys", "other_sys"];
+        // }
+
+        // let data = {
+        //     field_name: metricList,
+        //     start_time: StartTime.toISOString(),
+        //     end_time: EndTime.toISOString()
+        // };
+
+        const dataPoints = [];
+        let StartTime = new Date();
+        let EndTime = new Date();
+
+        if (timeRange == "15m") {
+            StartTime = new Date(new Date().getTime() - 15 * 60000); // Subtract 15 minutes
+        } else if (timeRange == "30m") {
+            StartTime = new Date(new Date().getTime() - 30 * 60000); // Subtract 30 minutes
+        } else if (timeRange == "1h") {
+            StartTime = new Date(new Date().getTime() - 60 * 60000); // Subtract 1 hour
+        } else if (timeRange == "6h") {
+            StartTime = new Date(new Date().getTime() - 360 * 60000); // Subtract 6 hours
+        } else if (timeRange == "1d") {
+            StartTime = new Date(new Date().getTime() - 1440 * 60000); // Subtract 1 day
+        }
+        
+
+        let metricList = [];
+        if (metricName == "heap") {
+            metricList = ["heap_alloc", "heap_sys", "heap_inuse", "heap_idle", "heap_released"];
+        } else if (metricName == "stack") {
+            metricList = ["stack_inuse", "stack_sys"];
+        } else if (metricName == "gc") {
+            metricList = ["pause_total_ns", "num_gc", "gc_cpu_fraction"];
+        } else if (metricName == "misc") {
+            metricList = ["m_span_inuse", "m_span_sys", "m_cache_inuse", "m_cache_sys", "buck_hash_sys", "gc_sys", "other_sys"];
         }
 
-        return {
-            title: {
-                text: getMetricTitle(metric),
-                left: 'center'
-            },
-            tooltip: {
-                trigger: 'axis'
-            },
-            legend: {
-                top: 30,
-                data: Object.keys(seriesData)
-            },
-            xAxis: {
-                type: 'category',
-                boundaryGap: false,
-                data: rawData.map(d => d.time.toLocaleString()),
-                axisLabel: {
-                    formatter: function(value) {
-                        return value.split(' ')[1]; // Show only time
-                    }
-                }
-            },
-            yAxis: {
-                type: 'value',
-                axisLabel: {
-                    formatter: function(value) {
-                        return formatYAxisLabel(metric, value);
-                    }
-                }
-            },
-            series: series
+        let data = {
+            field_name: metricList,
+            timerange: timeRange,
+            start_time: toLocalISOString(StartTime),
+            end_time: toLocalISOString(EndTime)
         };
+        console.log('Fetching data for metric:', metricName, 'and time range:', timeRange);
+        console.log('API REQ:', data);
+
+        fetch(`/service-metrics`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        }).then(response => response.json())
+            .then(data => {
+                console.log('API RES:', data);
+
+                let rawData = [];
+                for (let i = 0; i < data.length; i++) {
+                    const timestamp = new Date(data[i].time); 
+                    rawData.push({
+                        time: timestamp,
+                        value: data[i].value
+                    });
+                }
+
+
+                console.log('New Constructed DATA:', rawData);
+                const seriesData = {};
+                rawData.forEach(dataPoint => {
+                    const timeLabel = dataPoint.time.toLocaleString();
+                    for (let key in dataPoint.value) {
+                        if (!seriesData[key]) {
+                            seriesData[key] = [];
+                        }
+                        seriesData[key].push([timeLabel, dataPoint.value[key]]);
+                    }
+                });
+
+                const series = [];
+                for (let key in seriesData) {
+                    series.push({
+                        name: key,
+                        type: 'line',
+                        data: seriesData[key],
+                        smooth: true
+                    });
+                }
+
+                chart.setOption({
+                    title: {
+                        text: getMetricTitle(metricName),
+                        left: 'center'
+                    },
+                    tooltip: {
+                        trigger: 'axis'
+                    },
+                    legend: {
+                        top: 30,
+                        data: Object.keys(seriesData)
+                    },
+                    xAxis: {
+                        type: 'category',
+                        boundaryGap: false,
+                        data: rawData.map(d => d.time.toLocaleString()),
+                        axisLabel: {
+                            formatter: function(value) {
+                                return value.split(' ')[1]; // Show only time
+                            }
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        axisLabel: {
+                            formatter: function(value) {
+                                return formatYAxisLabel(metricName, value);
+                            }
+                        }
+                    },
+                    series: series
+                });
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
     }
+
+    // // Function to prepare chart options based on selected metric and time range
+    // function getChartOptions(metric, timeRange) {
+    //     fetchDataPointsFromServer(metric, timeRange);
+    // }
 
     // Helper function to get chart title based on metric
     function getMetricTitle(metric) {
@@ -589,7 +698,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Helper function to format Y-axis labels
     function formatYAxisLabel(metric, value) {
         if (metric === 'heap' || metric === 'misc') {
-            return `${value} MB`;
+            return `${value} KB`;
         } else if (metric === 'stack' || (metric === 'gc' && value > 1)) {
             return `${value} KB`;
         } else if (metric === 'gc' && value <= 1) {
@@ -603,8 +712,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateChart() {
         const metricSelect = document.getElementById('metric-select').value;
         const timeSelect = document.getElementById('time-select').value;
-        const options = getChartOptions(metricSelect, timeSelect);
-        chart.setOption(options);
+        fetchDataPointsFromServer(metricSelect, timeSelect);   
     }
 
     // Event listeners for dropdown changes

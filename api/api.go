@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sort"
 	"sync"
 	"time"
 
 	"github.com/iyashjayesh/monigo/common"
 	"github.com/iyashjayesh/monigo/core"
+	"github.com/iyashjayesh/monigo/models"
 	"github.com/iyashjayesh/monigo/timeseries"
 	"github.com/nakabonne/tstorage"
 )
@@ -49,165 +51,6 @@ func NewCoreStatistics(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(jsonMetrics))
 	log.Println("Time taken to get the service stats Final: ", time.Since(startTime))
 }
-
-// func GetMetrics(w http.ResponseWriter, r *http.Request) {
-// 	unit := r.URL.Query().Get("unit")
-// 	if unit == "" {
-// 		unit = "MB" // Default Unit
-// 	}
-
-// 	requestCount, totalDuration := core.GetServiceMetrics()
-// 	serviceStat := core.GetProcessSats()
-
-// 	memStats := core.ReadMemStats()
-
-// 	// Convert bytes to different units
-// 	bytesToUnit := func(bytes uint64) float64 {
-// 		switch unit {
-// 		case "KB":
-// 			return float64(bytes) / 1024.0
-// 		case "MB":
-// 			return float64(bytes) / 1048576.0
-// 		default: // "bytes"
-// 			return float64(bytes)
-// 		}
-// 	}
-
-// 	SystemUsedCoresToString := fmt.Sprintf("%.2f", serviceStat.SystemUsedCores)
-// 	ProcessUsedCoresToString := fmt.Sprintf("%.2f", serviceStat.ProcessUsedCores)
-
-// 	core := ProcessUsedCoresToString + "PC / " +
-// 		SystemUsedCoresToString + "SC / " +
-// 		strconv.Itoa(serviceStat.TotalLogicalCores) + "LC / " +
-// 		strconv.Itoa(serviceStat.TotalCores) + "C"
-
-// 	// ProcMemPercent
-// 	memoryUsed := fmt.Sprintf("%.2f", serviceStat.ProcMemPercent)
-// 	runtimeGoRoutine := runtime.NumGoroutine()
-// 	serviceInfo := common.GetServiceInfo()
-
-// 	// 7.051466958s
-// 	uptime := time.Since(serviceInfo.ServiceStartTime)
-// 	uptimeStr := fmt.Sprintf("%.2f s", uptime.Seconds())
-
-// 	if uptime.Seconds() > 60 {
-// 		uptimeStr = fmt.Sprintf("%.2f m", uptime.Minutes())
-// 	} else if uptime.Hours() > 60 {
-// 		uptimeStr = fmt.Sprintf("%.2f h", uptime.Hours())
-// 	} else if uptime.Hours() > 24 {
-// 		uptimeStr = fmt.Sprintf("%.2f d", uptime.Hours()/24)
-// 	} else if uptime.Hours() > 30*24 {
-// 		uptimeStr = fmt.Sprintf("%.2f m", uptime.Hours()/(30*24))
-// 	} else if uptime.Hours() > 12*30*24 {
-// 		uptimeStr = fmt.Sprintf("%.2f y", uptime.Hours()/(12*30*24))
-// 	}
-
-// 	metrics := struct {
-// 		Goroutines    int    `json:"goroutines"`
-// 		Requests      int64  `json:"requests"`
-// 		TotalDuration string `json:"total_duration"`
-// 		MemoryUsage   string `json:"memory_usage"`
-// 		Alloc         string `json:"alloc"`
-// 		TotalAlloc    string `json:"total_alloc"`
-// 		Sys           string `json:"sys"`
-// 		HeapAlloc     string `json:"heap_alloc"`
-// 		HeapSys       string `json:"heap_sys"`
-// 		Load          string `json:"load"`
-// 		Cores         string `json:"cores"`
-// 		MemoryUsed    string `json:"memory_used"`
-// 		Uptime        string `json:"uptime"`
-// 	}{
-// 		Goroutines:    runtimeGoRoutine,
-// 		Requests:      requestCount,
-// 		TotalDuration: totalDuration.String(),
-// 		MemoryUsage:   unit,
-// 		Alloc:         fmt.Sprintf("%.2f", bytesToUnit(memStats.Alloc)),
-// 		TotalAlloc:    fmt.Sprintf("%.2f", bytesToUnit(memStats.TotalAlloc)),
-// 		Sys:           fmt.Sprintf("%.2f", bytesToUnit(memStats.Sys)),
-// 		HeapAlloc:     fmt.Sprintf("%.2f", bytesToUnit(memStats.HeapAlloc)),
-// 		HeapSys:       fmt.Sprintf("%.2f", bytesToUnit(memStats.HeapSys)),
-// 		Load:          fmt.Sprintf("%.2f", serviceStat.ProcCPUPercent) + "%",
-// 		Cores:         core,
-// 		MemoryUsed:    memoryUsed + "%",
-// 		Uptime:        uptimeStr,
-// 	}
-
-// 	jsonMetrics, _ := json.Marshal(metrics)
-
-// 	w.Header().Set("Content-Type", "application/json")
-// 	w.Write([]byte(jsonMetrics))
-// }
-
-// func GetCoreStats(w http.ResponseWriter, r *http.Request) {
-// 	unit := r.URL.Query().Get("unit")
-// 	if unit == "" {
-// 		unit = "MB" // Default Unit
-// 	}
-
-// 	requestCount, totalDuration := core.GetServiceMetrics()
-// 	// serviceStat := core.GetProcessSats()
-
-// 	// memStats := core.ReadMemStats()
-// 	// memStatsRecord := core.ConstructMemStats(memStats)
-
-// 	// Convert bytes to different units
-// 	// bytesToUnit := func(bytes uint64) float64 {
-// 	// 	switch unit {
-// 	// 	case "KB":
-// 	// 		return float64(bytes) / 1024.0
-// 	// 	case "MB":
-// 	// 		return float64(bytes) / 1048576.0
-// 	// 	case "GB":
-// 	// 		return float64(bytes) / 1073741824.0
-// 	// 	default: // "bytes"
-// 	// 		return float64(bytes)
-// 	// 	}
-// 	// }
-
-// 	// SystemUsedCoresToString := fmt.Sprintf("%.2f", serviceStat.SystemUsedCores)
-// 	// ProcessUsedCoresToString := fmt.Sprintf("%.2f", serviceStat.ProcessUsedCores)
-
-// 	// coreStr := ProcessUsedCoresToString + "PC / " +
-// 	// 	SystemUsedCoresToString + "SC / " +
-// 	// 	strconv.Itoa(serviceStat.TotalLogicalCores) + "LC / " +
-// 	// 	strconv.Itoa(serviceStat.TotalCores) + "C"
-
-// 	// ProcMemPercent
-// 	// memoryUsed := fmt.Sprintf("%.2f", serviceStat.ProcMemPercent)
-// 	runtimeGoRoutine := runtime.NumGoroutine()
-// 	serviceInfo := common.GetServiceInfo()
-
-// 	// 7.051466958s
-// 	uptime := time.Since(serviceInfo.ServiceStartTime)
-// 	uptimeStr := fmt.Sprintf("%.2f s", uptime.Seconds())
-
-// 	if uptime.Seconds() > 60 {
-// 		uptimeStr = fmt.Sprintf("%.2f m", uptime.Minutes())
-// 	} else if uptime.Hours() > 60 {
-// 		uptimeStr = fmt.Sprintf("%.2f h", uptime.Hours())
-// 	} else if uptime.Hours() > 24 {
-// 		uptimeStr = fmt.Sprintf("%.2f d", uptime.Hours()/24)
-// 	} else if uptime.Hours() > 30*24 {
-// 		uptimeStr = fmt.Sprintf("%.2f m", uptime.Hours()/(30*24))
-// 	} else if uptime.Hours() > 12*30*24 {
-// 		uptimeStr = fmt.Sprintf("%.2f y", uptime.Hours()/(12*30*24))
-// 	}
-
-// 	metrics := models.ServiceCoreStats{
-// 		Goroutines:   runtimeGoRoutine,
-// 		RequestCount: requestCount,
-// 		// Load:                       fmt.Sprintf("%.2f", serviceStat.ProcCPUPercent) + "%",
-// 		Memory:                     core.GetSystemMemoryInfo(),
-// 		Uptime:                     uptimeStr,
-// 		TotalDurationTookbyRequest: totalDuration.Seconds(),
-// 		CPU:                        core.GetSystemCPUInfo(),
-// 	}
-
-// 	jsonMetrics, _ := json.Marshal(metrics)
-
-// 	w.Header().Set("Content-Type", "application/json")
-// 	w.Write([]byte(jsonMetrics))
-// }
 
 func GetFunctionMetrics(w http.ResponseWriter, r *http.Request) {
 	unit := r.URL.Query().Get("unit")
@@ -249,39 +92,160 @@ func GetFunctionMetrics(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(results))
 }
 
-// func ProfileHandler(w http.ResponseWriter, r *http.Request) {
-// 	log.Printf("Generating profile\n")
-// 	name := r.URL.Query().Get("name")
-// 	if name == "" {
-// 		http.Error(w, "Name parameter is required", http.StatusBadRequest)
+func GetGoRoutinesStats(w http.ResponseWriter, r *http.Request) {
+	jsonGoRoutinesStats, _ := json.Marshal(core.CollectGoRoutinesInfo())
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(jsonGoRoutinesStats))
+}
+
+// func GetServiceMetricsFromStorage(w http.ResponseWriter, r *http.Request) {
+
+// 	var req models.FetchDataPoints
+
+// 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+// 		http.Error(w, "Failed to decode request", http.StatusBadRequest)
 // 		return
 // 	}
 
-// 	profilesFolderPath := fmt.Sprintf("%s/profiles", common.GetBasePath())
-
-// 	cmd := exec.Command("go", "tool", "pprof", "-svg", profilesFolderPath)
-// 	output, err := cmd.Output()
+// 	startTime, err := time.Parse(time.RFC3339, req.StartTime)
 // 	if err != nil {
-// 		errMsg := fmt.Sprintf("failed to generate profile, given path %s, error: %v", profilesFolderPath, err)
-// 		http.Error(w, errMsg, http.StatusInternalServerError)
+// 		http.Error(w, "Invalid start time", http.StatusBadRequest)
 // 		return
 // 	}
 
-// 	w.Header().Set("Content-Type", "image/svg+xml")
-// 	if _, err := w.Write(output); err != nil {
-// 		http.Error(w, "Failed to write response", http.StatusInternalServerError)
+// 	endTime, err := time.Parse(time.RFC3339, req.EndTime)
+// 	if err != nil {
+// 		http.Error(w, "Invalid end time", http.StatusBadRequest)
+// 		return
 // 	}
+
+// 	labelName := "host"
+// 	labelValue := "server1"
+
+// 	var datapointRes []models.DataPointsInfo
+// 	for _, fieldName := range req.FieldName {
+// 		datapoints, err := timeseries.GetDataPoints(fieldName, []tstorage.Label{{Name: labelName, Value: labelValue}}, startTime.Unix(), endTime.Unix())
+// 		if err != nil {
+// 			http.Error(w, "Failed to get data points", http.StatusInternalServerError)
+// 			return
+// 		}
+
+// 		datapointRes = append(datapointRes, models.DataPointsInfo{
+// 			FieldName: fieldName,
+// 			Data:      datapoints,
+// 		})
+// 	}
+
+// 	// above "datapointRes" has all the data points for the requested fields and time range
+
+// 	// 	{
+// 	//     "time": "2024-09-06T09:07:33.770Z",
+// 	//     "value": {
+// 	//         "HeapAlloc": 6.47,
+// 	//         "HeapSys": 13.37,
+// 	//         "HeapInuse": 9.99,
+// 	//         "HeapIdle": 4.77,
+// 	//         "HeapReleased": 2.63
+// 	//     }
+// 	// }
+// 	// but I want soemthign like above
+// 	// how to acheive?
+
+// 	jsonDP, err := json.Marshal(datapointRes)
+// 	if err != nil {
+// 		http.Error(w, "Failed to marshal data points", http.StatusInternalServerError)
+// 		return
+// 	}
+
+// 	w.Header().Set("Content-Type", "application/json")
+// 	w.Write(jsonDP)
 // }
 
-type ReqObj struct {
-	FieldName string `json:"field_name"`
-	StartTime string `json:"start_time"` // "2006-01-02T15:04:05Z07:00"
-	EndTime   string `json:"end_time"`   // "2006-01-02T15:04:05Z07:00"
+// func GetServiceMetricsFromStorage(w http.ResponseWriter, r *http.Request) {
+// 	var req models.FetchDataPoints
+
+// 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+// 		http.Error(w, "Failed to decode request", http.StatusBadRequest)
+// 		return
+// 	}
+
+// 	startTime, err := time.Parse(time.RFC3339, req.StartTime)
+// 	if err != nil {
+// 		http.Error(w, "Invalid start time", http.StatusBadRequest)
+// 		return
+// 	}
+
+// 	endTime, err := time.Parse(time.RFC3339, req.EndTime)
+// 	if err != nil {
+// 		http.Error(w, "Invalid end time", http.StatusBadRequest)
+// 		return
+// 	}
+
+// 	labelName := "host"
+// 	labelValue := "server1"
+
+// 	// Map to group data points by timestamp
+// 	dataByTimestamp := make(map[int64]map[string]float64)
+
+// 	for _, fieldName := range req.FieldName {
+// 		datapoints, err := timeseries.GetDataPoints(fieldName, []tstorage.Label{{Name: labelName, Value: labelValue}}, startTime.Unix(), endTime.Unix())
+// 		if err != nil {
+// 			http.Error(w, "Failed to get data points", http.StatusInternalServerError)
+// 			return
+// 		}
+
+// 		for _, dp := range datapoints {
+// 			if _, exists := dataByTimestamp[dp.Timestamp]; !exists {
+// 				dataByTimestamp[dp.Timestamp] = make(map[string]float64)
+// 			}
+// 			dataByTimestamp[dp.Timestamp][fieldName] = dp.Value
+// 		}
+// 	}
+
+// 	// Prepare the final response structure
+// 	var result []map[string]interface{}
+// 	for timestamp, values := range dataByTimestamp {
+// 		result = append(result, map[string]interface{}{
+// 			"time":  time.Unix(timestamp, 0).UTC().Format(time.RFC3339),
+// 			"value": values,
+// 		})
+// 	}
+
+// 	log.Println("Data points fetched successfully, " + labelName + ": " + labelValue)
+
+// 	jsonDP, err := json.Marshal(result)
+// 	if err != nil {
+// 		http.Error(w, "Failed to marshal data points", http.StatusInternalServerError)
+// 		return
+// 	}
+
+// 	w.Header().Set("Content-Type", "application/json")
+// 	w.Write(jsonDP)
+// }
+
+var NameMap = map[string]string{
+	"heap_alloc":      "HeapAlloc",
+	"heap_sys":        "HeapSys",
+	"heap_inuse":      "HeapInuse",
+	"heap_idle":       "HeapIdle",
+	"heap_released":   "HeapReleased",
+	"stack_inuse":     "StackInuse",
+	"stack_sys":       "StackSys",
+	"pause_total_ns":  "PauseTotalNs",
+	"num_gc":          "NumGC",
+	"gc_cpu_fraction": "GCCPUFraction",
+	"m_span_inuse":    "MSpanInuse",
+	"m_span_sys":      "MSpanSys",
+	"m_cache_inuse":   "MCacheInuse",
+	"m_cache_sys":     "MCacheSys",
+	"buck_hash_sys":   "BuckHashSys",
+	"gc_sys":          "GCSys",
+	"other_sys":       "OtherSys",
 }
 
 func GetServiceMetricsFromStorage(w http.ResponseWriter, r *http.Request) {
+	var req models.FetchDataPoints
 
-	var req ReqObj
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Failed to decode request", http.StatusBadRequest)
 		return
@@ -299,13 +263,55 @@ func GetServiceMetricsFromStorage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	datapoints, err := timeseries.GetDataPoints(req.FieldName, []tstorage.Label{{Name: "host", Value: "server1"}}, startTime.Unix(), endTime.Unix())
-	if err != nil {
-		http.Error(w, "Failed to get data points", http.StatusInternalServerError)
-		return
+	log.Println("Request Fields: ", req.FieldName)
+	log.Println("Start Time: ", startTime)
+	log.Println("End Time: ", endTime)
+
+
+	labelName := "host"
+	labelValue := "server1"
+
+	dataByTimestamp := make(map[int64]map[string]float64)
+
+	for _, fieldName := range req.FieldName {
+		datapoints, err := timeseries.GetDataPoints(fieldName, []tstorage.Label{{Name: labelName, Value: labelValue}}, startTime.Unix(), endTime.Unix())
+		if err != nil {
+			http.Error(w, "Failed to get data points", http.StatusInternalServerError)
+			return
+		}
+
+		for _, dp := range datapoints {
+			if _, exists := dataByTimestamp[dp.Timestamp]; !exists {
+				dataByTimestamp[dp.Timestamp] = make(map[string]float64)
+			}
+			// AcctualfieldName := NameMap[fieldName]
+
+			if _, ok := NameMap[fieldName]; ok {
+				log.Println("Field Name Found in Map")
+				dataByTimestamp[dp.Timestamp][NameMap[fieldName]] = dp.Value
+			} else {
+				log.Println("Field Name Not Found in Map")
+				dataByTimestamp[dp.Timestamp][fieldName] = dp.Value
+			}
+		}
 	}
 
-	jsonDP, err := json.Marshal(datapoints)
+	var result []map[string]interface{}
+	for timestamp, values := range dataByTimestamp {
+		result = append(result, map[string]interface{}{
+			"time":  time.Unix(timestamp, 0).UTC().Format(time.RFC3339Nano),
+			"value": values,
+		})
+	}
+
+	// sort the timingdataByTimestamp in ascending order
+	sort.Slice(result, func(i, j int) bool {
+		return result[i]["time"].(string) < result[j]["time"].(string)
+	})
+
+	log.Println("Data points fetched successfully, " + labelName + ": " + labelValue)
+
+	jsonDP, err := json.Marshal(result)
 	if err != nil {
 		http.Error(w, "Failed to marshal data points", http.StatusInternalServerError)
 		return
@@ -336,8 +342,26 @@ func GetServiceMetricsFromStorage(w http.ResponseWriter, r *http.Request) {
 
 // }
 
-func GetGoRoutinesStats(w http.ResponseWriter, r *http.Request) {
-	jsonGoRoutinesStats, _ := json.Marshal(core.CollectGoRoutinesInfo())
-	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(jsonGoRoutinesStats))
-}
+// func ProfileHandler(w http.ResponseWriter, r *http.Request) {
+// 	log.Printf("Generating profile\n")
+// 	name := r.URL.Query().Get("name")
+// 	if name == "" {
+// 		http.Error(w, "Name parameter is required", http.StatusBadRequest)
+// 		return
+// 	}
+
+// 	profilesFolderPath := fmt.Sprintf("%s/profiles", common.GetBasePath())
+
+// 	cmd := exec.Command("go", "tool", "pprof", "-svg", profilesFolderPath)
+// 	output, err := cmd.Output()
+// 	if err != nil {
+// 		errMsg := fmt.Sprintf("failed to generate profile, given path %s, error: %v", profilesFolderPath, err)
+// 		http.Error(w, errMsg, http.StatusInternalServerError)
+// 		return
+// 	}
+
+// 	w.Header().Set("Content-Type", "image/svg+xml")
+// 	if _, err := w.Write(output); err != nil {
+// 		http.Error(w, "Failed to write response", http.StatusInternalServerError)
+// 	}
+// }
