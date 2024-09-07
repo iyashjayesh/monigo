@@ -140,14 +140,16 @@
                         </button>
                         <div class="collapse navbar-collapse" id="navbarSupportedContent">
                             <ul class="navbar-nav ml-auto navbar-list align-items-center">
-                                <li class="nav-item nav-icon dropdown">
-                                    <a href="#" class="btn border add-btn">
-                                        <span id="refresh-countdown"> <i class="fa fa-refresh p-0"></i> Refreshing in 5m 0s</span>
+                                <!-- on hover cursor-pointer -->
+                                <i id="refresh-btn" class="fa fa-refresh fa-1x mr-2 cursor-pointer" aria-hidden="true"></i>
+                                <li class="nav-item nav-icon">
+                                    <a  class="btn border add-btn">
+                                        <span id="refresh-countdown">Refreshing in 5m 0s</span>
                                     </a>
                                 </li>
                                 <li class="nav-item nav-icon dropdown">
                                     <a href="https://github.com/iyashjayesh/monigo" target="_blank">
-                                        <i class="fa fa-github fa-2x" aria-hidden="true"></i>
+                                        <i class="fa fa-github fa-2x cursor-pointer" aria-hidden="true"></i>
                                         <span class="bg-primary"></span>
                                     </a>
                                 </li>
@@ -160,99 +162,88 @@
         <div class="content-page">
             <div class="container-fluid">
                 <div class="row">
-                    <div class="col-lg-8">
+                    <div class="col-lg-4">
                         <div class="card card-transparent card-block card-stretch card-height border-none">
                             <div class="card-body p-0 mt-lg-2 mt-0">
-                                <h4 class="mb-0 mr-4">Moni<strong><em>GO</em></strong> dashboard gives you runtime views
+                                <!-- <h4 class="mb-0 mr-4">Moni<strong><em>GO</em></strong> dashboard gives you runtime views
                                     of key performance of your backend service process.
-                                </h4>
+                                </h4> -->
                                 <div class="row align-items-center">
-                                    <div class="col-lg-6">
+                                    <div class="mt-3">
+                                        <h4 class="mb-0">Service Health <span class="info-icon"
+                                                data-tooltip="The number of goroutines currently running in the application.">i</span>
+                                        </h4>
+                                        <div id="health-tag"></div>
+                                        <!-- <p class="mb-0">Service health is at 70%</p> -->
+                                    </div>
                                         <div class="gauge" id="g1">
                                             <svg viewBox="0 0 60 25">
-                                                <text x="50%" y="50%">20%</text>
+                                                <text x="50%" y="50%">...</text>
                                             </svg>
                                         </div>
-                                        <div class="mt-3">
-                                            <h4 class="mb-0">Service Health <span class="info-icon"
-                                                    data-tooltip="The number of goroutines currently running in the application.">i</span>
-                                            </h4>
-                                            <p class="mb-0">Service health is at 70%</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-6 p-0">
-                                        <div class="grid-container">
-                                            <div class="grid-item">
-                                                <div class="gauge" id="g2">
-                                                    <svg viewBox="0 0 60 25">
-                                                        <text x="50%" y="50%">70%</text>
-                                                    </svg>
-                                                </div>
-                                                <div>
-                                                    <!-- <h4 class="mb-0">Service Health</h4> -->
-                                                    <p class="mb-0">Service Health: 70% <span class="info-icon"
-                                                            data-tooltip="The number of goroutines currently running in the application.">i</span>
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div class="grid-item">
-                                                <div class="gauge" id="g3">
-                                                    <svg viewBox="0 0 60 25">
-                                                        <text x="50%" y="50%">30%</text>
-                                                    </svg>
-                                                </div>
-                                                <div>
-                                                    <!-- <h4 class="mb-0">Service Health</h4> -->
-                                                    <p class="mb-0">Service Health: 70% <span class="info-icon"
-                                                            data-tooltip="The number of goroutines currently running in the application.">i</span>
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div class="grid-item">
-                                                <div class="gauge" id="g4">
-                                                    <svg viewBox="0 0 60 25">
-                                                        <text x="50%" y="50%">40%</text>
-                                                    </svg>
-                                                </div>
-                                                <div>
-                                                    <!-- <h4 class="mb-0">Service Health</h4> -->
-                                                    <p class="mb-0">Service Health: 70% <span class="info-icon"
-                                                            data-tooltip="The number of goroutines currently running in the application.">i</span>
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div class="grid-item">
-                                                <div class="gauge" id="g5">
-                                                    <svg viewBox="0 0 60 25">
-                                                        <text x="50%" y="50%">50%</text>
-                                                    </svg>
-                                                </div>
-                                                <div>
-                                                    <!-- <h4 class="mb-0">Service Health</h4> -->
-                                                    <p class="mb-0">Service Health: 70%<span class="info-icon"
-                                                            data-tooltip="The number of goroutines currently running in the application.">i</span>
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                        
                                 </div>
-                                <div id="load-service-health-guage"></div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-4">
-                        <div class="row pl-3 pr-3">
+                    <div class="col-lg-8">
+                        <!-- <div class="row pl-3 pr-3">
                             <div class="card card-block card-stretch card-height">
                                 <div class="card-body">
-                        <div id="service-container">
-                        </div>
-                        <div class="iq-progress-bar mt-2">
-                            <span class="bg-info iq-progress progress-1" style="width: 0%;" data-percent="100">
-                            </span>
-                        </div>
-                        </div>
-                        </div>
+                                    <div id="service-container">
+                                    </div>
+                                    <div class="iq-progress-bar mt-2">
+                                        <span class="bg-info iq-progress progress-1" style="width: 0%;" data-percent="100">
+                                        </span>
+                                    </div>
+                                </div>
+                             </div>
+                        </div> -->
+                        <div class="row">
+                            <div class="col-lg-3 col-md-3">
+                                <div class="card card-block card-stretch card-height">
+                                    <div class="card-body">
+                                        <div id="service_name"></div>
+                                        <div class="iq-progress-bar mt-2">
+                                            <span class="bg-info iq-progress progress-1" data-percent="100">
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-3">
+                                <div class="card card-block card-stretch card-height">
+                                    <div class="card-body">
+                                        <div id="service_start_time"></div>
+                                        <div class="iq-progress-bar mt-2">
+                                            <span class="bg-info iq-progress progress-1" data-percent="100">
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-3">
+                                <div class="card card-block card-stretch card-height">
+                                    <div class="card-body">
+                                        <div id="go_version"></div>
+                                        <div class="iq-progress-bar mt-2">
+                                            <span class="bg-info iq-progress progress-1" data-percent="100">
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-3">
+                                <div class="card card-block card-stretch card-height">
+                                    <div class="card-body">
+                                        <div id="process_id"></div>
+                                        <div class="iq-progress-bar mt-2">
+                                            <span class="bg-info iq-progress progress-1" data-percent="100">
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="col-lg-12" id="dashboard">
@@ -595,12 +586,13 @@
     <script async src="../assets/js/chart-custom.js"></script>
     <!-- app JavaScript -->
     <script src="../assets/js/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
     <!-- Main JavaScript -->
     <!-- <script src="../assets/js/main.js" defer></script> -->
     <script src="./index.js" defer></script>
     <script src="./common.js" defer></script>
+    <script src="./refresh.js" defer></script>
     <!-- ECharts JS -->
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
 </body>
 
 </html>

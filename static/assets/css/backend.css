@@ -26175,7 +26175,7 @@ pre {
   justify-content: center;
   position: relative;
   aspect-ratio: 2 / 1.5;
-  width: 50%;
+  width: 100%;
   --fill-color: var(--green);
   --background-color: white;
   --gauge-background-color: #333;
@@ -26221,7 +26221,7 @@ pre {
   right: 0;
   position: absolute;
   --o: 0;
-  animation: roll-o-1 1s alternate ease-in-out both;
+  animation: roll-o-1 3s alternate ease-in-out both;
 
   /* inner ring */
   background: radial-gradient(circle at 50% 70%,

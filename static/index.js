@@ -1,8 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
+
     const DASHBOARD = document.getElementById('dashboard');
     const GOROUTINES_PAGE = document.getElementById('goroutines-page');
-    const goRoutinesNumber = document.getElementById('goroutine-count');
-    const serviceInfoContainer = document.getElementById('service-container');
+
+    const process_id = document.getElementById('process_id');
+    const service_name = document.getElementById('service_name');
+    const go_version = document.getElementById('go_version');
+    const service_start_time = document.getElementById('service_start_time');
+
     const refreshHtml = `
         <div class="loader-container">
             <div class="bouncing-dots">
@@ -30,12 +35,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (GOROUTINES_PAGE) {
         fetchServiceInfo();
-        fetchGoRoutines();
-        startCountdown();
     } else if (DASHBOARD) {
         fetchMetrics();
         fetchServiceInfo();
-        startCountdown();
     } else {
         console.warn('No valid page found');
     }
@@ -44,7 +46,11 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch(`/service-info`)
             .then(response => response.json())
             .then(data => {
-                serviceInfoContainer.innerHTML = '';
+                // serviceInfoContainer.innerHTML = '';
+                service_name.innerHTML = '';
+                go_version.innerHTML = '';
+                service_start_time.innerHTML = '';
+                process_id.innerHTML = '';
                 const date = new Date(data.service_start_time);
                 const formattedDate = date.toLocaleDateString('en-US', {
                     year: 'numeric',
@@ -57,55 +63,33 @@ document.addEventListener('DOMContentLoaded', () => {
                     hour12: true
                 });
 
-                serviceInfoContainer.innerHTML = `
-                                <div class="d-flex align-items-center mb-4 card-total-sale">
-                                    <div class="icon iq-icon-box-2 bg-info-light">
-                                        <img src="../assets/images/product/1.png" class="img-fluid" alt="image">
-                                    </div>
-                                    <div>
-                                        <p class="mb-2">Service Name: <h4>${data.service_name}</h4></p>
-                                        <p class="mb-2">Go Version: <h4>${data.go_version}</h4></p>
-                                        <p class="mb-2">Service Start Time: <h4>${formattedDate}<br/> ${formattedTime}</h4></p>
-                                        <p class="mb-2">Process ID: <h4>${data.process_id}</h4></p>
-                                    </div>
-                                </div>`;
-            });
-    }
-
-    function fetchGoRoutines() {
-        fetch(`/go-routines-stats`)
-            .then(response => response.json())
-            .then(data => {
-                console.log(data);
-                goRoutinesNumber.innerHTML = data.number_of_goroutines;
-                const container = document.getElementById('goroutines-container');
-                const countElement = document.getElementById('goroutine-count');
-
-                let goroutines = [];
-                data.stack_view.forEach((item, index) => {
-                    const goroutine = {
-                        id: index + 1,
-                        stackTrace: item
-                    };
-                    goroutines.push(goroutine);
-                });
-
-                countElement.textContent = goroutines.length;
-                container.innerHTML = '';
-
-                // Iterate over each goroutine and create HTML content
-                goroutines.forEach(goroutine => {
-                    const div = document.createElement('div');
-                    div.className = 'goroutine';
-                    div.innerHTML = `
-                        <div class="goroutine-header">Goroutine ${goroutine.id}:</div>
-                        <pre>${goroutine.stackTrace}</pre>
-                    `;
-                    container.appendChild(div);
-                });
-
-            }).catch(error => {
-                console.error(error);
+                service_name.innerHTML =`
+                    <div class="d-flex align-items-center mb-4 card-total-sale">
+                        <div>
+                            <p class="mb-2">Service Name: <h4>${data.service_name}</h4></p>
+                        </div>
+                    </div>`;
+                go_version.innerHTML = `
+                    <div class="d-flex align-items-center mb-4 card-total-sale">
+                        
+                        <div>
+                            <p class="mb-2">Go Version: <h4>${data.go_version}</h4></p>
+                        </div>
+                    </div>`;
+                service_start_time.innerHTML = `
+                    <div class="d-flex align-items-center mb-4 card-total-sale">
+                        
+                        <div>
+                            <p class="mb-2">Service Start Time: <h4>${formattedDate}<br/> ${formattedTime}</h4></p>
+                        </div>
+                    </div>`;
+                process_id.innerHTML = `
+                    <div class="d-flex align-items-center mb-4 card-total-sale">
+                        
+                        <div>
+                            <p class="mb-2">Process ID: <h4>${data.process_id}</h4></p>
+                        </div>
+                    </div>`;
             });
     }
 
@@ -125,6 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch(`/metrics`)
             .then(response => response.json())
             .then(data => {
+
+                console.log('Metrics:', data);  
                 const {
                     core_statistics,
                     load_statistics,
@@ -132,6 +118,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     memory_statistics,
                     overall_health
                 } = data;
+
+
+
+                updateGauge('g1', overall_health.overall_health_percent);
+
 
                 updateElement(elements.goroutines, 'Go Routines:', core_statistics?.goroutines ?? 'N/A', 'Number of goroutines that are currently running');
                 updateElement(elements.serviceLoad, 'Load:', `${load_statistics?.overall_load_of_service ?? 'N/A'}`, 'The load average of the system');
@@ -592,4 +583,59 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', function() {
         chart.resize();
     });
+
+
+    function updateGauge(gaugeId, percentageStr) {
+
+        percentageStr = percentageStr.replace('%', '');
+        const percentage = parseFloat(percentageStr);
+
+        const gauge = document.getElementById(gaugeId);
+        const guageText = gauge.querySelector('text');
+        // health-tag
+        const healthTag = document.getElementById('health-tag');
+
+        // Update the text inside the gauge
+        guageText.textContent = `${percentage}%`;
+
+        // Determine the fill color based on the percentage
+        let fillColor;
+        let tag;
+        if (percentage >= 80) {
+            fillColor = 'var(--green)';
+            tag = 'Smooth Sailing 🛳️';
+        } else if (percentage >= 60) {
+            fillColor = 'var(--lightgreen)';
+            tag = 'System Looking Good 👍';
+        } else if (percentage >= 50) {
+            fillColor = 'var(--yellow)';
+            tag = 'Fairly Balanced 🌟';
+        } else if (percentage >= 40) {
+            fillColor = 'var(--orange)';
+            tag = 'System Under Stress 😟';
+        } else {
+            fillColor = 'var(--red)';
+            tag = 'Critical Condition 🚨';
+        }
+                                        // <!-- <p class="mb-0">Service health is at 70%</p> -->
+
+        healthTag.innerHTML = `
+            <p class="mb-0">${tag}</p>
+        `
+        
+
+        // Reset the --o property to 0 to restart the animation
+        gauge.style.setProperty('--o', 0);
+
+        // Trigger a reflow to reset the animation (forces a repaint)
+        void gauge.offsetWidth;
+
+        // Set the custom properties for the gauge
+        gauge.style.setProperty('--fill-percentage', percentage);
+        gauge.style.setProperty('--fill-color', fillColor);
+
+        // Now update --o to the target percentage to animate
+        gauge.style.setProperty('--o', percentage);
+    }
+
 });

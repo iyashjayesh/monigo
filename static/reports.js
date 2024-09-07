@@ -72,11 +72,11 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .then(response => response.json())
         .then(data => {
-            const sectionTitle = document.getElementById('sectionTitle');
+            // const sectionTitle = document.getElementById('sectionTitle');
             const tablesContainer = document.getElementById('tablesContainer');
 
             if (data.length > 0) {
-                sectionTitle.textContent = `${metric} - ${timeframe}`;
+                // sectionTitle.textContent = `${metric} - ${timeframe}`;
                 const table = createTable(topic, data);
                 tablesContainer.appendChild(table);
 
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     downloadBtn.addEventListener('click', () => downloadCSV(data, metric));
                 }
             } else {
-                sectionTitle.textContent = 'No Data Available';
+                // sectionTitle.textContent = 'No Data Available';
                 tablesContainer.innerHTML = '';
                 const downloadBtn = document.getElementById('downloadBtn');
                 if (downloadBtn) {
@@ -174,9 +174,9 @@ document.addEventListener('DOMContentLoaded', () => {
      // Function to update chart based on selections
     function updateTableCompo() {
 
-        const sectionTitle = document.getElementById('sectionTitle');
+        // const sectionTitle = document.getElementById('sectionTitle');
         const tablesContainer = document.getElementById('tablesContainer');
-        sectionTitle.textContent = 'Loading...';
+        // sectionTitle.textContent = 'Loading...';
         tablesContainer.innerHTML = '';
         const metricSelect = document.getElementById('topic').value;
         const timeSelect = document.getElementById('timeframe').value;
