@@ -44,25 +44,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('No valid page found');
     }
 
-
-
-    function animateProgressBar(bar, targetWidth, duration) {
-        let start = null;
-
-        function step(timestamp) {
-            if (!start) start = timestamp;
-            const progress = timestamp - start;
-            const width = Math.min((progress / duration) * targetWidth, targetWidth);
-            bar.style.width = `${width}%`;
-
-            if (width < targetWidth) {
-                requestAnimationFrame(step);
-            }
-        }
-
-        requestAnimationFrame(step);
-    }
-
     function fetchServiceInfo() {
         fetch(`/service-info`)
             .then(response => response.json())
@@ -81,9 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 serviceInfoContainer.innerHTML = `
-                    <div class="row pl-3 pr-3">
-                        <div class="card card-block card-stretch card-height">
-                            <div class="card-body">
                                 <div class="d-flex align-items-center mb-4 card-total-sale">
                                     <div class="icon iq-icon-box-2 bg-info-light">
                                         <img src="../assets/images/product/1.png" class="img-fluid" alt="image">
@@ -94,19 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <p class="mb-2">Service Start Time: <h4>${formattedDate}<br/> ${formattedTime}</h4></p>
                                         <p class="mb-2">Process ID: <h4>${data.process_id}</h4></p>
                                     </div>
-                                </div>
-                                <div class="iq-progress-bar mt-2">
-                                    <span class="bg-info iq-progress progress-1" data-percent="100"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>`;
-
-                const progressBars = serviceInfoContainer.querySelectorAll('.iq-progress');
-                progressBars.forEach(bar => {
-                    const percent = bar.getAttribute('data-percent');
-                    animateProgressBar(bar, percent, 2000); // 2 seconds duration
-                });
+                                </div>`;
             });
     }
 
