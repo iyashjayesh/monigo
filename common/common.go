@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -259,6 +260,27 @@ func GetServiceStartTime() time.Time {
 	return serviceInfo.ServiceStartTime
 }
 
+func parseDuration(input string) (time.Duration, error) {
+	if strings.HasSuffix(input, "d") {
+		daysStr := strings.TrimSuffix(input, "d")
+		days, err := strconv.Atoi(daysStr)
+		if err != nil {
+			return 0, err
+		}
+		// Convert days to hours
+		return time.Duration(days*24) * time.Hour, nil
+	} else if strings.HasSuffix(input, "month") {
+		monthsStr := strings.TrimSuffix(input, "month")
+		months, err := strconv.Atoi(monthsStr)
+		if err != nil {
+			return 0, err
+		}
+		return time.Duration(months*30) * 24 * time.Hour, nil
+	}
+
+	return time.ParseDuration(input)
+}
+
 // GetRetentionPeriod returns the retention period.
 func GetRetentionPeriod() time.Duration {
 
@@ -266,10 +288,10 @@ func GetRetentionPeriod() time.Duration {
 		rententionPeriod = "7d"
 	}
 
-	rententionPeriod, err := time.ParseDuration(rententionPeriod)
+	rententionPeriod, err := parseDuration(rententionPeriod)
 	if err != nil {
-		log.Printf("Invalid retention period format: %v. Using default of 7d.\n", err)
-		rententionPeriod = 7 * 24 * time.Hour
+		log.Printf("Error parsing retention period, using default retention period (7d): %v", err)
+		rententionPeriod = time.Duration(7) * 24 * time.Hour
 	}
 
 	return rententionPeriod

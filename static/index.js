@@ -12,10 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         </div>`;
 
-         let countdownInterval;
-        let refreshIntervalId;
-        let refreshInterval; // To store the refresh interval in minutes
-        let remainingTime;
+    let countdownInterval;
+    let refreshIntervalId;
+    let refreshInterval; // To store the refresh interval in minutes
+    let remainingTime;
     const elements = {
         goroutines: document.getElementById('goroutines'),
         serviceLoad: document.getElementById('service-load'),
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('No valid page found');
     }
 
-    
+
 
     function animateProgressBar(bar, targetWidth, duration) {
         let start = null;
@@ -436,79 +436,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const chart = echarts.init(document.getElementById('chart'));
 
-    const timeRanges = {
-        '15m': 15,
-        '30m': 30,
-        '1h': 60,
-        '6h': 360,
-        '1d': 1440,
-        '3d': 4320,
-        '1m': 43200 // Approximate minutes in a month
-    };
-
-    // Generate mock time-series data
-    function generateMockData(metric, durationInMinutes) {
-        const dataPoints = [];
-        const now = new Date();
-        const interval = Math.floor(durationInMinutes / 60); // Generate data points every minute
-        const totalPoints = durationInMinutes;
-
-        for (let i = totalPoints; i >= 0; i--) {
-            const timestamp = new Date(now.getTime() - i * 60000); // Subtract i minutes
-            dataPoints.push({
-                time: timestamp,
-                value: getRandomValue(metric)
-            });
-        }
-        return dataPoints;
-    }
-
-    // Function to get random values based on metric type
-    function getRandomValue(metric) {
-        switch (metric) {
-            case 'heap':
-                return {
-                    HeapAlloc: getRandomArbitrary(4, 8),
-                        HeapSys: getRandomArbitrary(10, 15),
-                        HeapInuse: getRandomArbitrary(5, 10),
-                        HeapIdle: getRandomArbitrary(3, 7),
-                        HeapReleased: getRandomArbitrary(2, 5)
-                };
-            case 'stack':
-                return {
-                    StackInuse: getRandomArbitrary(600, 800),
-                        StackSys: getRandomArbitrary(600, 800)
-                };
-            case 'gc':
-                return {
-                    PauseTotalNs: getRandomArbitrary(50, 150),
-                        NumGC: getRandomInt(1, 10),
-                        GCCPUFraction: getRandomArbitrary(0.0001, 0.005)
-                };
-            case 'misc':
-                return {
-                    MSpanInuse: getRandomArbitrary(80, 120),
-                        MSpanSys: getRandomArbitrary(100, 130),
-                        MCacheInuse: getRandomArbitrary(10, 20),
-                        MCacheSys: getRandomArbitrary(12, 25),
-                        BuckHashSys: getRandomArbitrary(1, 2),
-                        GCSys: getRandomArbitrary(2, 5),
-                        OtherSys: getRandomArbitrary(1, 3)
-                };
-            default:
-                return {};
-        }
-    }
-
-    // Utility functions to generate random numbers
-    function getRandomArbitrary(min, max) {
-        return +(Math.random() * (max - min) + min).toFixed(2);
-    }
-
-    function getRandomInt(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-
     // Function to get the local ISO string with timezone offset
     function toLocalISOString(date) {
         const tzOffset = -date.getTimezoneOffset(); // in minutes
@@ -528,36 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
             diff + offsetHours + ':' + offsetMinutes;
     }
 
-    function fetchDataPointsFromServer(metricName, timeRange){
-        // const dataPoints = [];
-        // let StartTime = new Date();
-        // let EndTime = new Date();
-        // if (timeRange == "15m") {
-        //     StartTime = new Date(new Date().getTime() - 15 * 60000); // Subtract i minutes
-        // } else if (timeRange == "30m") {
-        //     StartTime = new Date(new Date().getTime() - 30 * 60000); // Subtract i minutes
-        // } else if (timeRange == "1h") {
-        //     StartTime = new Date(new Date().getTime() - 60 * 60000); // Subtract i minutes
-        // }
-
-        // let metricList = [];
-        // if (metricName == "heap") {
-        //     metricList = ["heap_alloc", "heap_sys", "heap_inuse", "heap_idle", "heap_released"];
-        // } else if (metricName == "stack") {
-        //     metricList = ["stack_inuse", "stack_sys"];
-        // } else if (metricName == "gc") {
-        //     metricList = ["pause_total_ns", "num_gc", "gc_cpu_fraction"];
-        // } else if (metricName == "misc") {
-        //     metricList = ["m_span_inuse", "m_span_sys", "m_cache_inuse", "m_cache_sys", "buck_hash_sys", "gc_sys", "other_sys"];
-        // }
-
-        // let data = {
-        //     field_name: metricList,
-        //     start_time: StartTime.toISOString(),
-        //     end_time: EndTime.toISOString()
-        // };
-
-        const dataPoints = [];
+    function fetchDataPointsFromServer(metricName, timeRange) {
         let StartTime = new Date();
         let EndTime = new Date();
 
@@ -577,10 +475,10 @@ document.addEventListener('DOMContentLoaded', () => {
             StartTime = new Date(new Date().getTime() - 4320 * 60000); // Subtract 3 days
         } else if (timeRange == "7d") {
             StartTime = new Date(new Date().getTime() - 10080 * 60000); // Subtract 7 days
-        } else if (timeRange == "1m") {
+        } else if (timeRange == "1month") {
             StartTime = new Date(new Date().getTime() - 43200 * 60000); // Subtract 1 month
         }
-        
+
 
         let metricList = [];
         if (metricName == "heap") {
@@ -603,18 +501,18 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('API REQ:', data);
 
         fetch(`/service-metrics`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        }).then(response => response.json())
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            }).then(response => response.json())
             .then(data => {
                 console.log('API RES:', data);
 
                 let rawData = [];
                 for (let i = 0; i < data.length; i++) {
-                    const timestamp = new Date(data[i].time); 
+                    const timestamp = new Date(data[i].time);
                     rawData.push({
                         time: timestamp,
                         value: data[i].value
@@ -720,7 +618,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateChart() {
         const metricSelect = document.getElementById('metric-select').value;
         const timeSelect = document.getElementById('time-select').value;
-        fetchDataPointsFromServer(metricSelect, timeSelect);   
+        fetchDataPointsFromServer(metricSelect, timeSelect);
     }
 
     // Event listeners for dropdown changes
@@ -735,63 +633,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     //////// Refreesh 
-   
 
-        // // Function to fetch data and update the chart
-        // function updateChart() {
-        //     startCountdown(); // Restart countdown after updating chart
-        // }
 
-        // Function to start the countdown
-        function startCountdown() {
-            clearInterval(countdownInterval); // Clear any existing countdown
-            const countdownDisplay = document.getElementById('refresh-countdown');
-            remainingTime = refreshInterval * 60; // Convert minutes to seconds
+    // // Function to fetch data and update the chart
+    // function updateChart() {
+    //     startCountdown(); // Restart countdown after updating chart
+    // }
 
-            countdownInterval = setInterval(() => {
-                const minutes = Math.floor(remainingTime / 60);
-                const seconds = remainingTime % 60;
-                countdownDisplay.textContent = `Refreshing in ${minutes}m ${seconds}s`;
-                remainingTime--;
+    // Function to start the countdown
+    function startCountdown() {
+        clearInterval(countdownInterval); // Clear any existing countdown
+        const countdownDisplay = document.getElementById('refresh-countdown');
+        remainingTime = refreshInterval * 60; // Convert minutes to seconds
 
-                if (remainingTime < 0) {
-                    clearInterval(countdownInterval);
-                }
-            }, 1000);
-        }
+        countdownInterval = setInterval(() => {
+            const minutes = Math.floor(remainingTime / 60);
+            const seconds = remainingTime % 60;
+            countdownDisplay.textContent = `Refreshing in ${minutes}m ${seconds}s`;
+            remainingTime--;
 
-        // Function to start auto-refresh with the set interval
-        function startAutoRefresh() {
-            clearInterval(refreshIntervalId); // Clear any existing interval
-            refreshIntervalId = setInterval(updateChart, refreshInterval * 60 * 1000); // Convert minutes to milliseconds
-            startCountdown(); // Start the countdown immediately after setting the interval
-        }
-
-        // Enable the "Set" button when the input is changed
-        document.getElementById('refresh-interval').addEventListener('input', function () {
-            document.getElementById('set-interval').disabled = false;
-        });
-
-        // Apply the refresh interval when "Set" is clicked
-        document.getElementById('set-interval').addEventListener('click', function () {
-            refreshInterval = parseInt(document.getElementById('refresh-interval').value, 10) || 5;
-            refreshInterval = Math.max(1, Math.min(60, refreshInterval)); // Enforce min 1, max 60
-            localStorage.setItem('refreshInterval', refreshInterval); // Store the value in localStorage
-            startAutoRefresh();
-            this.disabled = true; // Disable the button again until the next input change
-        });
-
-        // Load the refresh interval from localStorage or use default
-        function loadRefreshInterval() {
-            const storedInterval = localStorage.getItem('refreshInterval');
-            if (storedInterval) {
-                refreshInterval = parseInt(storedInterval, 10);
-            } else {
-                refreshInterval = 5; // Default value if nothing is stored
+            if (remainingTime < 0) {
+                clearInterval(countdownInterval);
             }
-            document.getElementById('refresh-interval').value = refreshInterval; // Update the input field
-        }
+        }, 1000);
+    }
 
-        loadRefreshInterval();
+    // Function to start auto-refresh with the set interval
+    function startAutoRefresh() {
+        clearInterval(refreshIntervalId); // Clear any existing interval
+        refreshIntervalId = setInterval(updateChart, refreshInterval * 60 * 1000); // Convert minutes to milliseconds
+        startCountdown(); // Start the countdown immediately after setting the interval
+    }
+
+    // Enable the "Set" button when the input is changed
+    document.getElementById('refresh-interval').addEventListener('input', function() {
+        document.getElementById('set-interval').disabled = false;
+    });
+
+    // Apply the refresh interval when "Set" is clicked
+    document.getElementById('set-interval').addEventListener('click', function() {
+        refreshInterval = parseInt(document.getElementById('refresh-interval').value, 10) || 5;
+        refreshInterval = Math.max(1, Math.min(60, refreshInterval)); // Enforce min 1, max 60
+        localStorage.setItem('refreshInterval', refreshInterval); // Store the value in localStorage
         startAutoRefresh();
+        this.disabled = true; // Disable the button again until the next input change
+    });
+
+    // Load the refresh interval from localStorage or use default
+    function loadRefreshInterval() {
+        const storedInterval = localStorage.getItem('refreshInterval');
+        if (storedInterval) {
+            refreshInterval = parseInt(storedInterval, 10);
+        } else {
+            refreshInterval = 5; // Default value if nothing is stored
+        }
+        document.getElementById('refresh-interval').value = refreshInterval; // Update the input field
+    }
+
+    loadRefreshInterval();
+    startAutoRefresh();
 });

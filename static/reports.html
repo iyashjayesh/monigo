@@ -5,13 +5,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Monigo - Metrics Dashboard</title>
-
     <!-- Favicon -->
     <link rel="shortcut icon" href="../assets/images/favicon.ico" />
     <link rel="stylesheet" href="../assets/css/backend-plugin.min.css">
     <link rel="stylesheet" href="../assets/css/backend.css?v=1.0.0">
+    <link rel="stylesheet" href="../assets/css/monigo-styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    
 </head>
 
 <body class="  ">
@@ -23,7 +22,6 @@
     <!-- loader END -->
     <!-- Wrapper Start -->
     <div class="wrapper">
-
         <div class="iq-sidebar  sidebar-default ">
             <div class="iq-sidebar-logo d-flex align-items-center justify-content-between">
                 <a href="./index.html" class="header-logo">
@@ -54,8 +52,10 @@
                         </li>
                         <li class=" ">
                             <a href="./go-routines-stats.html" class="">
-                                <svg class="svg-icon" id="p-dash1" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg class="svg-icon" id="p-dash1" width="20" height="20"
+                                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
                                     <path
                                         d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
                                     </path>
@@ -105,7 +105,8 @@
                             <div class="sidebarbottom-content">
                                 <!-- <div class="image"><img src="../assets/images/layouts/side-bkg.png" class="img-fluid" alt="side-bkg"></div> -->
                                 <h6 class="mt-4 px-4 body-title">Incase you find any issue or bug please report on
-                                    Github</h6>
+                                    Github
+                                </h6>
                                 <button type="button" class="btn sidebar-bottom-btn mt-4">Support the project</button>
                             </div>
                         </div>
@@ -127,10 +128,10 @@
                         </a>
                     </div>
                     <div class="iq-search-bar device-search">
-                        <form action="#" class="searchbox">
-                            <a class="search-link" href="#"><i class="ri-search-line"></i></a>
-                            <input type="text" class="text search-input" placeholder="Search here...">
-                        </form>
+                        <div class="health-status">
+                            <span id="health-indicator" class="health-indicator"></span>
+                            <span id="health-message" class="health-message"></span>
+                        </div>
                     </div>
                     <div class="d-flex align-items-center">
                         <button class="navbar-toggler" type="button" data-toggle="collapse"
@@ -146,7 +147,6 @@
                                         aria-expanded="false">
                                         <i style="font-size:18px" class="fa">&#xf021;</i>Refrsshing in 60s...
                                     </a>
-                                    
                                 </li>
                                 <li>
                                     <a href="#" class="btn border add-btn shadow-none mx-2 d-none d-md-block"
@@ -251,7 +251,6 @@
                                         </div>
                                     </div>
                                 </li>
-                                
                             </ul>
                         </div>
                     </div>
@@ -287,275 +286,54 @@
                     <div class="col-lg-12">
                         <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
                             <div>
-                                <h4 class="mb-3">Service Performace History</h4>
+                                <h2 class="mb-3">Service Statistics Dashboard</h2>
                                 <p class="mb-0">
-                                    Service performance history is a record of the service levels achieved by a service over a period of time.<br> 
-                                    It is used to help plan and manage the service levels that will be achieved in the future.
+                                    Service Statistics Dashboard is a record of the service levels achieved by a service
+                                    over a period of time.<br>
+                                    It is used to help plan and manage the service levels that will be achieved in the
+                                    future.
                                 </p>
                             </div>
-                            <a href="#" class="btn btn-primary add-list"><i class="las la-plus"></i>
+
+                            <!-- <button id="downloadCSV" class="btn btn-primary">Download CSV</button> -->
+                            
+                            <a id="downloadBtn" class="btn btn-primary add-list"><i class="las la-plus"></i>
                                 <i class="fa fa-download" aria-hidden="true"></i>Download Excel</a>
+                        </div>
+                        <div class="controls d-flex">
+                            <div class="dropdown">
+                                <label for="topic" class="dropdown-label">Select Topic:</label>
+                                <select id="topic" class="dropdown-select">
+                                    <option value="LoadStatistics">Load Statistics</option>
+                                    <option value="CPUStatistics">CPU Statistics</option>
+                                    <option value="MemoryStatistics">Memory Statistics</option>
+                                    <option value="MemoryProfile">Memory Profile</option>
+                                    <option value="NetworkIO">Network I/O</option>
+                                    <option value="OverallHealth">Overall Health</option>
+                                </select>
+                            </div>
+                            <div class="dropdown ml-3">
+                                <label for="timeframe" class="dropdown-label">Select Time Range:</label>
+                                <select id="timeframe" class="dropdown-select">
+                                    <option value="5m">5m</option>
+                                    <option value="10m">10m</option>
+                                    <option value="30m">30m</option>
+                                    <option value="1h">1h</option>
+                                    <option value="6h">6h</option>
+                                    <option value="1d">1d</option>
+                                    <option value="3d">3d</option>
+                                    <option value="1week">1 week</option>
+                                    <option value="1month">1 month(Max)</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     <div class="col-lg-12">
-                        <div class="table-responsive rounded mb-3">
-                            <table class="data-table table mb-0 tbl-server-info">
-                                <thead class="bg-white text-uppercase">
-                                    <tr class="ligth ligth-data">
-                                        <th>
-                                            <div class="checkbox d-inline-block">
-                                                <input type="checkbox" class="checkbox-input" id="checkbox1">
-                                                <label for="checkbox1" class="mb-0"></label>
-                                            </div>
-                                        </th>
-                                        <th>Company Name</th>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>Phone No.</th>
-                                        <th>City</th>
-                                        <th>Country</th>
-                                        <th>GST No</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="ligth-body">
-                                    <tr>
-                                        <td>
-                                            <div class="checkbox d-inline-block">
-                                                <input type="checkbox" class="checkbox-input" id="checkbox2">
-                                                <label for="checkbox2" class="mb-0"></label>
-                                            </div>
-                                        </td>
-                                        <td>Fruits Supply</td>
-                                        <td>Max Conversion</td>
-                                        <td>max@gmail.com</td>
-                                        <td>0123456789</td>
-                                        <td>Petaling</td>
-                                        <td>USA</td>
-                                        <td>1234</td>
-                                        <td>
-                                            <div class="d-flex align-items-center list-action">
-                                                <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="View" href="#"><i class="ri-eye-line mr-0"></i></a>
-                                                <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="Edit" href="#"><i class="ri-pencil-line mr-0"></i></a>
-                                                <a class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="Delete" href="#"><i
-                                                        class="ri-delete-bin-line mr-0"></i></a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="checkbox d-inline-block">
-                                                <input type="checkbox" class="checkbox-input" id="checkbox3">
-                                                <label for="checkbox3" class="mb-0"></label>
-                                            </div>
-                                        </td>
-                                        <td>Footwear Supply</td>
-                                        <td>Paige Turner</td>
-                                        <td>paige@gmail.com</td>
-                                        <td>0125856789</td>
-                                        <td>Orlando</td>
-                                        <td>USA</td>
-                                        <td>1235</td>
-                                        <td>
-                                            <div class="d-flex align-items-center list-action">
-                                                <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="View" href="#"><i class="ri-eye-line mr-0"></i></a>
-                                                <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="Edit" href="#"><i class="ri-pencil-line mr-0"></i></a>
-                                                <a class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="Delete" href="#"><i
-                                                        class="ri-delete-bin-line mr-0"></i></a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="checkbox d-inline-block">
-                                                <input type="checkbox" class="checkbox-input" id="checkbox4">
-                                                <label for="checkbox4" class="mb-0"></label>
-                                            </div>
-                                        </td>
-                                        <td>Furniture Supply</td>
-                                        <td>Barb Ackue</td>
-                                        <td>barb@gmail.com</td>
-                                        <td>0123246789</td>
-                                        <td>Miami</td>
-                                        <td>USA</td>
-                                        <td>1236</td>
-                                        <td>
-                                            <div class="d-flex align-items-center list-action">
-                                                <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="View" href="#"><i class="ri-eye-line mr-0"></i></a>
-                                                <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="Edit" href="#"><i class="ri-pencil-line mr-0"></i></a>
-                                                <a class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="Delete" href="#"><i
-                                                        class="ri-delete-bin-line mr-0"></i></a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="checkbox d-inline-block">
-                                                <input type="checkbox" class="checkbox-input" id="checkbox5">
-                                                <label for="checkbox5" class="mb-0"></label>
-                                            </div>
-                                        </td>
-                                        <td>Food Supply</td>
-                                        <td>Ira Membrit</td>
-                                        <td>ira@gmail.com</td>
-                                        <td>0123458719</td>
-                                        <td>Francisco</td>
-                                        <td>UK</td>
-                                        <td>1237</td>
-                                        <td>
-                                            <div class="d-flex align-items-center list-action">
-                                                <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="View" href="#"><i class="ri-eye-line mr-0"></i></a>
-                                                <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="Edit" href="#"><i class="ri-pencil-line mr-0"></i></a>
-                                                <a class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="Delete" href="#"><i
-                                                        class="ri-delete-bin-line mr-0"></i></a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="checkbox d-inline-block">
-                                                <input type="checkbox" class="checkbox-input" id="checkbox6">
-                                                <label for="checkbox6" class="mb-0"></label>
-                                            </div>
-                                        </td>
-                                        <td>Grocery Supply</td>
-                                        <td>Pete Sariya</td>
-                                        <td>pete@gmail.com</td>
-                                        <td>0111456789</td>
-                                        <td>Petaling</td>
-                                        <td>USA</td>
-                                        <td>1238</td>
-                                        <td>
-                                            <div class="d-flex align-items-center list-action">
-                                                <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="View" href="#"><i class="ri-eye-line mr-0"></i></a>
-                                                <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="Edit" href="#"><i class="ri-pencil-line mr-0"></i></a>
-                                                <a class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="Delete" href="#"><i
-                                                        class="ri-delete-bin-line mr-0"></i></a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="checkbox d-inline-block">
-                                                <input type="checkbox" class="checkbox-input" id="checkbox7">
-                                                <label for="checkbox7" class="mb-0"></label>
-                                            </div>
-                                        </td>
-                                        <td>Packing Supply</td>
-                                        <td>Rock lai</td>
-                                        <td>rock@gmail.com</td>
-                                        <td>0123452289</td>
-                                        <td>whopping </td>
-                                        <td>UK</td>
-                                        <td>1239</td>
-                                        <td>
-                                            <div class="d-flex align-items-center list-action">
-                                                <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="View" href="#"><i class="ri-eye-line mr-0"></i></a>
-                                                <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="Edit" href="#"><i class="ri-pencil-line mr-0"></i></a>
-                                                <a class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="Delete" href="#"><i
-                                                        class="ri-delete-bin-line mr-0"></i></a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="checkbox d-inline-block">
-                                                <input type="checkbox" class="checkbox-input" id="checkbox8">
-                                                <label for="checkbox8" class="mb-0"></label>
-                                            </div>
-                                        </td>
-                                        <td>Fish Supply</td>
-                                        <td>Terry Aki</td>
-                                        <td>terry@gmail.com</td>
-                                        <td>0123205789</td>
-                                        <td>Suzhou</td>
-                                        <td>USA</td>
-                                        <td>1240</td>
-                                        <td>
-                                            <div class="d-flex align-items-center list-action">
-                                                <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="View" href="#"><i class="ri-eye-line mr-0"></i></a>
-                                                <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="Edit" href="#"><i class="ri-pencil-line mr-0"></i></a>
-                                                <a class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="Delete" href="#"><i
-                                                        class="ri-delete-bin-line mr-0"></i></a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="checkbox d-inline-block">
-                                                <input type="checkbox" class="checkbox-input" id="checkbox9">
-                                                <label for="checkbox9" class="mb-0"></label>
-                                            </div>
-                                        </td>
-                                        <td>Cloth Supply</td>
-                                        <td>Cliff Hanger</td>
-                                        <td>cliff@gmail.com</td>
-                                        <td>0189556789</td>
-                                        <td>Guilin</td>
-                                        <td>UK</td>
-                                        <td>1241</td>
-                                        <td>
-                                            <div class="d-flex align-items-center list-action">
-                                                <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="View" href="#"><i class="ri-eye-line mr-0"></i></a>
-                                                <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="Edit" href="#"><i class="ri-pencil-line mr-0"></i></a>
-                                                <a class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="Delete" href="#"><i
-                                                        class="ri-delete-bin-line mr-0"></i></a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div class="checkbox d-inline-block">
-                                                <input type="checkbox" class="checkbox-input" id="checkbox10">
-                                                <label for="checkbox10" class="mb-0"></label>
-                                            </div>
-                                        </td>
-                                        <td>Toy Supply</td>
-                                        <td>Alex john</td>
-                                        <td>alex@gmail.com</td>
-                                        <td>0123456123</td>
-                                        <td>Nanjing</td>
-                                        <td>USA</td>
-                                        <td>1242</td>
-                                        <td>
-                                            <div class="d-flex align-items-center list-action">
-                                                <a class="badge badge-info mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="View" href="#"><i class="ri-eye-line mr-0"></i></a>
-                                                <a class="badge bg-success mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="Edit" href="#"><i class="ri-pencil-line mr-0"></i></a>
-                                                <a class="badge bg-warning mr-2" data-toggle="tooltip" data-placement="top" title=""
-                                                    data-original-title="Delete" href="#"><i
-                                                        class="ri-delete-bin-line mr-0"></i></a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                        <section id="dataSection">
+                            <h4 id="sectionTitle">Data</h4>
+                            <div id="tablesContainer">
+                            </div>
+                        </section>
                     </div>
                 </div>
                 <!-- Page end  -->
@@ -579,7 +357,8 @@
                         <div class="col-lg-6 text-right">
                             <span class="mr-1">
                                 <script>document.write(new Date().getFullYear())</script>©
-                            </span> <a href="#" class="">Moni<strong><em>GO</em></strong></a>.
+                            </span>
+                            <a href="#" class="">Moni<strong><em>GO</em></strong></a>.
                         </div>
                     </div>
                 </div>
@@ -588,20 +367,17 @@
     </footer>
     <!-- Backend Bundle JavaScript -->
     <script src="../assets/js/backend-bundle.min.js"></script>
-
     <!-- Table Treeview JavaScript -->
     <script src="../assets/js/table-treeview.js"></script>
-
     <!-- Chart Custom JavaScript -->
     <script src="../assets/js/customizer.js"></script>
-
     <!-- Chart Custom JavaScript -->
     <script async src="../assets/js/chart-custom.js"></script>
-
     <!-- app JavaScript -->
     <script src="../assets/js/app.js"></script>
     <!-- Main JavaScript -->
-    <script src="../assets/js/main.js" defer></script>
+    <script src="./reports.js" defer></script>
+    <script src="./common.js" defer></script>
 </body>
 
 </html>

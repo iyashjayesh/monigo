@@ -197,7 +197,9 @@ type DataPointsInfo struct {
 	Data      []*tstorage.DataPoint `json:"data_points"`
 }
 
-// type DataPointsInfo struct {
-// 	DataPointTime time.Time            `json:"time"`
-// 	Value         []map[string]float64 `json:"value"`
-// }
+type ReportsRequest struct {
+	Topic     string `json:"topic"`
+	StartTime string `json:"start_time"` // "2006-01-02T15:04:05Z07:00"
+	EndTime   string `json:"end_time"`   // "2006-01-02T15:04:05Z07:00"
+	TimeFrame string `json:"time_frame"`
+}

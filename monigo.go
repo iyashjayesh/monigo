@@ -140,6 +140,8 @@ func StartDashboard(addr int) {
 	http.HandleFunc("/service-metrics", api.GetServiceMetricsFromStorage) // API to fetch DATA points
 	http.HandleFunc("/go-routines-stats", api.GetGoRoutinesStats)
 
+	http.HandleFunc("/monigo/reports", api.GetReportData)
+
 	// /get-metrics?fields=service-info
 	// http.HandleFunc("/get-metrics", api.GetMetricsInfo)
 
