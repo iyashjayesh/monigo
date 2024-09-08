@@ -1,5 +1,9 @@
 ### Status: In Development 🚧
 
+<p align="center">
+  <img src="./static/assets/monigo-icon.png" width="200" title="Monigo Icon" alt="monigo-icon"/>
+</p>
+
 # MoniGo - Performance Monitoring for Go Applications
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/iyashjayesh/monigo)](https://goreportcard.com/report/github.com/iyashjayesh/monigo)

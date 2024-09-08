@@ -77,19 +77,23 @@ func GetCoreStatistics() models.CoreStatistics {
 
 	serviceInfo := common.GetServiceInfo()
 
-	// 7.051466958s
 	uptime := time.Since(serviceInfo.ServiceStartTime)
 	uptimeStr := fmt.Sprintf("%.2f s", uptime.Seconds())
 
+	// Formatting uptime based on its duration
 	if uptime.Seconds() > 60 {
 		uptimeStr = fmt.Sprintf("%.2f m", uptime.Minutes())
-	} else if uptime.Hours() > 60 {
+	}
+	if uptime.Minutes() > 60 {
 		uptimeStr = fmt.Sprintf("%.2f h", uptime.Hours())
-	} else if uptime.Hours() > 24 {
+	}
+	if uptime.Hours() > 24 {
 		uptimeStr = fmt.Sprintf("%.2f d", uptime.Hours()/24)
-	} else if uptime.Hours() > 30*24 {
-		uptimeStr = fmt.Sprintf("%.2f m", uptime.Hours()/(30*24))
-	} else if uptime.Hours() > 12*30*24 {
+	}
+	if uptime.Hours() > 30*24 {
+		uptimeStr = fmt.Sprintf("%.2f mo", uptime.Hours()/(30*24))
+	}
+	if uptime.Hours() > 12*30*24 {
 		uptimeStr = fmt.Sprintf("%.2f y", uptime.Hours()/(12*30*24))
 	}
 
@@ -100,6 +104,7 @@ func GetCoreStatistics() models.CoreStatistics {
 		TotalDurationTookByRequest: durationTook,
 	}
 }
+
 
 func GetLoadStatistics() models.LoadStatistics {
 

@@ -26163,13 +26163,13 @@ pre {
 }
 
 .gauge {
-  margin: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   aspect-ratio: 2 / 1.5;
-  width: 100%;
+  margin-left: 75px;
+  width: 60%;
   --fill-color: var(--green);
   --background-color: white;
   --gauge-background-color: #333;

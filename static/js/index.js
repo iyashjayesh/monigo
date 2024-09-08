@@ -72,25 +72,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>`;
                 go_version.innerHTML = `
                     <div class="d-flex align-items-center mb-4 card-total-sale">
-                        
                         <div>
                             <p class="mb-2">Go Version: <h4>${data.go_version}</h4></p>
                         </div>
                     </div>`;
+                // service_start_time.innerHTML = `
+                //     <div class="d-flex align-items-center card-total-sale">
+                //         <div>
+                //             <p class="mb-1">Service Start Time: <h4>${formattedDate}<br/> ${formattedTime}</h4></p>
+                //         </div>
+                //     </div>`;
+                // process_id.innerHTML = `
+                //     <div class="d-flex align-items-center card-total-sale">
+                //         <div>
+                //             <p class="mb-1">Process ID: <h4>${data.process_id}</h4></p>
+                //         </div>
+                //     </div>`;
                 service_start_time.innerHTML = `
-                    <div class="d-flex align-items-center mb-4 card-total-sale">
-                        
-                        <div>
-                            <p class="mb-2">Service Start Time: <h4>${formattedDate}<br/> ${formattedTime}</h4></p>
-                        </div>
-                    </div>`;
+                 <div>
+                    <p class="mb-2">Service Start Time: <h4>${formattedDate}<br/> ${formattedTime}</h4></p>
+                </div>`;
+
                 process_id.innerHTML = `
-                    <div class="d-flex align-items-center mb-4 card-total-sale">
-                        
-                        <div>
-                            <p class="mb-2">Process ID: <h4>${data.process_id}</h4></p>
-                        </div>
-                    </div>`;
+                 <div>
+                    <p class="mb-2">Process ID: <h4>${data.process_id}</h4></p>
+                </div>`;
+
             });
     }
 
@@ -243,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
             legend: {
                 orient: 'horizontal',
                 center: 0,
-                padding: [40, 0, 0, 0],
+                padding: [30, 0, 0, 0],
                 data: [{
                         name: 'Cores Used by Service',
                         icon: 'rect',
@@ -271,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: 'CPU Usage',
                 type: 'pie',
                 radius: '55%',
-                center: ['50%', '50%'],
+                center: ['50%', '60%'],
                 data: [{
                         value: cpu_statistics.cores_used_by_service,
                         name: 'Cores Used by Service'
