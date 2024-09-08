@@ -3,57 +3,54 @@ package models
 import (
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/nakabonne/tstorage"
 )
 
-type ProcessStats struct {
-	ProcessId         int32
-	SysCPUPercent     float64
-	ProcCPUPercent    float64
-	ProcMemPercent    float64
-	TotalMemoryUsage  float64
-	FreeMemory        float64
-	UsedMemoryPercent float64
-	TotalCores        int
-	TotalLogicalCores int
-	SystemUsedCores   float64
-	ProcessUsedCores  float64
-}
-
-type Memory struct {
-	TotalMemoryUsage float64
-	FreeMemory       float64
-	UsedPercent      float64
-}
-
-type FunctionMetrics struct {
-	FunctionLastRanAt time.Time
-	CPUProfile        string
-	MemoryUsage       uint64
-	GoroutineCount    int
-	ExecutionTime     time.Duration
-}
-
-// db struct
+// ServiceInfo is the struct to store the service information
 type ServiceInfo struct {
-	ServiceName      string
-	ServiceStartTime time.Time
-	GoVerison        string
-	TimeStamp        time.Time
+	ServiceName      string    `json:"service_name"`
+	ServiceStartTime time.Time `json:"service_start_time"`
+	GoVersion        string    `json:"go_version"`
+	ProcessId        int32     `json:"process_id"`
 }
 
-type ServiceMetrics struct {
-	Id                     uuid.UUID
-	Load                   string
-	Cores                  string
-	MemoryUsed             string
-	UpTime                 time.Duration
-	NumberOfReqServerd     int64
-	TotalDurationTookByAPI time.Duration
-	GoRoutines             int64
-	TotalAlloc             uint64
-	MemoryAllocSys         uint64
-	HeapAlloc              uint64
-	HeapAllocSys           uint64
-	TimeStamp              time.Time
+// GetMetrics is the struct to get the metrics from the storage
+type GetMetrics struct {
+	Name  string    `json:"name"`
+	Start time.Time `json:"start"`
+	End   time.Time `json:"end"`
+}
+
+// ServiceHealthThresholds is the struct to store the service health thresholds
+type ServiceHealthThresholds struct {
+	MaxGoroutines Thresholds `json:"max_goroutines"`
+	MaxCPULoad    Thresholds `json:"max_cpu_load"`
+	MaxMemory     Thresholds `json:"max_memory"`
+}
+
+// Thresholds is the struct to store the threshold values
+type Thresholds struct {
+	Value  float64 `json:"value"`
+	Weight float64 `json:"weight"`
+}
+
+// FetchDataPoints is the struct to fetch the data points from the storage
+type FetchDataPoints struct {
+	FieldName []string `json:"field_name"`
+	StartTime string   `json:"start_time"` // "2006-01-02T15:04:05Z07:00"
+	EndTime   string   `json:"end_time"`   // "2006-01-02T15:04:05Z07:00"
+}
+
+// DataPointsInfo is the struct to store the data points information
+type DataPointsInfo struct {
+	FieldName string                `json:"field_name"`
+	Data      []*tstorage.DataPoint `json:"data_points"`
+}
+
+// ReportsRequest is the struct to store the reports request
+type ReportsRequest struct {
+	Topic     string `json:"topic"`
+	StartTime string `json:"start_time"` // "2006-01-02T15:04:05Z07:00"
+	EndTime   string `json:"end_time"`   // "2006-01-02T15:04:05Z07:00"
+	TimeFrame string `json:"time_frame"`
 }

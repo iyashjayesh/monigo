@@ -2,21 +2,24 @@ package monigo
 
 import (
 	"embed"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
+	"path/filepath"
 	"runtime"
-	"strconv"
 	"sync"
 	"time"
 
-	"github.com/iyashjayesh/monigo/api"
-	"github.com/iyashjayesh/monigo/core"
 	"github.com/iyashjayesh/monigo/models"
-	monigodb "github.com/iyashjayesh/monigo/monigoDb"
-	bolt "go.etcd.io/bbolt"
+
+	"github.com/iyashjayesh/monigo/api"
+	"github.com/iyashjayesh/monigo/common"
+	"github.com/iyashjayesh/monigo/core"
+	"github.com/iyashjayesh/monigo/timeseries"
 )
 
 var (
@@ -24,226 +27,205 @@ var (
 	staticFiles      embed.FS
 	serviceStartTime time.Time = time.Now()
 	Once             sync.Once = sync.Once{}
-	Db               *bolt.DB
 	BasePath         string
-	serviceInfo      models.ServiceInfo
-	dbObj            *monigodb.DBWrapper
-	mu               sync.Mutex = sync.Mutex{}
 )
 
 func init() {
-	BasePath = GetBasePath()
-	dbObj = monigodb.GetDbInstance()
+	BasePath = common.GetBasePath()
 }
 
-func Start(addr int, serviceName string) {
-	// Store the service info
-	serviceInfo.ServiceName = serviceName
-	serviceInfo.ServiceStartTime = serviceStartTime
-	serviceInfo.GoVerison = runtime.Version()
-	serviceInfo.TimeStamp = serviceStartTime
+// Monigo is the main struct to start the monigo service
+type Monigo struct {
+	ServiceName        string    `json:"service_name"`
+	DashboardPort      int       `json:"dashboard_port"`
+	PurgeMonigoStorage bool      `json:"purge_monigo_storage"`
+	DbSyncFrequency    string    `json:"db_sync_frequency"`
+	RetentionPeriod    string    `json:"retention_period"`
+	GoVersion          string    `json:"go_version"`
+	ServiceStartTime   time.Time `json:"service_start_time"`
+	ProcessId          int32     `json:"process_id"`
+}
 
-	dbObj.StoreServiceInfo(&serviceInfo)
-	serviceInfo, err := dbObj.GetServiceInfo(serviceInfo.ServiceName)
-	if err != nil {
-		log.Fatalf("Error getting service info: %v\n", err)
+// MonigoInt is the interface to start the monigo service
+type MonigoInt interface {
+	Start()                                                                // Start the dashboard
+	DeleteMonigoStorage()                                                  // Purge the monigo storage
+	SetDbSyncFrequency(frequency ...string)                                // Set the frequency to sync the metrics to the storage
+	PrintGoRoutinesStats() models.GoRoutinesStatistic                      // Print the Go routines stats
+	SetServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) // Set the service thresholds to calculate the overall service health
+}
+
+type Cache struct {
+	Data map[string]time.Time
+}
+
+func (m *Monigo) Start() {
+
+	if m.ServiceName == "" {
+		log.Panic("service_name is required, please provide the service name")
 	}
-	log.Printf("Service Name: %s\nService Start Time: %s\nGo Version: %s\nTime Stamp: %s\n",
-		serviceInfo.ServiceName, serviceInfo.ServiceStartTime, serviceInfo.GoVerison, serviceInfo.TimeStamp)
 
-	go StartDashboard(addr)
+	if m.PurgeMonigoStorage {
+		m.DeleteMonigoStorage()
+	}
+
+	// Set the frequency to sync the metrics to the storage
+	m.SetDbSyncFrequency(m.DbSyncFrequency) // Default is 5 Minutes
+
+	// TODO: Correct the logs
+
+	m.ProcessId = common.GetProcessId()
+	m.GoVersion = runtime.Version()
+	m.ServiceStartTime = serviceStartTime
+
+	cachePath := BasePath + "/cache.dat"
+	cache := Cache{Data: make(map[string]time.Time)}
+
+	err := cache.LoadFromFile(cachePath)
+	if err != nil {
+		log.Println("Could not load cache, starting fresh")
+	}
+
+	if _, ok := cache.Data[m.ServiceName]; ok {
+		m.ServiceStartTime = cache.Data[m.ServiceName]
+	}
+
+	cache.Data[m.ServiceName] = m.ServiceStartTime
+
+	log.Println("Service start time updated in cache, new start time:", m.ServiceStartTime)
+
+	err = cache.SaveToFile(cachePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	common.SetServiceInfo(m.ServiceName, m.ServiceStartTime, m.GoVersion, m.ProcessId, m.RetentionPeriod)
+	go StartDashboard(m.DashboardPort)
+}
+
+func (m *Monigo) DeleteMonigoStorage() {
+	timeseries.PurgeStorage()
+}
+
+func (m *Monigo) SetDbSyncFrequency(frequency ...string) {
+	timeseries.SetDbSyncFrequency(m.DbSyncFrequency)
+}
+
+func (m *Monigo) PrintGoRoutinesStats() models.GoRoutinesStatistic {
+	return core.CollectGoRoutinesInfo()
+}
+
+func (m *Monigo) SetServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) {
+	core.SetServiceThresholds(thresholdsValues)
 }
 
 func StartDashboard(addr int) {
 
-	log.Println("Starting the dashboard")
+	if addr == 0 {
+		addr = 8080 // Default port for the dashboard
+	}
+
+	log.Println("Starting the dashboard at port:", addr)
 
 	http.HandleFunc("/", serveHtmlSite)
-	http.HandleFunc("/metrics", getMetrics)
-	http.HandleFunc("/function-metrics", getFunctionMetrics)
-	http.HandleFunc("/generate-function-metrics", profileHandler)
+	http.HandleFunc("/metrics", api.NewCoreStatistics)
 
 	// API to fetch the service metrics
-	http.HandleFunc("/get-service-info", api.GetServiceInfoAPI)
-	// http.HandleFunc("/get-service-metrics", GetServiceMetricsFromMonigoDbData)
-	// http.HandleFunc("/get-function-info", getFunctionMetricsAPI)
+	http.HandleFunc("/service-info", api.GetServiceInfoAPI) // Completed
 
-	fmt.Printf("Starting dashboard at http://localhost:%d\n", addr)
+	http.HandleFunc("/service-metrics", api.GetServiceMetricsFromStorage) // API to fetch DATA points
+	http.HandleFunc("/go-routines-stats", api.GetGoRoutinesStats)
+
+	http.HandleFunc("/monigo/reports", api.GetReportData)
+
+	// /get-metrics?fields=service-info
+	// http.HandleFunc("/get-metrics", api.GetMetricsInfo)
+
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", addr), nil); err != nil {
-		log.Fatalf("Error starting the dashboard: %v\n", err)
+		log.Panicf("Error starting the dashboard: %v\n", err)
 	}
 }
 
 func serveHtmlSite(w http.ResponseWriter, r *http.Request) {
+	baseDir := "static"
+	// Map of content types based on file extensions
+	contentTypes := map[string]string{
+		".html":  "text/html",
+		".ico":   "image/x-icon",
+		".css":   "text/css",
+		".js":    "application/javascript",
+		".png":   "image/png",
+		".jpg":   "image/jpeg",
+		".jpeg":  "image/jpeg",
+		".svg":   "image/svg+xml",
+		".woff":  "font/woff",
+		".woff2": "font/woff2",
+	}
+
+	filePath := baseDir + r.URL.Path
 	if r.URL.Path == "/" {
-		file, err := staticFiles.ReadFile("static/index.html")
-		if err != nil {
-			http.Error(w, "Could not load index.html", http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "text/html")
-		w.Write(file)
-		return
-	}
-	http.StripPrefix("/static/", http.FileServer(http.FS(staticFiles))).ServeHTTP(w, r)
-}
-
-func getMetrics(w http.ResponseWriter, r *http.Request) {
-	unit := r.URL.Query().Get("unit")
-	if unit == "" {
-		unit = "MB" // Default Unit
+		filePath = baseDir + "/index.html"
+	} else if r.URL.Path == "/favicon.ico" {
+		filePath = baseDir + "/assets/favicon.ico"
 	}
 
-	requestCount, totalDuration, memStats := core.GetServiceMetrics()
-	serviceStat := core.GetProcessSats()
-
-	// Convert bytes to different units
-	bytesToUnit := func(bytes uint64) float64 {
-		switch unit {
-		case "KB":
-			return float64(bytes) / 1024.0
-		case "MB":
-			return float64(bytes) / 1048576.0
-		default: // "bytes"
-			return float64(bytes)
-		}
+	ext := filepath.Ext(filePath) // getting the file extension
+	contentType, ok := contentTypes[ext]
+	if !ok {
+		contentType = "application/octet-stream"
 	}
 
-	SystemUsedCoresToString := fmt.Sprintf("%.2f", serviceStat.SystemUsedCores)
-	ProcessUsedCoresToString := fmt.Sprintf("%.2f", serviceStat.ProcessUsedCores)
-
-	core := ProcessUsedCoresToString + "PC / " +
-		SystemUsedCoresToString + "SC / " +
-		strconv.Itoa(serviceStat.TotalLogicalCores) + "LC / " +
-		strconv.Itoa(serviceStat.TotalCores) + "C"
-
-	// ProcMemPercent
-	memoryUsed := fmt.Sprintf("%.2f", serviceStat.ProcMemPercent)
-	runtimeGoRoutine := runtime.NumGoroutine()
-
-	metrics := fmt.Sprintf(
-		"Service Name: %s\nService Start Time: %s\nGoroutines: %d\nRequests: %d\nTotal Duration: %s\n\nMemory Usage (%s):\nAlloc: %.2f %s\nTotalAlloc: %.2f %s\nSys: %.2f %s\nHeapAlloc: %.2f %s\nHeapSys: %.2f %s\nGo Version: %s\n Load: %s\nCores: %s\n Memory Used: %s\n",
-		serviceInfo.ServiceName,
-		serviceStartTime.Format(time.RFC3339),
-		runtimeGoRoutine,
-		requestCount,
-		totalDuration,
-		unit,
-		bytesToUnit(memStats.Alloc),
-		unit,
-		bytesToUnit(memStats.TotalAlloc),
-		unit,
-		bytesToUnit(memStats.Sys),
-		unit,
-		bytesToUnit(memStats.HeapAlloc),
-		unit,
-		bytesToUnit(memStats.HeapSys),
-		unit,
-		runtime.Version(),
-		fmt.Sprintf("%.2f", serviceStat.ProcCPUPercent),
-		core,
-		memoryUsed,
-	)
-
-	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte(metrics))
-}
-
-func getFunctionMetrics(w http.ResponseWriter, r *http.Request) {
-	unit := r.URL.Query().Get("unit")
-	if unit == "" {
-		unit = "MB" // Default unit
-	}
-
-	// Convert bytes to different units
-	bytesToUnit := func(bytes uint64) float64 {
-		switch unit {
-		case "KB":
-			return float64(bytes) / 1024.0
-		case "MB":
-			return float64(bytes) / 1048576.0
-		default: // "bytes"
-			return float64(bytes)
-		}
-	}
-
-	functionsMetrics := core.GetLocalFunctionMetrics()
-
-	var results string
-	mu.Lock()
-	for name, metrics := range functionsMetrics {
-		results += fmt.Sprintf(
-			"Function: %s\nFunction Ran At: %s\nCPU Profile: %s\nExecution Time: %s\nMemory Usage: %.2f %s\nGoroutines: %d\n\n",
-			name,
-			metrics.FunctionLastRanAt.Format(time.RFC3339),
-			metrics.CPUProfile,
-			metrics.ExecutionTime,
-			bytesToUnit(metrics.MemoryUsage),
-			unit,
-			metrics.GoroutineCount,
-		)
-	}
-	mu.Unlock()
-
-	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte(results))
-}
-
-func profileHandler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Generating profile\n")
-	name := r.URL.Query().Get("name")
-	if name == "" {
-		http.Error(w, "Name parameter is required", http.StatusBadRequest)
-		return
-	}
-
-	profilesFolderPath := fmt.Sprintf("%s/profiles", BasePath)
-
-	cmd := exec.Command("go", "tool", "pprof", "-svg", profilesFolderPath)
-	output, err := cmd.Output()
+	file, err := staticFiles.ReadFile(filePath)
 	if err != nil {
-		errMsg := fmt.Sprintf("failed to generate profile, given path %s, error: %v", profilesFolderPath, err)
-		http.Error(w, errMsg, http.StatusInternalServerError)
+		http.Error(w, "Could not load "+filePath, http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "image/svg+xml")
-	if _, err := w.Write(output); err != nil {
-		http.Error(w, "Failed to write response", http.StatusInternalServerError)
-	}
+	w.Header().Set("Content-Type", contentType)
+	w.Write(file)
 }
 
-func GetBasePath() string {
-
-	const monigoFolder string = "monigo"
-
-	var path string
-	appPath, _ := os.Getwd()
-	if appPath == "/" {
-		path = fmt.Sprintf("%s%s", appPath, monigoFolder)
-	} else {
-		path = fmt.Sprintf("%s/%s", appPath, monigoFolder)
+func (c *Cache) SaveToFile(filename string) error {
+	// Encode the data as JSON
+	jsonData, err := json.Marshal(c.Data)
+	if err != nil {
+		return err
 	}
 
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		os.Mkdir(path, os.ModePerm)
+	// Encode the JSON data as Base64
+	base64Data := base64.StdEncoding.EncodeToString(jsonData)
+
+	// Save the Base64 encoded data to the file
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.WriteString(base64Data)
+	return err
+}
+
+func (c *Cache) LoadFromFile(filename string) error {
+	// Open the file
+	file, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Read the Base64 encoded data from the file
+	base64Data, err := ioutil.ReadAll(file)
+	if err != nil {
+		return err
 	}
 
-	return path
-}
+	// Decode the Base64 data
+	jsonData, err := base64.StdEncoding.DecodeString(string(base64Data))
+	if err != nil {
+		return err
+	}
 
-func PurgeMonigoDb() {
-	monigodb.PurgeMonigoDbFile()
-}
-
-func SetDbSyncFrequency(intervalStr ...string) {
-	monigodb.SetDbSyncFrequency(intervalStr...)
-}
-
-func MeasureExecutionTime(name string, f func()) {
-	core.MeasureExecutionTime(name, f)
-}
-
-func RecordRequestDuration(duration time.Duration) {
-	core.RecordRequestDuration(duration)
+	// Decode the JSON data into the cache
+	return json.Unmarshal(jsonData, &c.Data)
 }

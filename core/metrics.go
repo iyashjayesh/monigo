@@ -1,12 +1,12 @@
 package core
 
 import (
-	"fmt"
-	"os"
+	"log"
 	"runtime"
 	"sync"
 	"time"
 
+	"github.com/iyashjayesh/monigo/common"
 	"github.com/iyashjayesh/monigo/models"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/mem"
@@ -14,10 +14,23 @@ import (
 )
 
 var (
-	mu              sync.Mutex
-	requestCount    int64
-	totalDuration   time.Duration
-	functionMetrics = make(map[string]*models.FunctionMetrics)
+	mu                      sync.Mutex
+	requestCount            int64
+	totalDuration           time.Duration
+	serviceHealthThresholds = models.ServiceHealthThresholds{ // Default thresholds
+		MaxGoroutines: models.Thresholds{
+			Value:  100,
+			Weight: 0.2,
+		},
+		MaxCPULoad: models.Thresholds{
+			Value:  85,
+			Weight: 0.7,
+		},
+		MaxMemory: models.Thresholds{
+			Value:  85,
+			Weight: 0.7,
+		},
+	}
 )
 
 func RecordRequestDuration(duration time.Duration) {
@@ -27,115 +40,84 @@ func RecordRequestDuration(duration time.Duration) {
 	totalDuration += duration
 }
 
-func GetServiceMetrics() (int64, time.Duration, *runtime.MemStats) {
+func GetServiceMetrics() (int64, time.Duration) {
 	mu.Lock()
 	defer mu.Unlock()
-
-	var memStats runtime.MemStats
-	runtime.ReadMemStats(&memStats)
-
-	return requestCount, totalDuration, &memStats
+	return requestCount, totalDuration
 }
 
-func GetFunctionMetrics(functionName string) *models.FunctionMetrics {
-	mu.Lock()
-	defer mu.Unlock()
-	return functionMetrics[functionName]
-}
-
-func GetProcessSats() models.ProcessStats {
-
-	pid, proc, err := GetProcessDetails()
-	if err != nil {
-		fmt.Printf("Error fetching process information: %v\n", err)
-		return models.ProcessStats{}
-	}
-
-	// Getting system and process resource usage
-	sysCPUPercent, sysMemUsage, err := getSystemUsage()
-	if err != nil {
-		fmt.Printf("Error fetching system usage: %v\n", err)
-		return models.ProcessStats{}
-	}
-
-	procCPUPercent, procMemPercent, err := getProcessUsage(proc, &sysMemUsage)
-	if err != nil {
-		fmt.Printf("Error fetching process usage: %v\n", err)
-		return models.ProcessStats{}
-	}
-
-	totalCores, _ := cpu.Counts(false)
-	totalLogicalCores := runtime.NumCPU()
-	systemUsedCores := (sysCPUPercent / 100) * float64(totalLogicalCores)
-	processUsedCores := (procCPUPercent / 100) * float64(totalLogicalCores)
-
-	return models.ProcessStats{
-		ProcessId:         pid,
-		SysCPUPercent:     sysCPUPercent,
-		ProcCPUPercent:    procCPUPercent,
-		ProcMemPercent:    procMemPercent,
-		TotalMemoryUsage:  sysMemUsage.TotalMemoryUsage,
-		FreeMemory:        sysMemUsage.FreeMemory,
-		UsedMemoryPercent: sysMemUsage.UsedPercent,
-		TotalCores:        totalCores,
-		TotalLogicalCores: totalLogicalCores,
-		SystemUsedCores:   systemUsedCores,
-		ProcessUsedCores:  processUsedCores,
-	}
-}
-
-func GetProcessDetails() (int32, *process.Process, error) {
-	pid := int32(os.Getpid())
-	proc, err := process.NewProcess(pid)
-	if err != nil {
-		return 0, nil, err
-	}
-	return pid, proc, nil
-}
-
-// Fetches and returns system CPU and memory usage
-func getSystemUsage() (float64, models.Memory, error) {
+func GetCPUPrecent() float64 {
 	cpuPercent, err := cpu.Percent(time.Second, false)
 	if err != nil {
-		return 0, models.Memory{}, err
+		log.Panicf("Error fetching CPU usage: %v\n", err)
+		return 0
 	}
+	return cpuPercent[0]
+}
 
-	memUsage := models.Memory{}
+func GetVirtualMemoryStats() mem.VirtualMemoryStat {
 	memInfo, err := mem.VirtualMemory()
 	if err != nil {
-		return 0, models.Memory{}, err
+		log.Panicf("Error fetching memory usage: %v\n", err)
+		return mem.VirtualMemoryStat{}
 	}
 
-	memUsage = models.Memory{
-		TotalMemoryUsage: float64(memInfo.Total),
-		FreeMemory:       float64(memInfo.Free),
-		UsedPercent:      memInfo.UsedPercent,
-	}
-
-	return cpuPercent[0], memUsage, nil
+	return *memInfo
 }
 
 // Fetches and returns process CPU and memory usage
-func getProcessUsage(proc *process.Process, sysMemUsage *models.Memory) (float64, float64, error) {
+func getProcessUsage(proc *process.Process, memsStats *mem.VirtualMemoryStat) (float64, float64, error) {
 	procCPUPercent, err := proc.CPUPercent()
 	if err != nil {
 		return 0, 0, err
 	}
 
-	procMem, err := proc.MemoryInfo()
-	if err != nil {
-		return 0, 0, err
-	}
+	memStats := ReadMemStats()
 
-	if sysMemUsage.TotalMemoryUsage == 0 {
-		return 0, 0, fmt.Errorf("error fetching system memory usage")
-	}
+	// Calculate memory used by the process as a percentage of total system memory
+	processMemPercent := (float64(memStats.Alloc) / float64(memsStats.Total)) * 100
 
-	procMemPercent := float64(procMem.RSS) / sysMemUsage.TotalMemoryUsage * 100
-
-	return procCPUPercent, procMemPercent, nil
+	return procCPUPercent, processMemPercent, nil
 }
 
-func GetLocalFunctionMetrics() map[string]*models.FunctionMetrics {
-	return functionMetrics
+// SetServiceThresholds sets the service thresholds to calculate the overall service health.
+func SetServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) {
+	serviceHealthThresholds = *thresholdsValues
+}
+
+func GetServiceHealthThresholdsModel() models.ServiceHealthThresholds {
+	return serviceHealthThresholds
+}
+
+// newRecord creates a new Record with appropriate units and human-readable formats.
+func newRecord(name, description string, value interface{}) models.Record {
+	switch v := value.(type) {
+	case uint64:
+		size, unit := common.ConvertToReadableSize(v)
+		return models.Record{
+			Name:        name,
+			Description: description,
+			Value:       size,
+			Unit:        unit,
+		}
+	case float64:
+		return models.Record{
+			Name:        name,
+			Description: description,
+			Value:       v,
+			Unit:        "fraction",
+		}
+	default:
+		return models.Record{
+			Name:        name,
+			Description: description,
+			Value:       value,
+		}
+	}
+}
+
+func ReadMemStats() *runtime.MemStats {
+	memStats := runtime.MemStats{}
+	runtime.ReadMemStats(&memStats)
+	return &memStats
 }

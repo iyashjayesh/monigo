@@ -1,0 +1,92 @@
+.loader-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.bouncing-dots {
+    display: flex;
+    justify-content: space-between;
+    width: 40px;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    background-color: #FF5C35;
+    border-radius: 70%;
+    animation: bounce 1.5s infinite;
+}
+
+.dot:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.dot:nth-child(2) {
+    animation-delay: 0.3s;
+}
+
+.dot:nth-child(3) {
+    animation-delay: 0.6s;
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+.health-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 10px;
+    display: inline-block;
+}
+
+.health-indicator.healthy {
+    background-color: green;
+}
+
+.health-indicator.unhealthy {
+    background-color: red;
+}
+
+.chart-container {
+    height: 300px;
+    padding: 10px;
+}
+
+.card-header-toolbar {
+    padding: 1rem;
+}
+
+.dropdown {
+    display: flex;
+    align-items: center;
+}
+
+.dropdown-label {
+    margin-right: 0.5rem;
+    font-weight: bold;
+}
+
+.dropdown-select {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 0.4rem;
+    background-color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.chart-container {
+    margin-left: 1rem;
+    flex-grow: 1;
+}
