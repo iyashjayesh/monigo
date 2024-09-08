@@ -1,0 +1,9 @@
+{
+    "field_name": [
+        "stack_inuse",
+        "stack_sys"
+    ],
+    "timerange": "5m",
+    "start_time": "2024-09-08T19:02:42.111+05:30",
+    "end_time": "2024-09-08T19:07:42.111+05:30"
+}

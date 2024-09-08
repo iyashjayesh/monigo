@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     Object.values(elements).forEach(el => el && (el.innerHTML = refreshHtml));
     
     function fetchMetrics() {
-        fetch(`/metrics`)
+        fetch(`/monigo/api/v1/metrics`)
             .then(response => response.json())
             .then(data => {
                 const {

@@ -9955,6 +9955,7 @@ a.text-light-gray:focus {
   display: flex;
   align-items: flex-start;
   transition-delay: 0.2s;
+  margin-left: 25px;
 }
 .iq-sidebar-logo a span {
   margin-left: 10px;
@@ -9981,7 +9982,7 @@ a.text-light-gray:focus {
   text-decoration: none;
 }
 .iq-sidebar-logo img {
-  height: 25px;
+  height: 60px;
 }
 .iq-sidebar-logo .logo-title {
   font-weight: 700;

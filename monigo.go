@@ -119,29 +119,32 @@ func (m *Monigo) SetServiceThresholds(thresholdsValues *models.ServiceHealthThre
 	core.SetServiceThresholds(thresholdsValues)
 }
 
-func StartDashboard(addr int) {
+func StartDashboard(port int) {
 
-	if addr == 0 {
-		addr = 8080 // Default port for the dashboard
+	if port == 0 {
+		port = 8080 // Default port for the dashboard
 	}
 
-	log.Println("Starting the dashboard at port:", addr)
+	log.Println("Starting the dashboard at port:", port)
 
+	// Base API path
+	basePath := "/monigo/api/v1"
+
+	// HTML site
 	http.HandleFunc("/", serveHtmlSite)
-	http.HandleFunc("/metrics", api.NewCoreStatistics)
 
-	// API to fetch the service metrics
-	http.HandleFunc("/service-info", api.GetServiceInfoAPI) // Completed
+	// Core Statistics
+	http.HandleFunc(fmt.Sprintf("%s/metrics", basePath), api.NewCoreStatistics)
 
-	http.HandleFunc("/service-metrics", api.GetServiceMetricsFromStorage) // API to fetch DATA points
-	http.HandleFunc("/go-routines-stats", api.GetGoRoutinesStats)
+	// Service APIs
+	http.HandleFunc(fmt.Sprintf("%s/service-info", basePath), api.GetServiceInfoAPI)
+	http.HandleFunc(fmt.Sprintf("%s/service-metrics", basePath), api.GetServiceMetricsFromStorage)
+	http.HandleFunc(fmt.Sprintf("%s/go-routines-stats", basePath), api.GetGoRoutinesStats)
 
-	http.HandleFunc("/monigo/reports", api.GetReportData)
+	// Reports
+	http.HandleFunc(fmt.Sprintf("%s/reports", basePath), api.GetReportData)
 
-	// /get-metrics?fields=service-info
-	// http.HandleFunc("/get-metrics", api.GetMetricsInfo)
-
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", addr), nil); err != nil {
+	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
 		log.Panicf("Error starting the dashboard: %v\n", err)
 	}
 }

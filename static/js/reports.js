@@ -61,9 +61,9 @@ document.addEventListener('DOMContentLoaded', () => {
             time_frame: timeframe
         };
 
-        console.log("ReqObj: ", reqObj);
+        // console.log("ReqObj: ", reqObj);
 
-        fetch('/monigo/reports', {
+        fetch('/monigo/api/v1/reports', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

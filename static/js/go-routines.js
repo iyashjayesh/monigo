@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function fetchGoRoutines() {
-        fetch(`/go-routines-stats`)
+        fetch(`/monigo/api/v1/go-routines-stats`)
             .then(response => response.json())
             .then(data => {
                 console.log(data);

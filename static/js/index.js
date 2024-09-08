@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const service_start_time = document.getElementById('service_start_time');
 
     const refreshHtml = `
-        <div class="loader-container">
+        <div class="loader-container mt-3">
             <div class="bouncing-dots">
                 <div class="dot"></div>
                 <div class="dot"></div>
@@ -28,7 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
         loadChart: document.getElementById('load-chart'),
         cpuChart: document.getElementById('cpu-chart'),
         memoryPieChart: document.getElementById('memory-pie-chart'),
-        heapUsageChart: document.getElementById('heap-memory-chart')
+        heapUsageChart: document.getElementById('heap-memory-chart'),
+        healthTag: document.getElementById('health-tag')
     };
 
     Object.values(elements).forEach(el => el && (el.innerHTML = refreshHtml));
@@ -43,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function fetchServiceInfo() {
-        fetch(`/service-info`)
+        fetch(`/monigo/api/v1/service-info`)
             .then(response => response.json())
             .then(data => {
                 // serviceInfoContainer.innerHTML = '';
@@ -106,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function fetchMetrics() {
-        fetch(`/metrics`)
+        fetch(`/monigo/api/v1/metrics`)
             .then(response => response.json())
             .then(data => {
 
@@ -242,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
             legend: {
                 orient: 'horizontal',
                 center: 0,
-                padding: [30, 0, 0, 0],
+                padding: [40, 0, 0, 0],
                 data: [{
                         name: 'Cores Used by Service',
                         icon: 'rect',
@@ -306,9 +307,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             },
             legend: {
-                orient: 'vertical',
-                left: 'left',
-                padding: [30, 0, 0, 0],
+                orient: 'horizontal',
+                center: 0,
+                padding: [40, 0, 0, 0],
                 data: ['Memory Used by Service', 'Memory Used by System', 'Available Memory']
             },
             series: [{
@@ -453,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Fetching data for metric:', metricName, 'and time range:', timeRange);
         console.log('API REQ:', data);
 
-        fetch(`/service-metrics`, {
+        fetch(`/monigo/api/v1/service-metrics`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -588,7 +589,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const gauge = document.getElementById(gaugeId);
         const guageText = gauge.querySelector('text');
         // health-tag
-        const healthTag = document.getElementById('health-tag');
+        // const healthTag = document.getElementById('health-tag');
 
         // Update the text inside the gauge
         guageText.textContent = `${percentage}%`;
@@ -614,7 +615,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
                                         // <!-- <p class="mb-0">Service health is at 70%</p> -->
 
-        healthTag.innerHTML = `
+        elements.healthTag.innerHTML = `
             <p class="mb-0">${tag}</p>
         `
         

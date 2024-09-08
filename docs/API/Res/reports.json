@@ -1,0 +1,272 @@
+[
+    {
+        "time": "2024-09-08T13:31:36Z",
+        "value": {
+            "overall_load_of_service": 0.15,
+            "service_cpu_load": 0.17,
+            "service_memory_load": 0.13,
+            "system_cpu_load": 6.48,
+            "system_memory_load": 75
+        }
+    },
+    {
+        "time": "2024-09-08T13:31:47Z",
+        "value": {
+            "overall_load_of_service": 0.15,
+            "service_cpu_load": 0.17,
+            "service_memory_load": 0.13,
+            "system_cpu_load": 10.13,
+            "system_memory_load": 75.74
+        }
+    },
+    {
+        "time": "2024-09-08T13:31:58Z",
+        "value": {
+            "overall_load_of_service": 0.15,
+            "service_cpu_load": 0.17,
+            "service_memory_load": 0.13,
+            "system_cpu_load": 11.69,
+            "system_memory_load": 74.96
+        }
+    },
+    {
+        "time": "2024-09-08T13:32:09Z",
+        "value": {
+            "overall_load_of_service": 0.15,
+            "service_cpu_load": 0.17,
+            "service_memory_load": 0.13,
+            "system_cpu_load": 13.37,
+            "system_memory_load": 74.64
+        }
+    },
+    {
+        "time": "2024-09-08T13:32:20Z",
+        "value": {
+            "overall_load_of_service": 0.15,
+            "service_cpu_load": 0.17,
+            "service_memory_load": 0.13,
+            "system_cpu_load": 16.4,
+            "system_memory_load": 75.41
+        }
+    },
+    {
+        "time": "2024-09-08T13:32:31Z",
+        "value": {
+            "overall_load_of_service": 0.15,
+            "service_cpu_load": 0.17,
+            "service_memory_load": 0.13,
+            "system_cpu_load": 10.52,
+            "system_memory_load": 74.06
+        }
+    },
+    {
+        "time": "2024-09-08T13:32:42Z",
+        "value": {
+            "overall_load_of_service": 0.16,
+            "service_cpu_load": 0.17,
+            "service_memory_load": 0.14,
+            "system_cpu_load": 9.25,
+            "system_memory_load": 74.76
+        }
+    },
+    {
+        "time": "2024-09-08T13:32:53Z",
+        "value": {
+            "overall_load_of_service": 0.16,
+            "service_cpu_load": 0.17,
+            "service_memory_load": 0.14,
+            "system_cpu_load": 2.24,
+            "system_memory_load": 74.11
+        }
+    },
+    {
+        "time": "2024-09-08T13:33:04Z",
+        "value": {
+            "overall_load_of_service": 0.16,
+            "service_cpu_load": 0.17,
+            "service_memory_load": 0.14,
+            "system_cpu_load": 14.78,
+            "system_memory_load": 74.35
+        }
+    },
+    {
+        "time": "2024-09-08T13:33:15Z",
+        "value": {
+            "overall_load_of_service": 0.16,
+            "service_cpu_load": 0.17,
+            "service_memory_load": 0.14,
+            "system_cpu_load": 6.13,
+            "system_memory_load": 74.26
+        }
+    },
+    {
+        "time": "2024-09-08T13:33:26Z",
+        "value": {
+            "overall_load_of_service": 0.16,
+            "service_cpu_load": 0.17,
+            "service_memory_load": 0.14,
+            "system_cpu_load": 9.74,
+            "system_memory_load": 74.2
+        }
+    },
+    {
+        "time": "2024-09-08T13:33:37Z",
+        "value": {
+            "overall_load_of_service": 0.15,
+            "service_cpu_load": 0.16,
+            "service_memory_load": 0.14,
+            "system_cpu_load": 7.9,
+            "system_memory_load": 74.03
+        }
+    },
+    {
+        "time": "2024-09-08T13:33:48Z",
+        "value": {
+            "overall_load_of_service": 0.16,
+            "service_cpu_load": 0.17,
+            "service_memory_load": 0.14,
+            "system_cpu_load": 5.69,
+            "system_memory_load": 74.03
+        }
+    },
+    {
+        "time": "2024-09-08T13:33:59Z",
+        "value": {
+            "overall_load_of_service": 0.16,
+            "service_cpu_load": 0.17,
+            "service_memory_load": 0.14,
+            "system_cpu_load": 9.28,
+            "system_memory_load": 74.08
+        }
+    },
+    {
+        "time": "2024-09-08T13:34:10Z",
+        "value": {
+            "overall_load_of_service": 0.15,
+            "service_cpu_load": 0.16,
+            "service_memory_load": 0.14,
+            "system_cpu_load": 13.62,
+            "system_memory_load": 74.02
+        }
+    },
+    {
+        "time": "2024-09-08T13:34:21Z",
+        "value": {
+            "overall_load_of_service": 0.15,
+            "service_cpu_load": 0.16,
+            "service_memory_load": 0.14,
+            "system_cpu_load": 12.97,
+            "system_memory_load": 74.04
+        }
+    },
+    {
+        "time": "2024-09-08T13:34:32Z",
+        "value": {
+            "overall_load_of_service": 0.15,
+            "service_cpu_load": 0.16,
+            "service_memory_load": 0.13,
+            "system_cpu_load": 38.45,
+            "system_memory_load": 74.48
+        }
+    },
+    {
+        "time": "2024-09-08T13:34:43Z",
+        "value": {
+            "overall_load_of_service": 0.14,
+            "service_cpu_load": 0.16,
+            "service_memory_load": 0.12,
+            "system_cpu_load": 14.9,
+            "system_memory_load": 77.29
+        }
+    },
+    {
+        "time": "2024-09-08T13:34:54Z",
+        "value": {
+            "overall_load_of_service": 0.14,
+            "service_cpu_load": 0.16,
+            "service_memory_load": 0.12,
+            "system_cpu_load": 15.62,
+            "system_memory_load": 77.09
+        }
+    },
+    {
+        "time": "2024-09-08T13:35:05Z",
+        "value": {
+            "overall_load_of_service": 0.14,
+            "service_cpu_load": 0.16,
+            "service_memory_load": 0.12,
+            "system_cpu_load": 12.69,
+            "system_memory_load": 77.01
+        }
+    },
+    {
+        "time": "2024-09-08T13:35:17Z",
+        "value": {
+            "overall_load_of_service": 0.15,
+            "service_cpu_load": 0.17,
+            "service_memory_load": 0.12,
+            "system_cpu_load": 19.57,
+            "system_memory_load": 78.68
+        }
+    },
+    {
+        "time": "2024-09-08T13:35:28Z",
+        "value": {
+            "overall_load_of_service": 0.14,
+            "service_cpu_load": 0.16,
+            "service_memory_load": 0.12,
+            "system_cpu_load": 14.15,
+            "system_memory_load": 77.6
+        }
+    },
+    {
+        "time": "2024-09-08T13:35:39Z",
+        "value": {
+            "overall_load_of_service": 0.15,
+            "service_cpu_load": 0.17,
+            "service_memory_load": 0.12,
+            "system_cpu_load": 9.99,
+            "system_memory_load": 77.24
+        }
+    },
+    {
+        "time": "2024-09-08T13:35:50Z",
+        "value": {
+            "overall_load_of_service": 0.15,
+            "service_cpu_load": 0.17,
+            "service_memory_load": 0.12,
+            "system_cpu_load": 13.38,
+            "system_memory_load": 78.09
+        }
+    },
+    {
+        "time": "2024-09-08T13:36:01Z",
+        "value": {
+            "overall_load_of_service": 0.15,
+            "service_cpu_load": 0.17,
+            "service_memory_load": 0.12,
+            "system_cpu_load": 15.27,
+            "system_memory_load": 78.48
+        }
+    },
+    {
+        "time": "2024-09-08T13:36:12Z",
+        "value": {
+            "overall_load_of_service": 0.15,
+            "service_cpu_load": 0.17,
+            "service_memory_load": 0.12,
+            "system_cpu_load": 8.2,
+            "system_memory_load": 77.71
+        }
+    },
+    {
+        "time": "2024-09-08T13:36:23Z",
+        "value": {
+            "overall_load_of_service": 0.15,
+            "service_cpu_load": 0.16,
+            "service_memory_load": 0.14,
+            "system_cpu_load": 26.34,
+            "system_memory_load": 79.25
+        }
+    }
+]
