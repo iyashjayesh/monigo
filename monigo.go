@@ -130,10 +130,6 @@ func StartDashboard(addr int) {
 	http.HandleFunc("/", serveHtmlSite)
 	http.HandleFunc("/metrics", api.NewCoreStatistics)
 
-	http.HandleFunc("/function-metrics", api.GetFunctionMetrics)
-
-	// http.HandleFunc("/generate-function-metrics", api.ProfileHandler)
-
 	// API to fetch the service metrics
 	http.HandleFunc("/service-info", api.GetServiceInfoAPI) // Completed
 
@@ -170,7 +166,7 @@ func serveHtmlSite(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/" {
 		filePath = baseDir + "/index.html"
 	} else if r.URL.Path == "/favicon.ico" {
-		filePath = baseDir + "/assets/images/favicon.ico"
+		filePath = baseDir + "/assets/favicon.ico"
 	}
 
 	ext := filepath.Ext(filePath) // getting the file extension
@@ -187,14 +183,6 @@ func serveHtmlSite(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", contentType)
 	w.Write(file)
-}
-
-func MeasureExecutionTime(name string, f func()) {
-	core.MeasureExecutionTime(name, f)
-}
-
-func RecordRequestDuration(duration time.Duration) {
-	core.RecordRequestDuration(duration)
 }
 
 func (c *Cache) SaveToFile(filename string) error {

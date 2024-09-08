@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"sort"
@@ -50,46 +49,6 @@ func NewCoreStatistics(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(jsonMetrics))
 	log.Println("Time taken to get the service stats Final: ", time.Since(startTime))
-}
-
-func GetFunctionMetrics(w http.ResponseWriter, r *http.Request) {
-	unit := r.URL.Query().Get("unit")
-	if unit == "" {
-		unit = "MB" // Default unit
-	}
-
-	// Convert bytes to different units
-	bytesToUnit := func(bytes uint64) float64 {
-		switch unit {
-		case "KB":
-			return float64(bytes) / 1024.0
-		case "MB":
-			return float64(bytes) / 1048576.0
-		default: // "bytes"
-			return float64(bytes)
-		}
-	}
-
-	functionsMetrics := core.GetLocalFunctionMetrics()
-
-	var results string
-	mu.Lock()
-	for name, metrics := range functionsMetrics {
-		results += fmt.Sprintf(
-			"Function: %s\nFunction Ran At: %s\nCPU Profile: %s\nExecution Time: %s\nMemory Usage: %.2f %s\nGoroutines: %d\n\n",
-			name,
-			metrics.FunctionLastRanAt.Format(time.RFC3339),
-			metrics.CPUProfile,
-			metrics.ExecutionTime,
-			bytesToUnit(metrics.MemoryUsage),
-			unit,
-			metrics.GoroutineCount,
-		)
-	}
-	mu.Unlock()
-
-	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte(results))
 }
 
 func GetGoRoutinesStats(w http.ResponseWriter, r *http.Request) {
@@ -146,12 +105,6 @@ func GetServiceMetricsFromStorage(w http.ResponseWriter, r *http.Request) {
 		startTime = serviceStartTime
 	}
 
-	log.Println("\n")
-	log.Println("Request Fields: ", req.FieldName)
-	log.Println("Start Time: " + startTime.String() + " End Time: " + endTime.String())
-	log.Println("Start Time Unix: ", startTime.Unix(), " End Time Unix: ", endTime.Unix())
-	log.Println("\n")
-
 	labelName := "host"
 	labelValue := "server1"
 
@@ -168,13 +121,9 @@ func GetServiceMetricsFromStorage(w http.ResponseWriter, r *http.Request) {
 			if _, exists := dataByTimestamp[dp.Timestamp]; !exists {
 				dataByTimestamp[dp.Timestamp] = make(map[string]float64)
 			}
-			// AcctualfieldName := NameMap[fieldName]
-
 			if _, ok := NameMap[fieldName]; ok {
-				// log.Println("Field Name Found in Map")
 				dataByTimestamp[dp.Timestamp][NameMap[fieldName]] = dp.Value
 			} else {
-				// log.Println("Field Name Not Found in Map")
 				dataByTimestamp[dp.Timestamp][fieldName] = dp.Value
 			}
 		}
@@ -192,8 +141,6 @@ func GetServiceMetricsFromStorage(w http.ResponseWriter, r *http.Request) {
 	sort.Slice(result, func(i, j int) bool {
 		return result[i]["time"].(string) < result[j]["time"].(string)
 	})
-
-	log.Println("Data points fetched successfully, " + labelName + ": " + labelValue)
 
 	jsonDP, err := json.Marshal(result)
 	if err != nil {
@@ -213,8 +160,6 @@ func GetReportData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("Request Fields: ", reqObj)
-
 	startTime, err := time.Parse(time.RFC3339, reqObj.StartTime)
 	if err != nil {
 		http.Error(w, "Invalid start time", http.StatusBadRequest)
@@ -230,12 +175,8 @@ func GetReportData(w http.ResponseWriter, r *http.Request) {
 	serviceStartTime := common.GetServiceStartTime()
 
 	if startTime.Before(serviceStartTime) {
-		log.Println("Start time is before service start time, setting start time to service start time")
-		log.Println("Service Start Time: " + serviceStartTime.String() + " Requested Start Time: " + startTime.String())
 		startTime = serviceStartTime
 	}
-
-	log.Println("Start Time: " + startTime.String() + " End Time: " + endTime.String())
 
 	var fieldNameList []string
 	if reqObj.Topic == "LoadStatistics" {
@@ -285,8 +226,6 @@ func GetReportData(w http.ResponseWriter, r *http.Request) {
 	sort.Slice(result, func(i, j int) bool {
 		return result[i]["time"].(string) < result[j]["time"].(string)
 	})
-
-	log.Println("Data points fetched successfully, " + labelName + ": " + labelValue)
 
 	jsonDP, err := json.Marshal(result)
 	if err != nil {

@@ -26,21 +26,6 @@ var (
 	closeOnce sync.Once
 )
 
-// TimeSeriesServiceMetrics represents metrics for a time series service.
-type TimeSeriesServiceMetrics struct {
-	Load                   float64
-	Cores                  float64
-	MemoryUsed             float64
-	NumberOfReqServerd     float64
-	GoRoutines             float64
-	TotalAlloc             float64
-	MemoryAllocSys         float64
-	HeapAlloc              float64
-	HeapAllocSys           float64
-	UpTime                 time.Duration
-	TotalDurationTookByAPI time.Duration
-}
-
 // StorageWrapper wraps the tstorage.Storage to implement the Storage interface.
 type StorageWrapper struct {
 	storage tstorage.Storage
@@ -161,18 +146,3 @@ func SetDbSyncFrequency(frequency ...string) {
 		}
 	}()
 }
-
-// func ShowMetrics(w http.ResponseWriter, r *http.Request) {
-
-// 	timestamp := time.Now()
-// 	timestamp = timestamp.Add(-24 * time.Hour)
-
-// 	startTime := timestamp.Unix()
-// 	endTime := time.Now().Unix()
-// 	load, err := GetDataPoints("load_metrics", []tstorage.Label{{Name: "host", Value: "server1"}}, startTime, endTime)
-// 	if err != nil {
-// 		log.Fatalf("Error getting data points: %v\n", err)
-// 	}
-
-// 	log.Printf("Load length: ", len(load))
-// }

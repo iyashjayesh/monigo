@@ -2,8 +2,6 @@ package models
 
 import (
 	"time"
-
-	"github.com/nakabonne/tstorage"
 )
 
 // NewServiceStats represents the final statistics of the service.
@@ -28,6 +26,7 @@ type NewServiceStats struct {
 	OverallHealth ServiceHealth `json:"overall_health"`
 }
 
+// CoreStatistics represents the core statistics of the service.
 type CoreStatistics struct {
 	Goroutines                 int           `json:"goroutines"`
 	RequestCount               int64         `json:"request_count"`
@@ -35,6 +34,7 @@ type CoreStatistics struct {
 	TotalDurationTookByRequest time.Duration `json:"total_duration_took_by_request"`
 }
 
+// LoadStatistics represents the load statistics of the service.
 type LoadStatistics struct {
 	ServiceCPULoad       string `json:"service_cpu_load"`
 	SystemCPULoad        string `json:"system_cpu_load"`
@@ -48,6 +48,7 @@ type LoadStatistics struct {
 	// TotalDiskLoad        string `json:"total_disk_load"`	   @TODO: Need to work on this
 }
 
+// CPUStatistics represents the CPU statistics of the service.
 type CPUStatistics struct {
 	TotalCores                  float64 `json:"total_cores"`
 	TotalLogicalCores           float64 `json:"total_logical_cores"`
@@ -57,6 +58,7 @@ type CPUStatistics struct {
 	CoresUsedBySystemInPercent  string  `json:"cores_used_by_system_in_percent"`
 }
 
+// MemoryStatistics represents the memory statistics of the service.
 type MemoryStatistics struct {
 	TotalSystemMemory   string               `json:"total_system_memory"`
 	MemoryUsedBySystem  string               `json:"memory_used_by_system"`
@@ -70,72 +72,19 @@ type MemoryStatistics struct {
 	RawMemStatsRecords  []RawMemStatsRecords `json:"raw_mem_stats_records"` // RawMemStatsRecords holds a list of raw memory statistic records.
 }
 
+// ServiceInfo is the struct to store the service information
 type ServiceHealth struct {
 	OverallHealthPercent string `json:"overall_health_percent"`
 	Health               Health `json:"health"`
 }
 
+// Health represents the health of the service.
 type Health struct {
 	Healthy bool   `json:"healthy"`
 	Message string `json:"message"`
 }
 
-////////////////////
-
-// ServiceCoreStats represents the core statistics of the service.
-type ServiceCoreStats struct {
-	Goroutines                 int        `json:"goroutines"`
-	RequestCount               int64      `json:"request_count"`
-	Loads                      Loads      `json:"loads"`
-	CPU                        CPUStat    `json:"cpu"`
-	Memory                     MemoryStat `json:"memory"`
-	Uptime                     string     `json:"uptime"`
-	TotalDurationTookbyRequest float64    `json:"total_duration_took_by_request"`
-}
-
-// Loads represents the load statistics.
-type Loads struct {
-	ServiceCPULoad       string `json:"service_cpu_load"`
-	SystemCPULoad        string `json:"system_cpu_load"`
-	TotalCPULoad         string `json:"total_cpu_load"`
-	ServiceMemLoad       string `json:"service_memory_load"`
-	SystemMemLoad        string `json:"system_memory_load"`
-	TotalMemLoad         string `json:"total_memory_load"`
-	ServcieDiskLoad      string `json:"service_disk_load"`
-	SystemDiskLoad       string `json:"system_disk_load"`
-	TotalDiskLoad        string `json:"total_disk_load"`
-	OverallLoadOfService string `json:"overall_load_of_service"` // Final load of the service
-}
-
-// CPUStat represents the CPU statistics.
-type CPUStat struct {
-	TotalCores                  float64 `json:"total_cores"`
-	TotalLogicalCores           float64 `json:"total_logical_cores"`
-	CoresUsedBySystem           float64 `json:"cores_used_by_system"`
-	CoresUsedByService          float64 `json:"cores_used_by_service"`
-	CoresUsedByServiceInPercent string  `json:"cores_used_by_service_in_percent"`
-	CoresUsedBySystemInPercent  string  `json:"cores_used_by_system_in_percent"`
-}
-
-// MemoryStat represents the memory statistics.
-type MemoryStat struct {
-	TotalSystemMemory   float64         `json:"total_system_memory"`
-	MemoryUsedBySystem  float64         `json:"memory_used_by_system"`
-	MemoryUsedByService float64         `json:"memory_used_by_service"`
-	AvaialbleMemory     float64         `json:"available_memory"`
-	MemStatsRecords     MemStatsRecords `json:"mem_stats_records"` // MemStatsRecords holds a list of memory statistic records.
-	// HeapAllocByProcess  float64         `json:"heap_alloc_by_process"`  // HeapAlloc -> heap alloc means heap allocated by application
-	// HeapSysByProcess    float64         `json:"heap_sys_by_process"`    // HeapSys -> heap sys means heap allocated by system
-	// TotalAllocByProcess float64         `json:"total_alloc_by_process"` // TotalAlloc is the total allocated bytes in the lifetime of the process. Every allocation is counted.
-	// TotalSysByProcess   float64         `json:"total_sys_by_process"`   // Sys is the total bytes of memory obtained from the OS.
-	// UsedInPercent       string          `json:"used_in_percent"`        // UsedInPercent is the percentage of memory used by the process.
-}
-
-// MemStatsRecords holds a list of memory statistic records.
-type MemStatsRecords struct {
-	Records []Record `json:"records"`
-}
-
+// RawMemStatsRecords holds a list of raw memory statistic records.
 type RawMemStatsRecords struct {
 	RecordName  string  `json:"record_name"`
 	RecordValue float64 `json:"record_value"`
@@ -149,6 +98,7 @@ type Record struct {
 	Unit        string      `json:"record_unit,omitempty"` // Added Unit to support different units like bytes, MB, GB, etc.
 }
 
+// ServiceMetrics represents the metrics of the service.
 type ServiceMetrics struct {
 	Load                   float64       `json:"load"`
 	Cores                  float64       `json:"cores"`
@@ -163,6 +113,7 @@ type ServiceMetrics struct {
 	OverallHealth          ServiceHealth `json:"overall_health"`
 }
 
+// FieldName represents the field names of the service.
 type FieldName struct {
 	HeapAllocByService           float64
 	HeapAllocBySystem            float64
@@ -179,27 +130,8 @@ type FieldName struct {
 	NetworkIO                    float64
 }
 
+// GoRoutinesStatistic represents the Go routines statistics.
 type GoRoutinesStatistic struct {
 	NumberOfGoroutines int      `json:"number_of_goroutines"`
 	StackView          []string `json:"stack_view"`
-}
-
-/// API MODELS
-
-type FetchDataPoints struct {
-	FieldName []string `json:"field_name"`
-	StartTime string   `json:"start_time"` // "2006-01-02T15:04:05Z07:00"
-	EndTime   string   `json:"end_time"`   // "2006-01-02T15:04:05Z07:00"
-}
-
-type DataPointsInfo struct {
-	FieldName string                `json:"field_name"`
-	Data      []*tstorage.DataPoint `json:"data_points"`
-}
-
-type ReportsRequest struct {
-	Topic     string `json:"topic"`
-	StartTime string `json:"start_time"` // "2006-01-02T15:04:05Z07:00"
-	EndTime   string `json:"end_time"`   // "2006-01-02T15:04:05Z07:00"
-	TimeFrame string `json:"time_frame"`
 }

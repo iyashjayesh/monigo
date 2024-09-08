@@ -54,27 +54,6 @@ func GetMemoryLoad() (serviceMem, systemMem, totalMem string) {
 	return serviceMem, systemMem, totalMem
 }
 
-// func GetDiskLoad() (serviceDisk, systemDisk, totalDisk float64) {
-// 	// Get system disk usage statistics
-// 	diskStat, err := disk.Usage("/")
-// 	if err != nil {
-// 		log.Panicf("Error fetching disk load for the system: %v\n", err)
-// 	}
-// 	systemDisk = diskStat.UsedPercent
-// 	totalDisk = float64(diskStat.Total)
-// 	proc := GetProcessObject()
-
-// 	ioStat, err := proc.IOCounters()
-// 	if err != nil {
-// 		log.Panicf("Error fetching disk load for the service: %v\n", err)
-// 	}
-
-// 	// Service disk usage can be considered as the total bytes read and written by the service process
-// 	serviceDisk = float64(ioStat.ReadBytes + ioStat.WriteBytes)
-
-// 	return serviceDisk, systemDisk, totalDisk
-// }
-
 func GetProcessDetails() (int32, *process.Process) {
 	pid := GetProcessId()
 	proc, err := process.NewProcess(pid)

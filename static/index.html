@@ -6,10 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Monigo - Metrics Dashboard</title>
     <!-- Favicon -->
-    <link rel="shortcut icon" href="../assets/images/favicon.ico" />
-    <link rel="stylesheet" href="../assets/css/backend-plugin.min.css">
-    <link rel="stylesheet" href="../assets/css/backend.css?v=1.0.0">
-    <link rel="stylesheet" href="../assets/css/monigo-styles.css">
+    <link rel="shortcut icon" href="../assets/favicon.ico" />
+
+    <link rel="stylesheet" href="./css/core/backend-plugin.min.css">
+    <link rel="stylesheet" href="./css/core/backend.css?v=1.0.0">
+    <link rel="stylesheet" href="./css/monigo-styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 
@@ -25,7 +26,7 @@
         <div class="iq-sidebar  sidebar-default ">
             <div class="iq-sidebar-logo d-flex align-items-center justify-content-between">
                 <a href="./index.html" class="header-logo">
-                    <img src="../assets/images/logo.png" class="img-fluid rounded-normal light-logo" alt="logo">
+                    <img src="../assets/logo.png" class="img-fluid rounded-normal light-logo" alt="logo">
                     <h5 class="logo-title light-logo ml-3">Moni<strong><em>GO</em></strong></h5>
                 </a>
                 <div class="iq-menu-bt-sidebar ml-0">
@@ -66,21 +67,6 @@
                             </a>
                         </li>
                         <li class=" ">
-                            <a href="./function-metrics.html" class="">
-                                <svg class="svg-icon" id="p-dash1" width="20" height="20"
-                                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path
-                                        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
-                                    </path>
-                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                                </svg>
-                                <span class="ml-4">Function Metircs</span>
-                            </a>
-                        </li>
-                        <li class=" ">
                             <a href="./reports.html" class="">
                                 <svg class="svg-icon" id="p-dash7" width="20" height="20"
                                     xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -96,6 +82,19 @@
                             </a>
                             <ul id="reports" class="iq-submenu collapse" data-parent="#iq-sidebar-toggle">
                             </ul>
+                        </li>
+                        <li class=" ">
+                            <a href="#" class="">
+                                <svg class="svg-icon" id="p-dash1" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path
+                                        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                                    </path>
+                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                </svg>
+                                <span class="ml-4">Function Metircs (v2)</span>
+                            </a>
                         </li>
                     </ul>
                 </nav>
@@ -120,7 +119,7 @@
                     <div class="iq-navbar-logo d-flex align-items-center justify-content-between">
                         <i class="ri-menu-line wrapper-menu"></i>
                         <a href="../backend/index.html" class="header-logo">
-                            <img src="../assets/images/logo.png" class="img-fluid rounded-normal" alt="logo">
+                            <img src="../assets/logo.png" class="img-fluid rounded-normal" alt="logo">
                             <h5 class="logo-title ml-3">
                                 Moni<strong><em>GO</em></strong>
                             </h5>
@@ -171,7 +170,15 @@
                                 <div class="row align-items-center">
                                     <div class="mt-3">
                                         <h4 class="mb-0">Service Health <span class="info-icon"
-                                                data-tooltip="The number of goroutines currently running in the application.">i</span>
+                                                data-tooltip="Health Score Calculation
+The Health Score represents the overall performance of the service, calculated based on three key metrics:
+1. CPU Load: Measures the service's CPU usage compared to the total available CPU. A higher available CPU results in a higher score.
+
+2. Memory Usage: Assesses the memory consumption of the service relative to the total available memory. Lower memory usage contributes to a higher score.
+
+3. Goroutine Count: Evaluates the number of goroutines running against a predefined maximum. Fewer goroutines improve the score.
+
+Each metric is weighted and combined to produce a score ranging from 0% to 100%. A higher score indicates better overall health.">i</span>
                                         </h4>
                                         <div id="health-tag"></div>
                                         <!-- <p class="mb-0">Service health is at 70%</p> -->
@@ -254,7 +261,7 @@
                                     <div class="card-body">
                                         <div class="d-flex align-items-center mb-4 card-total-sale">
                                             <div class="icon iq-icon-box-2 bg-info-light">
-                                                <img src="../assets/images/product/1.png" class="img-fluid"
+                                                <img src="../assets/product/1.png" class="img-fluid"
                                                     alt="GoRoutines Image">
                                             </div>
                                             <div id="goroutines">
@@ -277,7 +284,7 @@
                                     <div class="card-body">
                                         <div class="d-flex align-items-center mb-4 card-total-sale">
                                             <div class="icon iq-icon-box-2 bg-info-light">
-                                                <img src="../assets/images/product/2.png" class="img-fluid"
+                                                <img src="../assets/product/2.png" class="img-fluid"
                                                     alt="Load Image">
                                             </div>
                                             <div id="service-load">
@@ -296,7 +303,7 @@
                                     <div class="card-body">
                                         <div class="d-flex align-items-center mb-4 card-total-sale">
                                             <div class="icon iq-icon-box-2 bg-info-light">
-                                                <img src="../assets/images/product/3.png" class="img-fluid"
+                                                <img src="../assets/product/3.png" class="img-fluid"
                                                     alt="Cores Image">
                                             </div>
                                             <div id="cores">
@@ -315,7 +322,7 @@
                                     <div class="card-body">
                                         <div class="d-flex align-items-center mb-4 card-total-sale">
                                             <div class="icon iq-icon-box-2 bg-info-light">
-                                                <img src="../assets/images/product/1.png" class="img-fluid"
+                                                <img src="../assets/product/1.png" class="img-fluid"
                                                     alt="Memory Image">
                                             </div>
                                             <div id="memory">
@@ -334,7 +341,7 @@
                                     <div class="card-body">
                                         <div class="d-flex align-items-center mb-4 card-total-sale">
                                             <div class="icon iq-icon-box-2 bg-info-light">
-                                                <img src="../assets/images/product/2.png" class="img-fluid"
+                                                <img src="../assets/product/2.png" class="img-fluid"
                                                     alt="CPU Usage Image">
                                             </div>
                                             <div id="cpu-usage">
@@ -353,7 +360,7 @@
                                     <div class="card-body">
                                         <div class="d-flex align-items-center mb-4 card-total-sale">
                                             <div class="icon iq-icon-box-2 bg-info-light">
-                                                <img src="../assets/images/product/3.png" class="img-fluid"
+                                                <img src="../assets/product/3.png" class="img-fluid"
                                                     alt="Uptime Image">
                                             </div>
                                             <div id="uptime">
@@ -490,7 +497,7 @@
                                      <div class="card card-block card-stretch card-height mb-0">
                                          <div class="card-body">
                                              <div class="bg-warning-light rounded">
-                                                 <img src="../assets/images/product/01.png"
+                                                 <img src="../assets/product/01.png"
                                                      class="style-img img-fluid m-auto p-3" alt="image">
                                              </div>
                                              <div class="style-text text-left mt-3">
@@ -504,7 +511,7 @@
                                      <div class="card card-block card-stretch card-height mb-0">
                                          <div class="card-body">
                                              <div class="bg-danger-light rounded">
-                                                 <img src="../assets/images/product/02.png"
+                                                 <img src="../assets/product/02.png"
                                                      class="style-img img-fluid m-auto p-3" alt="image">
                                              </div>
                                              <div class="style-text text-left mt-3">
@@ -518,7 +525,7 @@
                                      <div class="card card-block card-stretch card-height mb-0">
                                          <div class="card-body">
                                              <div class="bg-info-light rounded">
-                                                 <img src="../assets/images/product/03.png"
+                                                 <img src="../assets/product/03.png"
                                                      class="style-img img-fluid m-auto p-3" alt="image">
                                              </div>
                                              <div class="style-text text-left mt-3">
@@ -532,7 +539,7 @@
                                      <div class="card card-block card-stretch card-height mb-0">
                                          <div class="card-body">
                                              <div class="bg-success-light rounded">
-                                                 <img src="../assets/images/product/02.png"
+                                                 <img src="../assets/product/02.png"
                                                      class="style-img img-fluid m-auto p-3" alt="image">
                                              </div>
                                              <div class="style-text text-left mt-3">
@@ -556,7 +563,14 @@
         <div class="container-fluid">
             <div class="card">
                 <div class="card-body">
-                    <div class="row">
+                    <div class="text-center">
+                        <span class="mr-1">
+                            <script>document.write(new Date().getFullYear())</script>©
+                        </span>
+                        <a href="https://github.com/iyashjayesh/monigo/releases/tag/v1.0.0" class="">Moni<strong><em>GO</em></strong> v1.0.0</a>
+                    </div>
+                    
+                    <!-- <div class="row">
                         <div class="col-lg-6">
                             <ul class="list-inline mb-0">
                                 <li class="list-inline-item"><a href="../backend/privacy-policy.html">Privacy Policy</a>
@@ -569,30 +583,25 @@
                             <span class="mr-1">
                                 <script>document.write(new Date().getFullYear())</script>©
                             </span>
-                            <a href="#" class="">Moni<strong><em>GO</em></strong></a>.
+                            <a href="https://github.com/iyashjayesh/monigo/releases/tag/v1.0.0" class="">Moni<strong><em>GO</em></strong> v1.0.0</a>.
                         </div>
-                    </div>
+                    </div> -->
                 </div>
             </div>
         </div>
     </footer>
-    <!-- Backend Bundle JavaScript -->
-    <script src="../assets/js/backend-bundle.min.js"></script>
-    <!-- Table Treeview JavaScript -->
-    <script src="../assets/js/table-treeview.js"></script>
-    <!-- Chart Custom JavaScript -->
-    <script src="../assets/js/customizer.js"></script>
-    <!-- Chart Custom JavaScript -->
-    <script async src="../assets/js/chart-custom.js"></script>
-    <!-- app JavaScript -->
-    <script src="../assets/js/app.js"></script>
+
+    <!-- Javascript -->
+    <!-- <script src="./js/core/main.js" defer></script> -->
+    <script src="./js/index.js" defer></script>
+    <script src="./js/common.js"></script>
+    <script src="./js/refresh.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
-    <!-- Main JavaScript -->
-    <!-- <script src="../assets/js/main.js" defer></script> -->
-    <script src="./index.js" defer></script>
-    <script src="./common.js" defer></script>
-    <script src="./refresh.js" defer></script>
-    <!-- ECharts JS -->
+
+    <!-- Backend Bundle JavaScript -->
+    <script src="./js/core/backend-bundle.min.js"></script>
+    <script src="./js/core/app.js"></script>
+
 </body>
 
 </html>

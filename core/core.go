@@ -310,15 +310,6 @@ func ConstructMemStats(memStats *runtime.MemStats) []models.Record {
 	return r
 }
 
-// func GetCPUUsedInPercentByService() float64 {
-// 	_, proc := common.GetProcessDetails()
-// 	procCPUPercent, _, err := getProcessUsage(proc, nil)
-// 	if err != nil {
-// 		log.Fatalf("Error fetching process usage: %v\n", err)
-// 	}
-// 	return procCPUPercent
-// }
-
 // GetNetworkIO retrieves network I/O statistics.
 func GetNetworkIO() (float64, float64) {
 	// Fetch network I/O statistics
