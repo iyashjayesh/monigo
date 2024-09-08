@@ -99,13 +99,17 @@
                     </ul>
                 </nav>
                 <div id="sidebar-bottom" class="position-relative sidebar-bottom">
-                    <div class="card border-none">
-                        <div class="card-body p-0">
+                    <div class="card border-none border-radius-20 p-2 bg-success-light">
+                        <div class="card-body">
                             <div class="sidebarbottom-content">
-                                <h6 class="mt-4 px-4 body-title">Incase you find any issue or bug please report on
+                                <h6 class="body-title">Incase you find any issue or bug please report on
                                     Github
                                 </h6>
-                                <button type="button" class="btn sidebar-bottom-btn mt-4">Support the project</button>
+                                <button type="button" class="btn sidebar-bottom-btn mt-4">
+                                    <a href="https://github.com/iyashjayesh/monigo" target="_blank">
+                                        Support the project
+                                    </a>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -126,9 +130,17 @@
                         </a>
                     </div>
                     <div class="iq-search-bar device-search">
-                        <div class="health-status">
-                            <span id="health-indicator" class="health-indicator"></span>
-                            <span id="health-message" class="health-message"></span>
+                        <div class="d-flex align-items-center">
+                            <div class="collapse navbar-collapse">
+                                <ul class="card navbar-nav ml-auto navbar-list align-items-center border-radius-20">
+                                    <li class="nav-item nav-icon">
+                                        <div class="health-status p-1">
+                                            <span id="health-indicator" class="health-indicator"></span>
+                                            <span id="health-message" class="health-message"></span>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                     <div class="d-flex align-items-center">

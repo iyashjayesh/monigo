@@ -8504,9 +8504,9 @@ a.text-light-gray:hover {
   height: 100%;
   background: #fff;
   transition: all 0.6s ease-in-out;
-  -ms-box-shadow: 0 16px 15px 0 rgba(0, 0, 0, 0.07);
-  -o-box-shadow: 0 16px 15px 0 rgba(0, 0, 0, 0.07);
-  box-shadow: 0 16px 15px 0 rgba(0, 0, 0, 0.07);
+  -ms-box-shadow: 0 16px 15px 0 rgba(0, 0, 0, 0.2);
+  -o-box-shadow: 0 16px 15px 0 rgba(0, 0, 0, 0.2);
+  box-shadow: 0 16px 15px 0 rgba(0, 0, 0, 0.2);
 }
 #sidebar-scrollbar {
   height: 100vh;

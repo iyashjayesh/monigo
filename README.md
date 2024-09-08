@@ -15,6 +15,9 @@
 - **Customizable Dashboard**: Manage performance data with an easy-to-use UI.
 - **Visualizations**: Utilize graphs and charts to interpret performance trends.
 
+<img width="1506" alt="Screenshot 2024-09-08 at 4 39 55 PM" src="https://github.com/user-attachments/assets/b7065488-3e8d-4bf9-9653-86e8db6d494f">
+
+
 ## Installation
 
 To install MoniGo, use the following command:
@@ -23,28 +26,7 @@ To install MoniGo, use the following command:
 go get github.com/iyashjayesh/monigo
 ```
 
-#### For Linux
-
-Install Graphviz:
-
-```bash
-sudo apt-get install graphviz
-```
-
-Or, if you use Homebrew:
-
-```bash
-brew install graphviz
-```
-
-#### For Windows
-
-1. Download Graphviz from the following link: https://graphviz.gitlab.io/_pages/Download/Download_windows.html
-2. Install Graphviz and set the path in the environment variables.
-
-## Usage
-
-To begin monitoring your Go application, import the monigo package and call the monigo.Start function:
+## Example: How to Use MoniGo
 
 ```go
 package main
@@ -55,14 +37,52 @@ import (
 
 func main() {
 
-    monigoInstance := &monigo.Monigo{
-		ServiceName:   "service_name", // Default service name is "service_name"
-		DashboardPort: 8080, // Default port is 8080
+	monigoInstance := &monigo.Monigo{
+		ServiceName:        "service_name", // **Required**
+		PurgeMonigoStorage: true,       	// Default is false
+		DashboardPort:      8080,       	// Default is 8080
+		DbSyncFrequency:    "10s",       	// Default is 5 Minutes "5m"
+		RetentionPeriod:    "4d",       	// Default is 14 days (2 weeks)
 	}
 
-	monigoInstance.PurgeMonigoStorage()
-	monigoInstance.SetDbSyncFrequency("1m") // Default is 5m
-	monigoInstance.StartDashboard()
+	// 	### Weight Configuration
+
+	// In the health scoring system, weights determine the importance of each metric:
+
+	// - **Weight of `1.0`**: Indicates maximum importance. Metrics with this weight have the highest impact on the overall health score.
+	// - **Weights Less Than `1.0`**: Reflect decreasing levels of importance. Metrics with lower weights contribute less to the overall score.
+
+	// **Example**:
+	// - Set `MaxLoad.Weight` to `1.0` if CPU load is critical.
+	// - Set `MaxMemory.Weight` to `0.5` if memory usage is moderately important.
+	// - Set `MaxGoroutines.Weight` to `0.2` for less critical metrics.
+
+	// 1.0 is the maximum weight and 0.0 is the minimum weight.
+	// critical - 1.0
+	// moderate - 0.5
+	// less critical - 0.2
+
+	// to check overall health of the service
+	monigoInstance.SetServiceThresholds(&models.ServiceHealthThresholds{
+		MaxGoroutines: models.Thresholds{
+			Value:  100, //Default is 100
+			Weight: 1.0, //Default is 0.2
+		},
+		MaxCPULoad: models.Thresholds{
+			Value:  85, //Default is 85%
+			Weight: 0.5, //Default is 0.7
+		},
+		MaxMemory: models.Thresholds{
+			Value:  80, //Default is 85%
+			Weight: 0.2, //Default is 0.7
+		},
+	})
+
+	monigoInstance.Start()
+
+	// Optinal
+	// routinesStats := monigoInstance.PrintGoRoutinesStats() // Print go routines stats
+	// log.Println(routinesStats)
 
     select {} // To keep the program running
 }
@@ -145,26 +165,6 @@ For questions or feedback, please open an issue or contact me at iyashjayesh@gma
 
 [![Star History Chart](https://api.star-history.com/svg?repos=iyashjayesh/monigo&type=Date)](https://star-history.com/#iyashjayesh/monigo&Date) -->
 
-<!-- Next things to do -->
+## License
 
-<!-- / StartDashboard  -->
-
-<!-- 1. Register StoreInfo Only once when the server starts
-   Now on every time interval, do below things:
-1. Store Service Metrics
-1. Store Runtime Metrics -->
-
-<!-- List of Pages -->
-
-<!-- 1. Dashboard
-	1.1. Service Metrics
-	1.1.1 Guage Charts for (Service Health, Memory Health, CPU Health etc)
-	1.2 CPU Metrics (Detailed)
-	1.3 Memory Metrics (Detailed)
-	1.4. Go Routines Number Metrics
-	1.5. Charts for all the above metrics
-		1.5.1 Load Chart
-		1.5.2 CPU Chart
-<!-- 2. Go Routines Stats -->
-<!-- 3. Function Metrics -->
-<!-- 4. Performace Report -->
+This project is licensed under the Apache 2.0 License - see the [LICENSE file](https://github.com/iyashjayesh/monigo?tab=Apache-2.0-1-ov-file) for details.
