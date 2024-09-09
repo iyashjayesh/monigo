@@ -36,21 +36,21 @@ func init() {
 
 // Monigo is the main struct to start the monigo service
 type Monigo struct {
-	ServiceName        string    `json:"service_name"`
-	DashboardPort      int       `json:"dashboard_port"`
-	PurgeMonigoStorage bool      `json:"purge_monigo_storage"`
-	DbSyncFrequency    string    `json:"db_sync_frequency"`
-	RetentionPeriod    string    `json:"retention_period"`
-	GoVersion          string    `json:"go_version"`
-	ServiceStartTime   time.Time `json:"service_start_time"`
-	ProcessId          int32     `json:"process_id"`
+	ServiceName             string    `json:"service_name"`
+	DashboardPort           int       `json:"dashboard_port"`
+	PurgeMonigoStorage      bool      `json:"purge_monigo_storage"`
+	DataPointsSyncFrequency string    `json:"db_sync_frequency"`
+	RetentionPeriod         string    `json:"retention_period"`
+	GoVersion               string    `json:"go_version"`
+	ServiceStartTime        time.Time `json:"service_start_time"`
+	ProcessId               int32     `json:"process_id"`
 }
 
 // MonigoInt is the interface to start the monigo service
 type MonigoInt interface {
 	Start()                                                                      // Start the dashboard
 	DeleteMonigoStorage()                                                        // Purge the monigo storage
-	SetDbSyncFrequency(frequency ...string)                                      // Set the frequency to sync the metrics to the storage
+	SetDataPointsSyncFrequency(frequency ...string)                              // Set the frequency to sync the metrics to the storage
 	PrintGoRoutinesStats() models.GoRoutinesStatistic                            // Print the Go routines stats
 	ConfigureServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) // Set the service thresholds to calculate the overall service health
 }
@@ -70,7 +70,7 @@ func (m *Monigo) Start() {
 	}
 
 	// Set the frequency to sync the metrics to the storage
-	m.SetDbSyncFrequency(m.DbSyncFrequency) // Default is 5 Minutes
+	m.SetDataPointsSyncFrequency(m.DataPointsSyncFrequency) // Default is 5 Minutes
 
 	// TODO: Correct the logs
 
@@ -107,8 +107,8 @@ func (m *Monigo) DeleteMonigoStorage() {
 	timeseries.PurgeStorage()
 }
 
-func (m *Monigo) SetDbSyncFrequency(frequency ...string) {
-	timeseries.SetDbSyncFrequency(m.DbSyncFrequency)
+func (m *Monigo) SetDataPointsSyncFrequency(frequency ...string) {
+	timeseries.SetDataPointsSyncFrequency(m.DataPointsSyncFrequency)
 }
 
 func (m *Monigo) PrintGoRoutinesStats() models.GoRoutinesStatistic {

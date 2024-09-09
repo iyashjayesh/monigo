@@ -44,41 +44,38 @@ func main() {
 		ServiceName:        "service_name", // **Required**
 		PurgeMonigoStorage: true,       	// Default is false
 		DashboardPort:      8080,       	// Default is 8080
-		DbSyncFrequency:    "10s",       	// Default is 5 Minutes "5m"
+		DataPointsSyncFrequency:    "10s",       	// Default is 5 Minutes "5m"
 		RetentionPeriod:    "4d",       	// Default is 14 days (2 weeks)
 	}
 
-	// 	### Weight Configuration
+	// **Thresholds Explanation:**
 
-	// In the health scoring system, weights determine the importance of each metric:
+	// The `Thresholds` structure defines the performance and resource usage thresholds used to evaluate system health:
 
-	// - **Weight of `1.0`**: Indicates maximum importance. Metrics with this weight have the highest impact on the overall health score.
-	// - **Weights Less Than `1.0`**: Reflect decreasing levels of importance. Metrics with lower weights contribute less to the overall score.
+	// - **Low**: The percentage value below which the system is considered to be in optimal health.
+	// - **Medium**: The percentage value indicating moderate health; usage above this threshold but below the High threshold may be acceptable but should be monitored.
+	// - **High**: The percentage value indicating high usage, suggesting potential performance issues or resource constraints.
+	// - **Critical**: The percentage value where the system is critically stressed and immediate attention is needed.
+	// - **GoroutinesLow**: The lower bound for the number of goroutines; fewer goroutines are considered better.
+	// - **GoroutinesHigh**: The upper bound for the number of goroutines; more goroutines may indicate high load or potential inefficiencies.
 
-	// **Example**:
-	// - Set `MaxLoad.Weight` to `1.0` if CPU load is critical.
-	// - Set `MaxMemory.Weight` to `0.5` if memory usage is moderately important.
-	// - Set `MaxGoroutines.Weight` to `0.2` for less critical metrics.
+	// Example values:
+	// - `Low: 20.0` - The system is healthy if usage is below 20%.
+	// - `Medium: 50.0` - Usage between 20% and 50% is moderate.
+	// - `High: 80.0` - Usage between 50% and 80% is high.
+	// - `Critical: 100.0` - Usage at or above 100% is critical.
 
-	// 1.0 is the maximum weight and 0.0 is the minimum weight.
-	// critical - 1.0
-	// moderate - 0.5
-	// less critical - 0.2
+	// For goroutines:
+	// - `GoroutinesLow: 100` - Ideal number of goroutines is below 100.
+	// - `GoroutinesHigh: 500` - The system may experience performance issues if the number of goroutines exceeds 500.
 
-	// to check overall health of the service
 	monigoInstance.ConfigureServiceThresholds(&models.ServiceHealthThresholds{
-		MaxGoroutines: models.Thresholds{
-			Value:  100, //Default is 100
-			Weight: 1.0, //Default is 0.2
-		},
-		MaxCPULoad: models.Thresholds{
-			Value:  85, //Default is 85%
-			Weight: 0.5, //Default is 0.7
-		},
-		MaxMemory: models.Thresholds{
-			Value:  80, //Default is 85%
-			Weight: 0.2, //Default is 0.7
-		},
+		Low:            20.0,  // Default is 20.0
+		Medium:         50.0,  // Default is 50.0
+		High:           80.0,  // Default is 80.0
+		Critical:       100.0, // Default is 100.0
+		GoRoutinesLow:  100,   // Default is 100
+		GoRoutinesHigh: 500,   // Default is 500
 	})
 
 	monigoInstance.Start()

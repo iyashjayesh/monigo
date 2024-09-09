@@ -107,7 +107,7 @@ func PurgeStorage() {
 	}
 }
 
-func SetDbSyncFrequency(frequency ...string) {
+func SetDataPointsSyncFrequency(frequency ...string) {
 	freqStr := "5m"
 	if len(frequency) > 0 {
 		freqStr = frequency[0]
