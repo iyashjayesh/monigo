@@ -48,11 +48,11 @@ type Monigo struct {
 
 // MonigoInt is the interface to start the monigo service
 type MonigoInt interface {
-	Start()                                                                // Start the dashboard
-	DeleteMonigoStorage()                                                  // Purge the monigo storage
-	SetDbSyncFrequency(frequency ...string)                                // Set the frequency to sync the metrics to the storage
-	PrintGoRoutinesStats() models.GoRoutinesStatistic                      // Print the Go routines stats
-	SetServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) // Set the service thresholds to calculate the overall service health
+	Start()                                                                      // Start the dashboard
+	DeleteMonigoStorage()                                                        // Purge the monigo storage
+	SetDbSyncFrequency(frequency ...string)                                      // Set the frequency to sync the metrics to the storage
+	PrintGoRoutinesStats() models.GoRoutinesStatistic                            // Print the Go routines stats
+	ConfigureServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) // Set the service thresholds to calculate the overall service health
 }
 
 type Cache struct {
@@ -115,8 +115,8 @@ func (m *Monigo) PrintGoRoutinesStats() models.GoRoutinesStatistic {
 	return core.CollectGoRoutinesInfo()
 }
 
-func (m *Monigo) SetServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) {
-	core.SetServiceThresholds(thresholdsValues)
+func (m *Monigo) ConfigureServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) {
+	core.ConfigureServiceThresholds(thresholdsValues)
 }
 
 func StartDashboard(port int) {

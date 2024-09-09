@@ -26202,6 +26202,7 @@ pre {
 }
 
 .gauge>svg>text {
+  font-size: 12px;
   text-anchor: middle;
   alignment-baseline: central;
   fill: var(--fill-color);

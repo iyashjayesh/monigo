@@ -15,9 +15,9 @@ import (
 	"github.com/shirou/gopsutil/net"
 )
 
-func GetNewServiceStats() models.NewServiceStats {
+func GetServiceStats() models.ServiceStats {
 
-	var serviceStats models.NewServiceStats
+	var serviceStats models.ServiceStats
 	// timeNow := time.Now()
 	serviceStats.CoreStatistics = GetCoreStatistics()
 	// log.Println("Time taken to get the core statistics: ", time.Since(timeNow))
@@ -66,7 +66,7 @@ func GetNewServiceStats() models.NewServiceStats {
 
 	wg.Wait()
 
-	serviceStats.OverallHealth = GetServiceHealth(&serviceStats.LoadStatistics)
+	serviceStats.Health = GetServiceHealth(&serviceStats.LoadStatistics)
 	// serviceStats.DiskIO = GetDiskIO()                                             // TODO: Need to implement this function
 
 	return serviceStats
@@ -104,7 +104,6 @@ func GetCoreStatistics() models.CoreStatistics {
 		TotalDurationTookByRequest: durationTook,
 	}
 }
-
 
 func GetLoadStatistics() models.LoadStatistics {
 
@@ -156,72 +155,6 @@ func CalculateOverallLoad(serviceCPU, serviceMem string) string {
 
 	return common.ParseFloat64ToString(overallLoad) + "%"
 }
-
-// CalculateHealthScore calculates a health score based on CPU and memory usage.
-func CalculateHealthScore(serviceCPU, systemCPU, totalCPU float64, serviceMem, systemMem, totalMem float64) string {
-	thresholds := GetServiceHealthThresholdsModel()
-
-	// Calculate scores with bounds checks
-	loadScore := (thresholds.MaxCPULoad.Value - totalCPU) / thresholds.MaxCPULoad.Value * thresholds.MaxCPULoad.Weight
-	if loadScore < 0 {
-		loadScore = 0
-	}
-
-	memoryScore := (thresholds.MaxMemory.Value - totalMem) / thresholds.MaxMemory.Value * thresholds.MaxMemory.Weight
-	if memoryScore < 0 {
-		memoryScore = 0
-	}
-
-	goroutineScore := (float64(thresholds.MaxGoroutines.Value) - float64(runtime.NumGoroutine())) / float64(thresholds.MaxGoroutines.Value) * thresholds.MaxGoroutines.Weight
-	if goroutineScore < 0 {
-		goroutineScore = 0
-	}
-
-	overallHealth := loadScore + memoryScore + goroutineScore
-
-	// Ensure the health percent is within 0-100%
-	if overallHealth > 100 {
-		overallHealth = 100
-	}
-
-	return common.ParseFloat64ToString(overallHealth*100) + "%"
-}
-
-// In the CalculateHealthScore function, Weight is used to determine the importance of each metric (CPU load, memory usage, goroutines) in the overall health score.
-
-// Weight Explanation
-// Weight is a factor used to adjust the contribution of each metric to the overall health score. It represents the relative importance of the metric:
-
-// Higher Weight: Indicates that the metric is more important in calculating the overall health score.
-// Lower Weight: Indicates that the metric is less influential.
-
-// Metric Score = ((Threshold Value - Actual Value) / Threshold Value) * Weight
-
-// Usage:
-
-// Load Score: Weighted by MaxLoad.Weight
-// Memory Score: Weighted by MaxMemory.Weight
-// Goroutine Score: Weighted by MaxGoroutines.Weight
-// The combined weighted scores are summed to provide the final health score, ensuring that more critical metrics have a greater impact on the overall assessment.
-
-// Example:
-// If MaxLoad.Weight is 0.4, it means CPU load contributes 40% to the final health score.
-
-// ### Health Scoring System
-
-// The health score is calculated using weighted metrics to reflect their importance. Adjust the weights to prioritize metrics according to your application's needs.
-
-// - **Weight**: Determines the relative importance of each metric in the overall health score.
-//   - `MaxLoad.Weight`: Weight for CPU load. A higher weight indicates greater importance.
-//   - `MaxMemory.Weight`: Weight for memory usage.
-//   - `MaxGoroutines.Weight`: Weight for the number of goroutines.
-
-// **Example**:
-// - If CPU load is critical, set `MaxLoad.Weight` to 0.5.
-// - For moderate importance, set `MaxMemory.Weight` to 0.3.
-// - For less critical metrics, set `MaxGoroutines.Weight` to 0.2.
-
-// Adjust these weights and thresholds based on your application's operational requirements.
 
 // GetCPUStatistics retrieves the CPU statistics.
 func GetCPUStatistics() models.CPUStatistics {
@@ -334,35 +267,52 @@ func GetNetworkIO() (float64, float64) {
 	return totalBytesReceived, totalBytesSent
 }
 
-// GetServiceMetrics retrieves the service metrics.
+// GetServiceHealth retrieves the service health statistics.
 func GetServiceHealth(loadStats *models.LoadStatistics) models.ServiceHealth {
+	threshold := GetServiceHealthThresholdsModel()
 
-	overallHealth := CalculateHealthScore(
-		common.ParseStringToFloat64(loadStats.ServiceCPULoad),
-		common.ParseStringToFloat64(loadStats.SystemCPULoad),
-		common.ParseStringToFloat64(loadStats.TotalCPULoad),
-		common.ParseStringToFloat64(loadStats.ServiceMemLoad),
-		common.ParseStringToFloat64(loadStats.SystemMemLoad),
-		common.ParseStringToFloat64(loadStats.TotalMemLoad)*1024*1024,
-	)
-
-	healthy := true
-	message := ""
-
-	if overallHealth > "50%" {
-		message = "[Healthy] Service is healthy and running smoothly."
-	} else {
-		healthy = false
-		message = "[Unhealthy] Service is under heavy load or high memory usage, consider scaling up or optimizing. Check the memory and CPU usage for more details."
+	healthInPercent, err := CalculateHealthScore(threshold)
+	if err != nil {
+		log.Println("Error calculating health score:", err)
+		return models.ServiceHealth{
+			SystemHealth:  models.Health{Percent: 0, Healthy: false, Message: "Oops! We hit a snag while calculating the health score."},
+			ServiceHealth: models.Health{Percent: 0, Healthy: false, Message: "Oops! We hit a snag while calculating the health score."},
+			OverallHealth: models.Health{Percent: 0, Healthy: false, Message: "Oops! We hit a snag while calculating the health score."},
+		}
 	}
 
-	return models.ServiceHealth{
-		OverallHealthPercent: overallHealth,
-		Health: models.Health{
-			Healthy: healthy,
-			Message: message,
-		},
+	var healthData models.ServiceHealth
+	healthData.ServiceHealth.Percent = healthInPercent.ServiceHealth
+	healthData.SystemHealth.Percent = healthInPercent.SystemHealth
+	healthData.OverallHealth.Percent = healthInPercent.OverallHealth
+
+	overallHealth := healthInPercent.OverallHealth
+	healthy := overallHealth > 50
+	var message string
+
+	switch {
+	case overallHealth >= 90:
+		message = "[Outstanding] The Overall Health is rocking it! Everything’s running smoothly and life is good."
+	case overallHealth >= 85:
+		message = "[Impressive] The Overall Health is doing great—just a few hiccups that need a tweak here and there."
+	case overallHealth >= 70:
+		message = "[Solid] The Overall Health is holding up well. A bit of fine-tuning could make it shine even brighter."
+	case overallHealth >= 50:
+		message = "[Fair] The Overall Health is functional but could use a bit of TLC. Time to check those resources!"
+	case overallHealth >= 30:
+		message = "[Wobbly] The Overall Health is feeling the heat. Roll up your sleeves and dig into those logs!"
+	default:
+		message = "[Oops] The Overall Health is in rough shape. Time to call in the cavalry and get things back on track!"
 	}
+
+	healthData.ServiceHealth.Healthy = healthy
+	healthData.ServiceHealth.Message = message
+	healthData.SystemHealth.Healthy = healthy
+	healthData.SystemHealth.Message = message
+	healthData.OverallHealth.Healthy = healthy
+	healthData.OverallHealth.Message = message
+
+	return healthData
 }
 
 // ConstructRawMemStats constructs a list of raw memory statistics records.

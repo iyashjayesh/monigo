@@ -23,6 +23,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     goroutines.push(goroutine);
                 });
 
+
+                if (goroutines.length > 0) {
+                    const downloadBtn = document.getElementById('download-stack-view');
+                    if (downloadBtn) {
+                        downloadBtn.style.display = 'block';
+                        downloadBtn.addEventListener('click', () => {
+                            const blob = new Blob([goroutines.map(g => g.stackTrace).join('\n')], { type: 'text/plain' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'go-routines-stack-view.txt';
+                            a.click();
+                            URL.revokeObjectURL(url);
+                        });
+                    } else {
+                        downloadBtn.style.display = 'none';
+                    }
+                }
+
                 countElement.textContent = goroutines.length;
                 container.innerHTML = '';
 

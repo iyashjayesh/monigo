@@ -43,7 +43,7 @@ func NewCoreStatistics(w http.ResponseWriter, r *http.Request) {
 		fieldDescription = common.ConstructJsonFieldDescription()
 	}
 
-	serviceStats := core.GetNewServiceStats()
+	serviceStats := core.GetServiceStats()
 
 	jsonMetrics, _ := json.Marshal(serviceStats)
 	w.Header().Set("Content-Type", "application/json")

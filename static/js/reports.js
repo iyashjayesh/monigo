@@ -61,8 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
             time_frame: timeframe
         };
 
-        // console.log("ReqObj: ", reqObj);
-
         fetch('/monigo/api/v1/reports', {
             method: 'POST',
             headers: {

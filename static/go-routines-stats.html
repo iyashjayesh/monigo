@@ -120,11 +120,8 @@
                 <nav class="navbar navbar-expand-lg navbar-light p-0">
                     <div class="iq-navbar-logo d-flex align-items-center justify-content-between">
                         <i class="ri-menu-line wrapper-menu"></i>
-                        <a href="../backend/index.html" class="header-logo">
-                            <img src="../assets/logo.png" class="img-fluid rounded-normal" alt="logo">
-                            <h5 class="logo-title ml-3">
-                                Moni<strong><em>GO</em></strong>
-                            </h5>
+                        <a href="./index.html" class="header-logo">
+                            <img src="./assets/monigo-icon.png" class="img-fluid rounded-normal light-logo" alt="logo">
                         </a>
                     </div>
                     <div class="iq-search-bar device-search">
@@ -194,22 +191,13 @@
                     </div>
                     <div id="goroutines-page"></div>
                     <div class="col-lg-8">
-                        <!-- <div class="row pl-3 pr-3">
-                            <div class="card card-block card-stretch card-height">
-                                <div class="card-body">
-                                    <div id="service-container">
-                                    </div>
-                                    <div class="iq-progress-bar mt-2">
-                                        <span class="bg-info iq-progress progress-1" style="width: 0%;" data-percent="100">
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div> -->
                         <div class="row">
                             <div class="col-lg-3 col-md-3">
                                 <div class="card card-block card-stretch card-height">
                                     <div class="card-body">
+                                        <div class="icon iq-icon-box-2 bg-info-light">
+                                            <img src="./assets/product/service.png" class="img-fluid" alt="GoRoutines Image">
+                                        </div>
                                         <div id="service_name"></div>
                                         <div class="iq-progress-bar mt-2">
                                             <span class="bg-info iq-progress progress-1" data-percent="100">
@@ -221,17 +209,9 @@
                             <div class="col-lg-3 col-md-3">
                                 <div class="card card-block card-stretch card-height">
                                     <div class="card-body">
-                                        <div id="service_start_time"></div>
-                                        <div class="iq-progress-bar mt-2">
-                                            <span class="bg-info iq-progress progress-1" data-percent="100">
-                                            </span>
+                                        <div class="icon iq-icon-box-2 bg-info-light">
+                                            <img src="./assets/product/go-version.png" class="img-fluid" alt="GoRoutines Image">
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-3 col-md-3">
-                                <div class="card card-block card-stretch card-height">
-                                    <div class="card-body">
                                         <div id="go_version"></div>
                                         <div class="iq-progress-bar mt-2">
                                             <span class="bg-info iq-progress progress-1" data-percent="100">
@@ -240,11 +220,22 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-lg-3 col-md-3">
+                            <div class="col-lg-6 col-md-6">
                                 <div class="card card-block card-stretch card-height">
                                     <div class="card-body">
-                                        <div id="process_id"></div>
-                                        <div class="iq-progress-bar mt-2">
+                                        <div class="d-flex align-items-center card-total-sale">
+                                            <div class="icon iq-icon-box-2 bg-info-light">
+                                                <img src="./assets/product/start-time.png" class="img-fluid" alt="Load Image">
+                                            </div>
+                                            <div id="service_start_time"></div>
+                                        </div>
+                                        <div class="d-flex align-items-center card-total-sale">
+                                            <div class="icon iq-icon-box-2 bg-info-light">
+                                                <img src="./assets/product/id.png" class="img-fluid" alt="Load Image">
+                                            </div>
+                                            <div id="process_id"></div>
+                                        </div>
+                                        <div class="iq-progress-bar mt-1">
                                             <span class="bg-info iq-progress progress-1" data-percent="100">
                                             </span>
                                         </div>
@@ -262,7 +253,7 @@
                                     <h4 class="card-title mb-0">Go Routines Stack View</h4>
                                 </div>
                                 <div class="card-header-toolbar d-flex align-items-center">
-                                    <div><a href="#" class="btn btn-primary view-btn font-size-14"><i class="fa fa-download" aria-hidden="true"></i>Download</a></div>
+                                    <div><a id="download-stack-view" class="btn btn-primary view-btn font-size-14"><i class="fa fa-download" aria-hidden="true"></i>Download Stack View</a></div>
                                 </div>
                             </div>
                         </div>
@@ -310,7 +301,6 @@
     <!-- Backend Bundle JavaScript -->
     <script src="./js/core/backend-bundle.min.js"></script>
     <script src="./js/core/app.js"></script>
-
 
     <!-- Main JavaScript -->
     <!-- <script src="./js/core//main.js" defer></script> -->

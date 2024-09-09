@@ -66,7 +66,7 @@ func main() {
 	// less critical - 0.2
 
 	// to check overall health of the service
-	monigoInstance.SetServiceThresholds(&models.ServiceHealthThresholds{
+	monigoInstance.ConfigureServiceThresholds(&models.ServiceHealthThresholds{
 		MaxGoroutines: models.Thresholds{
 			Value:  100, //Default is 100
 			Weight: 1.0, //Default is 0.2

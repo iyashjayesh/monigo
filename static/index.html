@@ -121,11 +121,8 @@
                 <nav class="navbar navbar-expand-lg navbar-light p-0">
                     <div class="iq-navbar-logo d-flex align-items-center justify-content-between">
                         <i class="ri-menu-line wrapper-menu"></i>
-                        <a href="../backend/index.html" class="header-logo">
-                            <img src="../assets/logo.png" class="img-fluid rounded-normal" alt="logo">
-                            <h5 class="logo-title ml-3">
-                                Moni<strong><em>GO</em></strong>
-                            </h5>
+                        <a href="./index.html" class="header-logo">
+                            <img src="./assets/monigo-icon.png" class="img-fluid rounded-normal light-logo" alt="logo">
                         </a>
                     </div>
                     <div class="iq-search-bar device-search">
@@ -179,19 +176,14 @@
                                     of key performance of your backend service process.
                                 </h4> -->
                                     <div class="service-health">
-                                        <h4 class="mb-0">Service Health <span class="info-icon"
-                                                data-tooltip="Health Score Calculation
-The Health Score represents the overall performance of the service, calculated based on three key metrics:
-1. CPU Load: Measures the service's CPU usage compared to the total available CPU. A higher available CPU results in a higher score.
-
-2. Memory Usage: Assesses the memory consumption of the service relative to the total available memory. Lower memory usage contributes to a higher score.
-
-3. Goroutine Count: Evaluates the number of goroutines running against a predefined maximum. Fewer goroutines improve the score.
-
-Each metric is weighted and combined to produce a score ranging from 0% to 100%. A higher score indicates better overall health.">i</span>
+                                        <h4 class="mb-0">Overall Health <span class="info-icon"
+                                                data-tooltip="Health Score Calculation">i</span>
                                         </h4>
                                         <div id="health-tag"></div>
-                                        <!-- <p class="mb-0">Service health is at 70%</p> -->
+                                        
+                                        <div id="service-health-tag"></div>
+                                        <div id="system-health-tag"></div>
+                                        <!-- <div id="overall-health-tag"></div> -->
                                     </div>
                                         <div class="gauge" id="g1">
                                             <svg viewBox="0 0 60 25">

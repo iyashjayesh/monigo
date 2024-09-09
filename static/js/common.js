@@ -20,20 +20,19 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(response => response.json())
             .then(data => {
                 const {
-                    core_statistics,
-                    load_statistics,
-                    cpu_statistics,
-                    memory_statistics,
-                    overall_health
+                    // core_statistics,
+                    // load_statistics,
+                    // cpu_statistics,
+                    // memory_statistics,
+                    health
                 } = data;
-
                 const healthIndicator = document.getElementById('health-indicator');
-                if (overall_health.health.healthy) {
+                if (health.overall_health.healthy) {
                     healthIndicator.classList.add('healthy');
-                    document.getElementById('health-message').textContent = overall_health.health.message;
+                    document.getElementById('health-message').textContent = health.overall_health.message;
                 } else {
                     healthIndicator.classList.add('unhealthy');
-                    document.getElementById('health-message').textContent = overall_health.health.message;
+                    document.getElementById('health-message').textContent =health.overall_health.message;
                 }
             })
             .catch(error => {

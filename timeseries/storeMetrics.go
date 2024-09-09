@@ -96,7 +96,7 @@ func FormatFloat(val float64) float64 {
 	return float64(int(val*100)) / 100
 }
 
-func StoreNewServiceMetrics(serviceMetrics *models.NewServiceStats) error {
+func StoreNewServiceMetrics(serviceMetrics *models.ServiceStats) error {
 
 	sto, err := GetStorageInstance()
 	if err != nil {
@@ -278,12 +278,30 @@ func StoreNewServiceMetrics(serviceMetrics *models.NewServiceStats) error {
 		},
 	}...)
 
+	// ServiceHealth
+	rows = append(rows, []tstorage.Row{
+		{
+			Metric:    "service_health_percent",
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.Health.ServiceHealth.Percent},
+			Labels:    []tstorage.Label{{Name: labelName, Value: labelValue}},
+		},
+	}...)
+
+	// SystemHealth
+	rows = append(rows, []tstorage.Row{
+		{
+			Metric:    "system_health_percent",
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.Health.SystemHealth.Percent},
+			Labels:    []tstorage.Label{{Name: labelName, Value: labelValue}},
+		},
+	}...)
+
 	// OverallHealth
 	// overall_health_percent
 	rows = append(rows, []tstorage.Row{
 		{
 			Metric:    "overall_health_percent",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: StringToFloat(serviceMetrics.OverallHealth.OverallHealthPercent)},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.Health.OverallHealth.Percent},
 			Labels:    []tstorage.Label{{Name: labelName, Value: labelValue}},
 		},
 	}...)

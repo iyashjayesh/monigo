@@ -29,7 +29,9 @@ document.addEventListener('DOMContentLoaded', () => {
         cpuChart: document.getElementById('cpu-chart'),
         memoryPieChart: document.getElementById('memory-pie-chart'),
         heapUsageChart: document.getElementById('heap-memory-chart'),
-        healthTag: document.getElementById('health-tag')
+        healthTag: document.getElementById('health-tag'),
+        serviceHealthTag : document.getElementById('service-health-tag'),
+        systemHealthTag : document.getElementById('system-health-tag')
     };
 
     Object.values(elements).forEach(el => el && (el.innerHTML = refreshHtml));
@@ -124,12 +126,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     load_statistics,
                     cpu_statistics,
                     memory_statistics,
-                    overall_health
+                    health
                 } = data;
 
 
 
-                updateGauge('g1', overall_health.overall_health_percent);
+                updateGauge('g1', health);
 
 
                 updateElement(elements.goroutines, 'Go Routines:', core_statistics?.goroutines ?? 'N/A', 'Number of goroutines that are currently running');
@@ -140,12 +142,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateElement(elements.uptime, 'Uptime:', core_statistics?.uptime ?? 'N/A', 'Uptime of the service');
 
                 const healthIndicator = document.getElementById('health-indicator');
-                if (overall_health.health.healthy) {
+                if (health.overall_health.healthy) {
                     healthIndicator.classList.add('healthy');
-                    document.getElementById('health-message').textContent = overall_health.health.message;
+                    document.getElementById('health-message').textContent = health.overall_health.message;
                 } else {
                     healthIndicator.classList.add('unhealthy');
-                    document.getElementById('health-message').textContent = overall_health.health.message;
+                    document.getElementById('health-message').textContent = health.overall_health.message;
                 }
 
                 renderCharts(data);
@@ -588,17 +590,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-    function updateGauge(gaugeId, percentageStr) {
-
-        percentageStr = percentageStr.replace('%', '');
-        const percentage = parseFloat(percentageStr);
-
+    function updateGauge(gaugeId, health) {
+        const percentage = health.overall_health.percent;
         const gauge = document.getElementById(gaugeId);
         const guageText = gauge.querySelector('text');
-        // health-tag
-        // const healthTag = document.getElementById('health-tag');
-
-        // Update the text inside the gauge
         guageText.textContent = `${percentage}%`;
 
         // Determine the fill color based on the percentage
@@ -620,12 +615,23 @@ document.addEventListener('DOMContentLoaded', () => {
             fillColor = 'var(--red)';
             tag = 'Critical Condition 🚨';
         }
-                                        // <!-- <p class="mb-0">Service health is at 70%</p> -->
 
         elements.healthTag.innerHTML = `
-            <p class="mb-0">${tag}</p>
+            <p class="mb-0">${tag}  <span class="info-icon" data-tooltip="${health.overall_health.message}">i</span> : ${percentage}%</p>
         `
-        
+
+        elements.serviceHealthTag.innerHTML = `
+            <h6 class="mb-0">Service Health 
+                <span class="info-icon" data-tooltip="${health.service_health.message}">i</span> : ${health.service_health.percent}%
+            </h6>
+        `
+
+        elements.systemHealthTag.innerHTML = `
+            <h6 class="mb-0">System Health 
+                <span class="info-icon" data-tooltip="${health.system_health.message}">i</span> : ${health.system_health.percent}%
+            </h6>
+        `
+
 
         // Reset the --o property to 0 to restart the animation
         gauge.style.setProperty('--o', 0);

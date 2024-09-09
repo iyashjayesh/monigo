@@ -122,7 +122,7 @@ func SetDbSyncFrequency(frequency ...string) {
 	freqOnce := sync.Once{}
 	freqOnce.Do(func() {
 		// serviceMetrics := core.GetServiceMetricsModel()
-		serviceMetrics := core.GetNewServiceStats()
+		serviceMetrics := core.GetServiceStats()
 		if err := StoreNewServiceMetrics(&serviceMetrics); err != nil {
 			log.Panicf("Error storing service metrics: %v\n", err)
 		}
@@ -135,7 +135,7 @@ func SetDbSyncFrequency(frequency ...string) {
 			select {
 			case <-timer.C:
 				// serviceMetrics := core.GetServiceMetricsModel()
-				serviceMetrics := core.GetNewServiceStats()
+				serviceMetrics := core.GetServiceStats()
 				if err := StoreNewServiceMetrics(&serviceMetrics); err != nil {
 					log.Panicf("Error storing service metrics: %v\n", err)
 				}
