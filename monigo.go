@@ -40,7 +40,7 @@ type Monigo struct {
 	DashboardPort           int       `json:"dashboard_port"`
 	PurgeMonigoStorage      bool      `json:"purge_monigo_storage"`
 	DataPointsSyncFrequency string    `json:"db_sync_frequency"`
-	RetentionPeriod         string    `json:"retention_period"`
+	DataRetentionPeriod     string    `json:"retention_period"`
 	GoVersion               string    `json:"go_version"`
 	ServiceStartTime        time.Time `json:"service_start_time"`
 	ProcessId               int32     `json:"process_id"`
@@ -48,8 +48,7 @@ type Monigo struct {
 
 // MonigoInt is the interface to start the monigo service
 type MonigoInt interface {
-	Start()                                                                      // Start the dashboard
-	DeleteMonigoStorage()                                                        // Purge the monigo storage
+	Start()                                                                      // Purge the monigo storage
 	SetDataPointsSyncFrequency(frequency ...string)                              // Set the frequency to sync the metrics to the storage
 	PrintGoRoutinesStats() models.GoRoutinesStatistic                            // Print the Go routines stats
 	ConfigureServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) // Set the service thresholds to calculate the overall service health
@@ -66,7 +65,7 @@ func (m *Monigo) Start() {
 	}
 
 	if m.PurgeMonigoStorage {
-		m.DeleteMonigoStorage()
+		timeseries.PurgeStorage()
 	}
 
 	// Set the frequency to sync the metrics to the storage
@@ -99,12 +98,8 @@ func (m *Monigo) Start() {
 		log.Fatal(err)
 	}
 
-	common.SetServiceInfo(m.ServiceName, m.ServiceStartTime, m.GoVersion, m.ProcessId, m.RetentionPeriod)
+	common.SetServiceInfo(m.ServiceName, m.ServiceStartTime, m.GoVersion, m.ProcessId, m.DataRetentionPeriod)
 	go StartDashboard(m.DashboardPort)
-}
-
-func (m *Monigo) DeleteMonigoStorage() {
-	timeseries.PurgeStorage()
 }
 
 func (m *Monigo) SetDataPointsSyncFrequency(frequency ...string) {

@@ -53,7 +53,7 @@ func GetStorageInstance() (Storage, error) {
 		basePath = GetBasePath()
 		tstorageInstance, err := tstorage.NewStorage(
 			tstorage.WithDataPath(basePath+"/data"),
-			tstorage.WithRetention(common.GetRetentionPeriod()),
+			tstorage.WithRetention(common.GetDataRetentionPeriod()),
 		)
 		if err != nil {
 			log.Fatalf("Error initializing storage: %v\n", err)

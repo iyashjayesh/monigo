@@ -281,8 +281,8 @@ func parseDuration(input string) (time.Duration, error) {
 	return time.ParseDuration(input)
 }
 
-// GetRetentionPeriod returns the retention period.
-func GetRetentionPeriod() time.Duration {
+// GetDataRetentionPeriod returns the retention period.
+func GetDataRetentionPeriod() time.Duration {
 
 	if rententionPeriod == "" {
 		rententionPeriod = "7d"
