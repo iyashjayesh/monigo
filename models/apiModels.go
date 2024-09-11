@@ -4,8 +4,8 @@ import (
 	"time"
 )
 
-// NewServiceStats represents the final statistics of the service.
-type NewServiceStats struct {
+// ServiceStats represents the final statistics of the service.
+type ServiceStats struct {
 	CoreStatistics   CoreStatistics   `json:"core_statistics"`   // Core Statistics
 	LoadStatistics   LoadStatistics   `json:"load_statistics"`   // Load Statistics
 	CPUStatistics    CPUStatistics    `json:"cpu_statistics"`    // CPU Statistics
@@ -23,7 +23,7 @@ type NewServiceStats struct {
 	} `json:"network_io"`
 
 	// Health
-	OverallHealth ServiceHealth `json:"overall_health"`
+	Health ServiceHealth `json:"health"`
 }
 
 // CoreStatistics represents the core statistics of the service.
@@ -72,16 +72,18 @@ type MemoryStatistics struct {
 	RawMemStatsRecords  []RawMemStatsRecords `json:"raw_mem_stats_records"` // RawMemStatsRecords holds a list of raw memory statistic records.
 }
 
-// ServiceInfo is the struct to store the service information
+// ServiceHealth represents the health of the service.
 type ServiceHealth struct {
-	OverallHealthPercent string `json:"overall_health_percent"`
-	Health               Health `json:"health"`
+	SystemHealth  Health `json:"system_health"`
+	ServiceHealth Health `json:"service_health"`
+	OverallHealth Health `json:"overall_health"`
 }
 
 // Health represents the health of the service.
 type Health struct {
-	Healthy bool   `json:"healthy"`
-	Message string `json:"message"`
+	Percent float64 `json:"percent"`
+	Healthy bool    `json:"healthy"`
+	Message string  `json:"message"`
 }
 
 // RawMemStatsRecords holds a list of raw memory statistic records.
@@ -110,7 +112,7 @@ type ServiceMetrics struct {
 	HeapAlloc              float64       `json:"heap_alloc"`
 	HeapAllocSys           float64       `json:"heap_alloc_sys"`
 	TotalDurationTookByAPI time.Duration `json:"total_duration_took_by_api"`
-	OverallHealth          ServiceHealth `json:"overall_health"`
+	Health                 ServiceHealth `json:"health"`
 }
 
 // FieldName represents the field names of the service.

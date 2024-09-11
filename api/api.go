@@ -43,7 +43,7 @@ func NewCoreStatistics(w http.ResponseWriter, r *http.Request) {
 		fieldDescription = common.ConstructJsonFieldDescription()
 	}
 
-	serviceStats := core.GetNewServiceStats()
+	serviceStats := core.GetServiceStats()
 
 	jsonMetrics, _ := json.Marshal(serviceStats)
 	w.Header().Set("Content-Type", "application/json")
@@ -190,7 +190,7 @@ func GetReportData(w http.ResponseWriter, r *http.Request) {
 	} else if reqObj.Topic == "NetworkIO" {
 		fieldNameList = []string{"bytes_sent", "bytes_received"}
 	} else if reqObj.Topic == "OverallHealth" {
-		fieldNameList = []string{"overall_health_percent"}
+		fieldNameList = []string{"overall_health_percent", "service_health_percent", "system_health_percent"}
 	}
 
 	labelName := "host"
@@ -198,6 +198,7 @@ func GetReportData(w http.ResponseWriter, r *http.Request) {
 
 	dataByTimestamp := make(map[int64]map[string]float64)
 
+	log.Println("Field Name List: ", fieldNameList)
 	for _, fieldName := range fieldNameList {
 
 		datapoints, err := timeseries.GetDataPoints(fieldName, []tstorage.Label{{Name: labelName, Value: labelValue}}, startTime.Unix(), endTime.Unix())

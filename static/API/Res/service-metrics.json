@@ -1,0 +1,198 @@
+[
+    {
+        "time": "2024-09-08T13:32:42Z",
+        "value": {
+            "StackInuse": 786.432,
+            "StackSys": 786.432
+        }
+    },
+    {
+        "time": "2024-09-08T13:32:53Z",
+        "value": {
+            "StackInuse": 786.432,
+            "StackSys": 786.432
+        }
+    },
+    {
+        "time": "2024-09-08T13:33:04Z",
+        "value": {
+            "StackInuse": 786.432,
+            "StackSys": 786.432
+        }
+    },
+    {
+        "time": "2024-09-08T13:33:15Z",
+        "value": {
+            "StackInuse": 786.432,
+            "StackSys": 786.432
+        }
+    },
+    {
+        "time": "2024-09-08T13:33:26Z",
+        "value": {
+            "StackInuse": 819.2,
+            "StackSys": 819.2
+        }
+    },
+    {
+        "time": "2024-09-08T13:33:37Z",
+        "value": {
+            "StackInuse": 786.432,
+            "StackSys": 786.432
+        }
+    },
+    {
+        "time": "2024-09-08T13:33:48Z",
+        "value": {
+            "StackInuse": 819.2,
+            "StackSys": 819.2
+        }
+    },
+    {
+        "time": "2024-09-08T13:33:59Z",
+        "value": {
+            "StackInuse": 786.432,
+            "StackSys": 786.432
+        }
+    },
+    {
+        "time": "2024-09-08T13:34:10Z",
+        "value": {
+            "StackInuse": 786.432,
+            "StackSys": 786.432
+        }
+    },
+    {
+        "time": "2024-09-08T13:34:21Z",
+        "value": {
+            "StackInuse": 786.432,
+            "StackSys": 786.432
+        }
+    },
+    {
+        "time": "2024-09-08T13:34:32Z",
+        "value": {
+            "StackInuse": 786.432,
+            "StackSys": 786.432
+        }
+    },
+    {
+        "time": "2024-09-08T13:34:43Z",
+        "value": {
+            "StackInuse": 786.432,
+            "StackSys": 786.432
+        }
+    },
+    {
+        "time": "2024-09-08T13:34:54Z",
+        "value": {
+            "StackInuse": 786.432,
+            "StackSys": 786.432
+        }
+    },
+    {
+        "time": "2024-09-08T13:35:05Z",
+        "value": {
+            "StackInuse": 786.432,
+            "StackSys": 786.432
+        }
+    },
+    {
+        "time": "2024-09-08T13:35:17Z",
+        "value": {
+            "StackInuse": 786.432,
+            "StackSys": 786.432
+        }
+    },
+    {
+        "time": "2024-09-08T13:35:28Z",
+        "value": {
+            "StackInuse": 786.432,
+            "StackSys": 786.432
+        }
+    },
+    {
+        "time": "2024-09-08T13:35:39Z",
+        "value": {
+            "StackInuse": 819.2,
+            "StackSys": 819.2
+        }
+    },
+    {
+        "time": "2024-09-08T13:35:50Z",
+        "value": {
+            "StackInuse": 884.736,
+            "StackSys": 884.736
+        }
+    },
+    {
+        "time": "2024-09-08T13:36:01Z",
+        "value": {
+            "StackInuse": 851.968,
+            "StackSys": 851.968
+        }
+    },
+    {
+        "time": "2024-09-08T13:36:12Z",
+        "value": {
+            "StackInuse": 851.968,
+            "StackSys": 851.968
+        }
+    },
+    {
+        "time": "2024-09-08T13:36:23Z",
+        "value": {
+            "StackInuse": 819.2,
+            "StackSys": 819.2
+        }
+    },
+    {
+        "time": "2024-09-08T13:36:34Z",
+        "value": {
+            "StackInuse": 819.2,
+            "StackSys": 819.2
+        }
+    },
+    {
+        "time": "2024-09-08T13:36:45Z",
+        "value": {
+            "StackInuse": 819.2,
+            "StackSys": 819.2
+        }
+    },
+    {
+        "time": "2024-09-08T13:36:56Z",
+        "value": {
+            "StackInuse": 819.2,
+            "StackSys": 819.2
+        }
+    },
+    {
+        "time": "2024-09-08T13:37:07Z",
+        "value": {
+            "StackInuse": 851.968,
+            "StackSys": 851.968
+        }
+    },
+    {
+        "time": "2024-09-08T13:37:18Z",
+        "value": {
+            "StackInuse": 851.968,
+            "StackSys": 851.968
+        }
+    },
+    {
+        "time": "2024-09-08T13:37:29Z",
+        "value": {
+            "StackInuse": 819.2,
+            "StackSys": 819.2
+        }
+    },
+    {
+        "time": "2024-09-08T13:37:40Z",
+        "value": {
+            "StackInuse": 819.2,
+            "StackSys": 819.2
+        }
+    }
+]

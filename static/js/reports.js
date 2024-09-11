@@ -61,9 +61,9 @@ document.addEventListener('DOMContentLoaded', () => {
             time_frame: timeframe
         };
 
-        console.log("ReqObj: ", reqObj);
+        console.log(reqObj);
 
-        fetch('/monigo/reports', {
+        fetch('/monigo/api/v1/reports', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -72,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .then(response => response.json())
         .then(data => {
+            console.log('Success:', data);
             // const sectionTitle = document.getElementById('sectionTitle');
             const tablesContainer = document.getElementById('tablesContainer');
 

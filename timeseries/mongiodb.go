@@ -1,6 +1,7 @@
 package timeseries
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -24,11 +25,15 @@ var (
 	basePath  string
 	storage   Storage
 	closeOnce sync.Once
+	ctx       context.Context
+	cancel    context.CancelFunc
 )
 
 // StorageWrapper wraps the tstorage.Storage to implement the Storage interface.
 type StorageWrapper struct {
 	storage tstorage.Storage
+	closed  bool
+	mu      sync.Mutex
 }
 
 // InsertRows inserts rows into the storage.
@@ -43,6 +48,14 @@ func (s *StorageWrapper) Select(metric string, labels []tstorage.Label, start, e
 
 // Close closes the storage connection.
 func (s *StorageWrapper) Close() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.closed {
+		return nil // or return a specific error indicating it's already closed
+	}
+
+	s.closed = true
 	return s.storage.Close()
 }
 
@@ -53,12 +66,15 @@ func GetStorageInstance() (Storage, error) {
 		basePath = GetBasePath()
 		tstorageInstance, err := tstorage.NewStorage(
 			tstorage.WithDataPath(basePath+"/data"),
-			tstorage.WithRetention(common.GetRetentionPeriod()),
+			tstorage.WithRetention(common.GetDataRetentionPeriod()),
 		)
 		if err != nil {
 			log.Fatalf("Error initializing storage: %v\n", err)
 		}
 		storage = &StorageWrapper{storage: tstorageInstance}
+
+		// Initialize context and cancel function for goroutines
+		ctx, cancel = context.WithCancel(context.Background())
 	})
 	return storage, err
 }
@@ -82,9 +98,12 @@ func GetBasePath() string {
 	return path
 }
 
-// CloseStorage closes the storage instance.
+// CloseStorage closes the storage instance and stops any running goroutines.
 func CloseStorage() {
 	closeOnce.Do(func() {
+		if cancel != nil {
+			cancel() // Stop any goroutines
+		}
 		if storage != nil {
 			log.Println("Closing storage instance")
 			if err := storage.Close(); err != nil {
@@ -94,7 +113,7 @@ func CloseStorage() {
 	})
 }
 
-// PurgeStorage removes alqqql storage data and closes the storage.
+// PurgeStorage removes all storage data and closes the storage.
 func PurgeStorage() {
 	basePath := GetBasePath()
 	log.Println("Purging storage from path:", basePath)
@@ -107,7 +126,8 @@ func PurgeStorage() {
 	}
 }
 
-func SetDbSyncFrequency(frequency ...string) {
+// SetDataPointsSyncFrequency sets the frequency at which data points are synchronized.
+func SetDataPointsSyncFrequency(frequency ...string) {
 	freqStr := "5m"
 	if len(frequency) > 0 {
 		freqStr = frequency[0]
@@ -119,24 +139,22 @@ func SetDbSyncFrequency(frequency ...string) {
 		freqTime = 5 * time.Minute
 	}
 
-	freqOnce := sync.Once{}
-	freqOnce.Do(func() {
-		// serviceMetrics := core.GetServiceMetricsModel()
-		serviceMetrics := core.GetNewServiceStats()
-		if err := StoreNewServiceMetrics(&serviceMetrics); err != nil {
-			log.Panicf("Error storing service metrics: %v\n", err)
-		}
-	})
+	// Initialize service metrics once
+	serviceMetrics := core.GetServiceStats()
+	if err := StoreServiceMetrics(&serviceMetrics); err != nil {
+		log.Panicf("Error storing service metrics: %v\n", err)
+	}
 
 	timer := time.NewTimer(freqTime)
 	go func() {
 		defer timer.Stop()
 		for {
 			select {
+			case <-ctx.Done():
+				return
 			case <-timer.C:
-				// serviceMetrics := core.GetServiceMetricsModel()
-				serviceMetrics := core.GetNewServiceStats()
-				if err := StoreNewServiceMetrics(&serviceMetrics); err != nil {
+				serviceMetrics := core.GetServiceStats()
+				if err := StoreServiceMetrics(&serviceMetrics); err != nil {
 					log.Panicf("Error storing service metrics: %v\n", err)
 				}
 				size := common.GetDirSize(basePath + "/data")

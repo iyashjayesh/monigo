@@ -18,18 +18,12 @@ var (
 	requestCount            int64
 	totalDuration           time.Duration
 	serviceHealthThresholds = models.ServiceHealthThresholds{ // Default thresholds
-		MaxGoroutines: models.Thresholds{
-			Value:  100,
-			Weight: 0.2,
-		},
-		MaxCPULoad: models.Thresholds{
-			Value:  85,
-			Weight: 0.7,
-		},
-		MaxMemory: models.Thresholds{
-			Value:  85,
-			Weight: 0.7,
-		},
+		Low:            20.0,
+		Medium:         50.0,
+		High:           80.0,
+		Critical:       100.0,
+		GoRoutinesLow:  100,
+		GoRoutinesHigh: 500,
 	}
 )
 
@@ -81,7 +75,7 @@ func getProcessUsage(proc *process.Process, memsStats *mem.VirtualMemoryStat) (f
 }
 
 // SetServiceThresholds sets the service thresholds to calculate the overall service health.
-func SetServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) {
+func ConfigureServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) {
 	serviceHealthThresholds = *thresholdsValues
 }
 

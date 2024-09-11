@@ -9955,6 +9955,7 @@ a.text-light-gray:focus {
   display: flex;
   align-items: flex-start;
   transition-delay: 0.2s;
+  margin-left: 25px;
 }
 .iq-sidebar-logo a span {
   margin-left: 10px;
@@ -9981,7 +9982,7 @@ a.text-light-gray:focus {
   text-decoration: none;
 }
 .iq-sidebar-logo img {
-  height: 25px;
+  height: 60px;
 }
 .iq-sidebar-logo .logo-title {
   font-weight: 700;
@@ -26162,13 +26163,13 @@ pre {
 }
 
 .gauge {
-  margin: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   aspect-ratio: 2 / 1.5;
-  width: 100%;
+  margin-left: 75px;
+  width: 60%;
   --fill-color: var(--green);
   --background-color: white;
   --gauge-background-color: #333;
@@ -26201,6 +26202,7 @@ pre {
 }
 
 .gauge>svg>text {
+  font-size: 12px;
   text-anchor: middle;
   alignment-baseline: central;
   fill: var(--fill-color);

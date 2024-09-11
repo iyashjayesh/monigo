@@ -23,9 +23,12 @@ type GetMetrics struct {
 
 // ServiceHealthThresholds is the struct to store the service health thresholds
 type ServiceHealthThresholds struct {
-	MaxGoroutines Thresholds `json:"max_goroutines"`
-	MaxCPULoad    Thresholds `json:"max_cpu_load"`
-	MaxMemory     Thresholds `json:"max_memory"`
+	Low            float64 `json:"low"`
+	Medium         float64 `json:"medium"`
+	High           float64 `json:"high"`
+	Critical       float64 `json:"critical"`
+	GoRoutinesLow  int     `json:"go_routines_low"`
+	GoRoutinesHigh int     `json:"go_routines_high"`
 }
 
 // Thresholds is the struct to store the threshold values
@@ -53,4 +56,11 @@ type ReportsRequest struct {
 	StartTime string `json:"start_time"` // "2006-01-02T15:04:05Z07:00"
 	EndTime   string `json:"end_time"`   // "2006-01-02T15:04:05Z07:00"
 	TimeFrame string `json:"time_frame"`
+}
+
+// SystemHealthInPercent is the struct to store the system health in percentage
+type SystemHealthInPercent struct {
+	SystemHealth  float64 `json:"system_health_percentage"`
+	ServiceHealth float64 `json:"service_health_percentage"`
+	OverallHealth float64 `json:"overall_health_percentage"`
 }

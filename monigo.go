@@ -24,10 +24,10 @@ import (
 
 var (
 	//go:embed static/*
-	staticFiles      embed.FS
-	serviceStartTime time.Time = time.Now()
-	Once             sync.Once = sync.Once{}
-	BasePath         string
+	staticFiles embed.FS
+	// serviceStartTime time.Time
+	Once     sync.Once = sync.Once{}
+	BasePath string
 )
 
 func init() {
@@ -36,23 +36,22 @@ func init() {
 
 // Monigo is the main struct to start the monigo service
 type Monigo struct {
-	ServiceName        string    `json:"service_name"`
-	DashboardPort      int       `json:"dashboard_port"`
-	PurgeMonigoStorage bool      `json:"purge_monigo_storage"`
-	DbSyncFrequency    string    `json:"db_sync_frequency"`
-	RetentionPeriod    string    `json:"retention_period"`
-	GoVersion          string    `json:"go_version"`
-	ServiceStartTime   time.Time `json:"service_start_time"`
-	ProcessId          int32     `json:"process_id"`
+	ServiceName             string    `json:"service_name"`
+	DashboardPort           int       `json:"dashboard_port"`
+	PurgeMonigoStorage      bool      `json:"purge_monigo_storage"`
+	DataPointsSyncFrequency string    `json:"db_sync_frequency"`
+	DataRetentionPeriod     string    `json:"retention_period"`
+	GoVersion               string    `json:"go_version"`
+	ServiceStartTime        time.Time `json:"service_start_time"`
+	ProcessId               int32     `json:"process_id"`
 }
 
 // MonigoInt is the interface to start the monigo service
 type MonigoInt interface {
-	Start()                                                                // Start the dashboard
-	DeleteMonigoStorage()                                                  // Purge the monigo storage
-	SetDbSyncFrequency(frequency ...string)                                // Set the frequency to sync the metrics to the storage
-	PrintGoRoutinesStats() models.GoRoutinesStatistic                      // Print the Go routines stats
-	SetServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) // Set the service thresholds to calculate the overall service health
+	Start()                                                                      // Purge the monigo storage
+	SetDataPointsSyncFrequency(frequency ...string)                              // Set the frequency to sync the metrics to the storage
+	PrintGoRoutinesStats() models.GoRoutinesStatistic                            // Print the Go routines stats
+	ConfigureServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) // Set the service thresholds to calculate the overall service health
 }
 
 type Cache struct {
@@ -66,12 +65,19 @@ func (m *Monigo) Start() {
 	}
 
 	if m.PurgeMonigoStorage {
-		m.DeleteMonigoStorage()
+		timeseries.PurgeStorage()
 	}
 
 	// Set the frequency to sync the metrics to the storage
-	m.SetDbSyncFrequency(m.DbSyncFrequency) // Default is 5 Minutes
+	m.SetDataPointsSyncFrequency(m.DataPointsSyncFrequency) // Default is 5 Minutes
 
+	location, err := time.LoadLocation("Local")
+	if err != nil {
+		fmt.Println("Error loading location:", err)
+		return
+	}
+
+	serviceStartTime := time.Now().In(location)
 	// TODO: Correct the logs
 
 	m.ProcessId = common.GetProcessId()
@@ -80,12 +86,7 @@ func (m *Monigo) Start() {
 
 	cachePath := BasePath + "/cache.dat"
 	cache := Cache{Data: make(map[string]time.Time)}
-
-	err := cache.LoadFromFile(cachePath)
-	if err != nil {
-		log.Println("Could not load cache, starting fresh")
-	}
-
+	cache.LoadFromFile(cachePath)
 	if _, ok := cache.Data[m.ServiceName]; ok {
 		m.ServiceStartTime = cache.Data[m.ServiceName]
 	}
@@ -99,49 +100,48 @@ func (m *Monigo) Start() {
 		log.Fatal(err)
 	}
 
-	common.SetServiceInfo(m.ServiceName, m.ServiceStartTime, m.GoVersion, m.ProcessId, m.RetentionPeriod)
+	common.SetServiceInfo(m.ServiceName, m.ServiceStartTime, m.GoVersion, m.ProcessId, m.DataRetentionPeriod)
 	go StartDashboard(m.DashboardPort)
 }
 
-func (m *Monigo) DeleteMonigoStorage() {
-	timeseries.PurgeStorage()
-}
-
-func (m *Monigo) SetDbSyncFrequency(frequency ...string) {
-	timeseries.SetDbSyncFrequency(m.DbSyncFrequency)
+func (m *Monigo) SetDataPointsSyncFrequency(frequency ...string) {
+	timeseries.SetDataPointsSyncFrequency(m.DataPointsSyncFrequency)
 }
 
 func (m *Monigo) PrintGoRoutinesStats() models.GoRoutinesStatistic {
 	return core.CollectGoRoutinesInfo()
 }
 
-func (m *Monigo) SetServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) {
-	core.SetServiceThresholds(thresholdsValues)
+func (m *Monigo) ConfigureServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) {
+	core.ConfigureServiceThresholds(thresholdsValues)
 }
 
-func StartDashboard(addr int) {
+func StartDashboard(port int) {
 
-	if addr == 0 {
-		addr = 8080 // Default port for the dashboard
+	if port == 0 {
+		port = 8080 // Default port for the dashboard
 	}
 
-	log.Println("Starting the dashboard at port:", addr)
+	log.Println("Starting the dashboard at port:", port)
 
+	// Base API path
+	basePath := "/monigo/api/v1"
+
+	// HTML site
 	http.HandleFunc("/", serveHtmlSite)
-	http.HandleFunc("/metrics", api.NewCoreStatistics)
 
-	// API to fetch the service metrics
-	http.HandleFunc("/service-info", api.GetServiceInfoAPI) // Completed
+	// Core Statistics
+	http.HandleFunc(fmt.Sprintf("%s/metrics", basePath), api.NewCoreStatistics)
 
-	http.HandleFunc("/service-metrics", api.GetServiceMetricsFromStorage) // API to fetch DATA points
-	http.HandleFunc("/go-routines-stats", api.GetGoRoutinesStats)
+	// Service APIs
+	http.HandleFunc(fmt.Sprintf("%s/service-info", basePath), api.GetServiceInfoAPI)
+	http.HandleFunc(fmt.Sprintf("%s/service-metrics", basePath), api.GetServiceMetricsFromStorage)
+	http.HandleFunc(fmt.Sprintf("%s/go-routines-stats", basePath), api.GetGoRoutinesStats)
 
-	http.HandleFunc("/monigo/reports", api.GetReportData)
+	// Reports
+	http.HandleFunc(fmt.Sprintf("%s/reports", basePath), api.GetReportData)
 
-	// /get-metrics?fields=service-info
-	// http.HandleFunc("/get-metrics", api.GetMetricsInfo)
-
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", addr), nil); err != nil {
+	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
 		log.Panicf("Error starting the dashboard: %v\n", err)
 	}
 }
@@ -206,26 +206,40 @@ func (c *Cache) SaveToFile(filename string) error {
 	return err
 }
 
-func (c *Cache) LoadFromFile(filename string) error {
-	// Open the file
-	file, err := os.Open(filename)
+// handleError is a helper function to log the error and panic
+func handleError(msg string, err error) {
+	log.Panicf("%s: %v", msg, err)
+}
+
+// LoadFromFile loads the cache from a file, or starts fresh if the file does not exist or an error occurs
+func (c *Cache) LoadFromFile(filename string) {
+	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
-		return err
+		handleError("Could not open or create cache file", err)
 	}
 	defer file.Close()
 
-	// Read the Base64 encoded data from the file
+	fileInfo, err := file.Stat()
+	if err != nil {
+		handleError("Could not retrieve file info", err)
+	}
+	if fileInfo.Size() == 0 {
+		log.Println("Cache file is empty, starting fresh")
+		return
+	}
+
 	base64Data, err := ioutil.ReadAll(file)
 	if err != nil {
-		return err
+		handleError("Could not read cache file", err)
 	}
 
-	// Decode the Base64 data
 	jsonData, err := base64.StdEncoding.DecodeString(string(base64Data))
 	if err != nil {
-		return err
+		handleError("Could not decode cache file", err)
 	}
 
-	// Decode the JSON data into the cache
-	return json.Unmarshal(jsonData, &c.Data)
+	err = json.Unmarshal(jsonData, &c.Data)
+	if err != nil {
+		handleError("Could not unmarshal cache data", err)
+	}
 }

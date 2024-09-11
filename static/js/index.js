@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const service_start_time = document.getElementById('service_start_time');
 
     const refreshHtml = `
-        <div class="loader-container">
+        <div class="loader-container mt-3">
             <div class="bouncing-dots">
                 <div class="dot"></div>
                 <div class="dot"></div>
@@ -28,7 +28,13 @@ document.addEventListener('DOMContentLoaded', () => {
         loadChart: document.getElementById('load-chart'),
         cpuChart: document.getElementById('cpu-chart'),
         memoryPieChart: document.getElementById('memory-pie-chart'),
-        heapUsageChart: document.getElementById('heap-memory-chart')
+        heapUsageChart: document.getElementById('heap-memory-chart'),
+        healthTag: document.getElementById('health-tag'),
+        serviceHealthTag : document.getElementById('service-health-tag'),
+        systemHealthTag : document.getElementById('system-health-tag'),
+        memoryDetailButton: document.getElementById('memory-detail-button'),
+        coreUsageDetailButton: document.getElementById('core-usage-detail-button'),
+        loadUsageDetailButton: document.getElementById('load-usage-detail-button')
     };
 
     Object.values(elements).forEach(el => el && (el.innerHTML = refreshHtml));
@@ -43,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function fetchServiceInfo() {
-        fetch(`/service-info`)
+        fetch(`/monigo/api/v1/service-info`)
             .then(response => response.json())
             .then(data => {
                 // serviceInfoContainer.innerHTML = '';
@@ -71,73 +77,147 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>`;
                 go_version.innerHTML = `
                     <div class="d-flex align-items-center mb-4 card-total-sale">
-                        
                         <div>
                             <p class="mb-2">Go Version: <h4>${data.go_version}</h4></p>
                         </div>
                     </div>`;
                 service_start_time.innerHTML = `
-                    <div class="d-flex align-items-center mb-4 card-total-sale">
-                        
-                        <div>
-                            <p class="mb-2">Service Start Time: <h4>${formattedDate}<br/> ${formattedTime}</h4></p>
-                        </div>
-                    </div>`;
+                 <div>
+                    <p class="mb-2">Service Start Time: <h4>${formattedDate}<br/> ${formattedTime}</h4></p>
+                </div>`;
+
                 process_id.innerHTML = `
-                    <div class="d-flex align-items-center mb-4 card-total-sale">
-                        
-                        <div>
-                            <p class="mb-2">Process ID: <h4>${data.process_id}</h4></p>
-                        </div>
-                    </div>`;
+                 <div>
+                    <p class="mb-2">Process ID: <h4>${data.process_id}</h4></p>
+                </div>`;
+
             });
     }
 
-    function updateElement(element, label, value, info = '') {
+    function updateElement(element, label, value, info = '', obj) {
         if (element) {
             element.innerHTML = `
                 <div>
                     <p class="mb-2">${label} <span class="info-icon" data-tooltip="${info}">i</span></p>
                     <h4>${value}</h4>
                 </div>`;
+
+            if (label == 'Memory:') {
+                elements.memoryDetailButton.innerHTML = '';
+                for (let i = 0; i < obj.mem_stats_records.length; i++) {
+                    const record = obj.mem_stats_records[i];
+                    const recordName = record.record_name;
+                    const recordValue = record.record_value;
+                    const recordUnit = record.record_unit;
+                    const recordDescription = record.record_description;
+
+                    elements.memoryDetailButton.innerHTML += `
+                        <div class="d-flex align-items-center mb-1 card-total-sale">
+                            <div>
+                                <p class="mb-2">${recordName} <span class="info-icon" data-tooltip="${recordDescription}">i</span></p>
+                                <h4>${recordValue} ${recordUnit}</h4>
+                            </div>
+                        </div>`;
+                }
+            } 
+            
+            if (label == 'Cores:') {
+                console.log('Cores: ', obj);
+                elements.coreUsageDetailButton.innerHTML = '';
+                elements.coreUsageDetailButton.innerHTML = `
+                    <div class="d-flex align-items-center mb-1 card-total-sale">
+                        <div>
+                            <p class="mb-2">Total Cores: <h4>${obj.total_cores}</h4></p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-1 card-total-sale">
+                        <div>
+                            <p class="mb-2">Total Logical Cores: <h4>${obj.total_logical_cores}</h4></p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-1 card-total-sale">
+                        <div>
+                            <p class="mb-2">Cores Used by System: <h4>${obj.cores_used_by_system}</h4></p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-1 card-total-sale">
+                        <div>
+                            <p class="mb-2">Cores Used by Service: <h4>${obj.cores_used_by_service}</h4></p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-1 card-total-sale">
+                        <div>
+                            <p class="mb-2">Cores Used by Service in Percent: <h4>${obj.cores_used_by_service_in_percent}</h4></p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-1 card-total-sale">
+                        <div>
+                            <p class="mb-2">Cores Used by System in Percent: <h4>${obj.cores_used_by_system_in_percent}</h4></p>
+                        </div>
+                    </div>`;
+            }
+
+            if (label == 'Load:') {
+                elements.loadUsageDetailButton.innerHTML = '';
+                elements.loadUsageDetailButton.innerHTML = `
+                    <div class="d-flex align-items-center mb-1 card-total-sale">
+                        <div>
+                            <p class="mb-2">Service CPU Load: <h4>${obj.service_cpu_load}</h4></p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-1 card-total-sale">
+                        <div>
+                            <p class="mb-2">System CPU Load: <h4>${obj.system_cpu_load}</h4></p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-1 card-total-sale">
+                        <div>
+                            <p class="mb-2">Total CPU Load: <h4>${obj.total_cpu_load}</h4></p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-1 card-total-sale">
+                        <div>
+                            <p class="mb-2">Service Memory Load: <h4>${obj.service_memory_load}</h4></p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-1 card-total-sale">
+                        <div>
+                            <p class="mb-2">System Memory Load: <h4>${obj.system_memory_load}</h4></p>
+                        </div>
+                    </div>`;
+            }
         } else {
             console.warn(`Element for ${label} not found`);
         }
     }
 
     function fetchMetrics() {
-        fetch(`/metrics`)
+        fetch(`/monigo/api/v1/metrics`)
             .then(response => response.json())
             .then(data => {
-
-                console.log('Metrics:', data);  
                 const {
                     core_statistics,
                     load_statistics,
                     cpu_statistics,
                     memory_statistics,
-                    overall_health
+                    health
                 } = data;
 
-
-
-                updateGauge('g1', overall_health.overall_health_percent);
-
-
-                updateElement(elements.goroutines, 'Go Routines:', core_statistics?.goroutines ?? 'N/A', 'Number of goroutines that are currently running');
-                updateElement(elements.serviceLoad, 'Load:', `${load_statistics?.overall_load_of_service ?? 'N/A'}`, 'The load average of the system');
-                updateElement(elements.cores, 'Cores:', `${cpu_statistics?.cores_used_by_service ?? 'N/A'} / ${cpu_statistics?.total_cores ?? 'N/A'}`, 'Number of CPU cores');
-                updateElement(elements.memory, 'Memory:', `${memory_statistics?.memory_used_by_service ?? 'N/A'}`, 'Memory used by the service');
-                updateElement(elements.cpuUsage, 'CPU Usage:', `${cpu_statistics?.cores_used_by_service_in_percent ?? 'N/A'}`, 'CPU usage of the service');
-                updateElement(elements.uptime, 'Uptime:', core_statistics?.uptime ?? 'N/A', 'Uptime of the service');
+                updateGauge('g1', health);
+                updateElement(elements.goroutines, 'Go Routines:', core_statistics?.goroutines ?? 'N/A', 'Number of goroutines that are currently running', core_statistics);
+                updateElement(elements.serviceLoad, 'Load:', `${load_statistics?.overall_load_of_service ?? 'N/A'}`, 'The load average of the system', load_statistics);
+                updateElement(elements.cores, 'Cores:', `${cpu_statistics?.cores_used_by_service ?? 'N/A'} / ${cpu_statistics?.total_cores ?? 'N/A'}`, 'Number of CPU cores', cpu_statistics);
+                updateElement(elements.memory, 'Memory:', `${memory_statistics?.memory_used_by_service ?? 'N/A'}`, 'Memory used by the service', memory_statistics);
+                updateElement(elements.cpuUsage, 'CPU Usage:', `${cpu_statistics?.cores_used_by_service_in_percent ?? 'N/A'}`, 'CPU usage of the service', cpu_statistics);
+                updateElement(elements.uptime, 'Uptime:', core_statistics?.uptime ?? 'N/A', 'Uptime of the service', core_statistics);
 
                 const healthIndicator = document.getElementById('health-indicator');
-                if (overall_health.health.healthy) {
+                if (health.overall_health.healthy) {
                     healthIndicator.classList.add('healthy');
-                    document.getElementById('health-message').textContent = overall_health.health.message;
+                    document.getElementById('health-message').textContent = health.overall_health.message;
                 } else {
                     healthIndicator.classList.add('unhealthy');
-                    document.getElementById('health-message').textContent = overall_health.health.message;
+                    document.getElementById('health-message').textContent = health.overall_health.message;
                 }
 
                 renderCharts(data);
@@ -270,7 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: 'CPU Usage',
                 type: 'pie',
                 radius: '55%',
-                center: ['50%', '50%'],
+                center: ['50%', '60%'],
                 data: [{
                         value: cpu_statistics.cores_used_by_service,
                         name: 'Cores Used by Service'
@@ -306,9 +386,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             },
             legend: {
-                orient: 'vertical',
-                left: 'left',
-                padding: [30, 0, 0, 0],
+                orient: 'horizontal',
+                center: 0,
+                padding: [40, 0, 0, 0],
                 data: ['Memory Used by Service', 'Memory Used by System', 'Available Memory']
             },
             series: [{
@@ -450,10 +530,10 @@ document.addEventListener('DOMContentLoaded', () => {
             start_time: toLocalISOString(StartTime),
             end_time: toLocalISOString(EndTime)
         };
-        console.log('Fetching data for metric:', metricName, 'and time range:', timeRange);
-        console.log('API REQ:', data);
+        // console.log('Fetching data for metric:', metricName, 'and time range:', timeRange);
+        // console.log('API REQ:', data);
 
-        fetch(`/service-metrics`, {
+        fetch(`/monigo/api/v1/service-metrics`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -461,7 +541,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(data),
             }).then(response => response.json())
             .then(data => {
-                console.log('API RES:', data);
+                // console.log('API RES:', data);
 
                 let rawData = [];
                 for (let i = 0; i < data.length; i++) {
@@ -473,7 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
 
-                console.log('New Constructed DATA:', rawData);
+                // console.log('New Constructed DATA:', rawData);
                 const seriesData = {};
                 rawData.forEach(dataPoint => {
                     const timeLabel = dataPoint.time.toLocaleString();
@@ -580,17 +660,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-    function updateGauge(gaugeId, percentageStr) {
-
-        percentageStr = percentageStr.replace('%', '');
-        const percentage = parseFloat(percentageStr);
-
+    function updateGauge(gaugeId, health) {
+        const percentage = health.overall_health.percent;
         const gauge = document.getElementById(gaugeId);
         const guageText = gauge.querySelector('text');
-        // health-tag
-        const healthTag = document.getElementById('health-tag');
-
-        // Update the text inside the gauge
         guageText.textContent = `${percentage}%`;
 
         // Determine the fill color based on the percentage
@@ -612,12 +685,19 @@ document.addEventListener('DOMContentLoaded', () => {
             fillColor = 'var(--red)';
             tag = 'Critical Condition 🚨';
         }
-                                        // <!-- <p class="mb-0">Service health is at 70%</p> -->
 
-        healthTag.innerHTML = `
-            <p class="mb-0">${tag}</p>
+        elements.healthTag.innerHTML = `
+            <p class="mb-0">${tag} : ${percentage}%</p>
         `
-        
+        // <span class="info-icon" data-tooltip="${health.service_health.message}">i</span>
+        elements.serviceHealthTag.innerHTML = `
+            <h6 class="mb-0">Service Health  : ${health.service_health.percent}%</h6>
+        `
+
+        elements.systemHealthTag.innerHTML = `
+            <h6 class="mb-0">System Health : ${health.system_health.percent}%</h6>
+        `
+
 
         // Reset the --o property to 0 to restart the animation
         gauge.style.setProperty('--o', 0);

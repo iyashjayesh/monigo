@@ -26,8 +26,7 @@
         <div class="iq-sidebar  sidebar-default ">
             <div class="iq-sidebar-logo d-flex align-items-center justify-content-between">
                 <a href="./index.html" class="header-logo">
-                    <img src="../assets/logo.png" class="img-fluid rounded-normal light-logo" alt="logo">
-                    <h5 class="logo-title light-logo ml-3">Moni<strong><em>GO</em></strong></h5>
+                    <img src="./assets/monigo-icon.png" class="img-fluid rounded-normal light-logo" alt="logo">
                 </a>
                 <div class="iq-menu-bt-sidebar ml-0">
                     <i class="las la-bars wrapper-menu"></i>
@@ -122,11 +121,8 @@
                 <nav class="navbar navbar-expand-lg navbar-light p-0">
                     <div class="iq-navbar-logo d-flex align-items-center justify-content-between">
                         <i class="ri-menu-line wrapper-menu"></i>
-                        <a href="../backend/index.html" class="header-logo">
-                            <img src="../assets/logo.png" class="img-fluid rounded-normal" alt="logo">
-                            <h5 class="logo-title ml-3">
-                                Moni<strong><em>GO</em></strong>
-                            </h5>
+                        <a href="./index.html" class="header-logo">
+                            <img src="./assets/monigo-icon.png" class="img-fluid rounded-normal light-logo" alt="logo">
                         </a>
                     </div>
                     <div class="iq-search-bar device-search">
@@ -173,55 +169,38 @@
         <div class="content-page">
             <div class="container-fluid">
                 <div class="row">
-                    <div class="col-lg-4">
-                        <div class="card card-transparent card-block card-stretch card-height border-none">
-                            <div class="card-body p-0 mt-lg-2 mt-0">
+                    <div class="col-lg-4 align-items-center">
+                        <div class="card card-block card-stretch card-height">
+                            <div class="card-body">
                                 <!-- <h4 class="mb-0 mr-4">Moni<strong><em>GO</em></strong> dashboard gives you runtime views
                                     of key performance of your backend service process.
                                 </h4> -->
-                                <div class="row align-items-center">
-                                    <div class="mt-3">
-                                        <h4 class="mb-0">Service Health <span class="info-icon"
-                                                data-tooltip="Health Score Calculation
-The Health Score represents the overall performance of the service, calculated based on three key metrics:
-1. CPU Load: Measures the service's CPU usage compared to the total available CPU. A higher available CPU results in a higher score.
-
-2. Memory Usage: Assesses the memory consumption of the service relative to the total available memory. Lower memory usage contributes to a higher score.
-
-3. Goroutine Count: Evaluates the number of goroutines running against a predefined maximum. Fewer goroutines improve the score.
-
-Each metric is weighted and combined to produce a score ranging from 0% to 100%. A higher score indicates better overall health.">i</span>
+                                    <div class="service-health">
+                                        <h4 class="mb-0">Overall Health <span class="info-icon"
+                                                data-tooltip="Health Score Calculation">i</span>
                                         </h4>
                                         <div id="health-tag"></div>
-                                        <!-- <p class="mb-0">Service health is at 70%</p> -->
+                                        
+                                        <div id="service-health-tag"></div>
+                                        <div id="system-health-tag"></div>
+                                        <!-- <div id="overall-health-tag"></div> -->
                                     </div>
                                         <div class="gauge" id="g1">
                                             <svg viewBox="0 0 60 25">
                                                 <text x="50%" y="50%">...</text>
                                             </svg>
                                         </div>
-                                        
-                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-lg-8">
-                        <!-- <div class="row pl-3 pr-3">
-                            <div class="card card-block card-stretch card-height">
-                                <div class="card-body">
-                                    <div id="service-container">
-                                    </div>
-                                    <div class="iq-progress-bar mt-2">
-                                        <span class="bg-info iq-progress progress-1" style="width: 0%;" data-percent="100">
-                                        </span>
-                                    </div>
-                                </div>
-                             </div>
-                        </div> -->
                         <div class="row">
                             <div class="col-lg-3 col-md-3">
                                 <div class="card card-block card-stretch card-height">
                                     <div class="card-body">
+                                        <div class="icon iq-icon-box-2 bg-info-light">
+                                            <img src="./assets/product/service.png" class="img-fluid" alt="GoRoutines Image">
+                                        </div>
                                         <div id="service_name"></div>
                                         <div class="iq-progress-bar mt-2">
                                             <span class="bg-info iq-progress progress-1" data-percent="100">
@@ -233,17 +212,9 @@ Each metric is weighted and combined to produce a score ranging from 0% to 100%.
                             <div class="col-lg-3 col-md-3">
                                 <div class="card card-block card-stretch card-height">
                                     <div class="card-body">
-                                        <div id="service_start_time"></div>
-                                        <div class="iq-progress-bar mt-2">
-                                            <span class="bg-info iq-progress progress-1" data-percent="100">
-                                            </span>
+                                        <div class="icon iq-icon-box-2 bg-info-light">
+                                            <img src="./assets/product/go-version.png" class="img-fluid" alt="GoRoutines Image">
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-3 col-md-3">
-                                <div class="card card-block card-stretch card-height">
-                                    <div class="card-body">
                                         <div id="go_version"></div>
                                         <div class="iq-progress-bar mt-2">
                                             <span class="bg-info iq-progress progress-1" data-percent="100">
@@ -252,11 +223,22 @@ Each metric is weighted and combined to produce a score ranging from 0% to 100%.
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-lg-3 col-md-3">
+                            <div class="col-lg-6 col-md-6">
                                 <div class="card card-block card-stretch card-height">
                                     <div class="card-body">
-                                        <div id="process_id"></div>
-                                        <div class="iq-progress-bar mt-2">
+                                        <div class="d-flex align-items-center card-total-sale">
+                                            <div class="icon iq-icon-box-2 bg-info-light">
+                                                <img src="./assets/product/start-time.png" class="img-fluid" alt="Load Image">
+                                            </div>
+                                            <div id="service_start_time"></div>
+                                        </div>
+                                        <div class="d-flex align-items-center card-total-sale">
+                                            <div class="icon iq-icon-box-2 bg-info-light">
+                                                <img src="./assets/product/id.png" class="img-fluid" alt="Load Image">
+                                            </div>
+                                            <div id="process_id"></div>
+                                        </div>
+                                        <div class="iq-progress-bar mt-1">
                                             <span class="bg-info iq-progress progress-1" data-percent="100">
                                             </span>
                                         </div>
@@ -273,7 +255,7 @@ Each metric is weighted and combined to produce a score ranging from 0% to 100%.
                                     <div class="card-body">
                                         <div class="d-flex align-items-center mb-4 card-total-sale">
                                             <div class="icon iq-icon-box-2 bg-info-light">
-                                                <img src="../assets/product/1.png" class="img-fluid"
+                                                <img src="./assets/product/thread.png" class="img-fluid"
                                                     alt="GoRoutines Image">
                                             </div>
                                             <div id="goroutines">
@@ -296,11 +278,35 @@ Each metric is weighted and combined to produce a score ranging from 0% to 100%.
                                     <div class="card-body">
                                         <div class="d-flex align-items-center mb-4 card-total-sale">
                                             <div class="icon iq-icon-box-2 bg-info-light">
-                                                <img src="../assets/product/2.png" class="img-fluid"
+                                                <img src="./assets/product/cpu-load.png" class="img-fluid"
                                                     alt="Load Image">
                                             </div>
                                             <div id="service-load">
                                             </div>
+                                            <div style="padding-left: 64px;">
+                                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#loadUsageModalView">
+                                                    Detailed View
+                                                </button>
+                                                <div class="modal fade" id="loadUsageModalView" tabindex="-1" role="dialog" aria-labelledby="loadUsageModalViewTitle"
+                                                    aria-hidden="true">
+                                                    <div class="modal-dialog modal-dialog-scrollable" role="document">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title" id="loadUsageModalViewTitle">Load Usage Statistics</h5>
+                                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                    <span aria-hidden="true">&times;</span>
+                                                                </button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <div id="load-usage-detail-button"></div>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="iq-progress-bar mt-2">
                                             <span class="bg-info iq-progress progress-1" style="width: 0%;"
@@ -315,11 +321,35 @@ Each metric is weighted and combined to produce a score ranging from 0% to 100%.
                                     <div class="card-body">
                                         <div class="d-flex align-items-center mb-4 card-total-sale">
                                             <div class="icon iq-icon-box-2 bg-info-light">
-                                                <img src="../assets/product/3.png" class="img-fluid"
+                                                <img src="./assets/product/cpu-core.png" class="img-fluid"
                                                     alt="Cores Image">
                                             </div>
                                             <div id="cores">
                                             </div>
+                                            <div style="padding-left: 26px;">
+                                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#coreUsageModalView">
+                                                    Detailed View
+                                                </button>
+                                                <div class="modal fade" id="coreUsageModalView" tabindex="-1" role="dialog" aria-labelledby="coreUsageModalViewTitle"
+                                                    aria-hidden="true">
+                                                    <div class="modal-dialog modal-dialog-scrollable" role="document">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title" id="coreUsageModalViewTitle">Core Usage Statistics</h5>
+                                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                    <span aria-hidden="true">&times;</span>
+                                                                </button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <div id="core-usage-detail-button"></div>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="iq-progress-bar mt-2">
                                             <span class="bg-info iq-progress progress-1" style="width: 0%;"
@@ -334,11 +364,35 @@ Each metric is weighted and combined to produce a score ranging from 0% to 100%.
                                     <div class="card-body">
                                         <div class="d-flex align-items-center mb-4 card-total-sale">
                                             <div class="icon iq-icon-box-2 bg-info-light">
-                                                <img src="../assets/product/1.png" class="img-fluid"
+                                                <img src="./assets/product/memory.png" class="img-fluid"
                                                     alt="Memory Image">
                                             </div>
                                             <div id="memory">
                                             </div>
+                                            <div style="padding-left: 40px;">
+                                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalScrollable">
+                                                    Detailed View
+                                                </button>
+                                                <div class="modal fade" id="exampleModalScrollable" tabindex="-1" role="dialog"
+                                                    aria-labelledby="exampleModalScrollableTitle" aria-hidden="true">
+                                                    <div class="modal-dialog modal-dialog-scrollable" role="document">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title" id="exampleModalScrollableTitle">Memory Statistics</h5>
+                                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                    <span aria-hidden="true">&times;</span>
+                                                                </button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <div id="memory-detail-button"></div>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="iq-progress-bar mt-2">
                                             <span class="bg-info iq-progress progress-1" style="width: 0%;"
@@ -353,11 +407,12 @@ Each metric is weighted and combined to produce a score ranging from 0% to 100%.
                                     <div class="card-body">
                                         <div class="d-flex align-items-center mb-4 card-total-sale">
                                             <div class="icon iq-icon-box-2 bg-info-light">
-                                                <img src="../assets/product/2.png" class="img-fluid"
+                                                <img src="./assets/product/cpu-usage.png" class="img-fluid"
                                                     alt="CPU Usage Image">
                                             </div>
                                             <div id="cpu-usage">
                                             </div>
+                                            
                                         </div>
                                         <div class="iq-progress-bar mt-2">
                                             <span class="bg-info iq-progress progress-1" style="width: 0%;"
@@ -372,7 +427,7 @@ Each metric is weighted and combined to produce a score ranging from 0% to 100%.
                                     <div class="card-body">
                                         <div class="d-flex align-items-center mb-4 card-total-sale">
                                             <div class="icon iq-icon-box-2 bg-info-light">
-                                                <img src="../assets/product/3.png" class="img-fluid"
+                                                <img src="./assets/product/uptime.png" class="img-fluid"
                                                     alt="Uptime Image">
                                             </div>
                                             <div id="uptime">
@@ -388,56 +443,66 @@ Each metric is weighted and combined to produce a score ranging from 0% to 100%.
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-12">
+                    <div class="col-lg-6">
                         <div class="card card-block card-stretch card-height">
-                            <div class="card-header d-flex align-items-center justify-content-between">
+                            <div class="card-header d-flex justify-content-between">
                                 <div class="header-title">
-                                    <h4 class="card-title">Runtime View</h4>
+                                    <h4 class="card-title">
+                                        Load Statistics
+                                        <span class="info-icon"
+                                            data-tooltip="Load Statistics shows the 'Service CPU Load', 'System CPU Load', 'Total CPU Load', 'Service Memory Load', 'System Memory Load'">i</span>
+                                    </h4>
                                 </div>
-                                <!-- <div class="card-header-toolbar d-flex align-items-center">
-                              <div class="dropdown">
-                                  <span class="dropdown-toggle dropdown-bg btn" id="dropdownMenuButton006"
-                                      data-toggle="dropdown">
-                                      This Month<i class="ri-arrow-down-s-line ml-1"></i>
-                                  </span>
-                                  <div class="dropdown-menu dropdown-menu-right shadow-none"
-                                      aria-labelledby="dropdownMenuButton006">
-                                      <a class="dropdown-item" href="#">Year</a>
-                                      <a class="dropdown-item" href="#">Month</a>
-                                      <a class="dropdown-item" href="#">Week</a>
-                                  </div>
-                              </div>
-                              </div> -->
                             </div>
-                            <div class="card-body">
-                                <div class="col-lg-12">
-                                    <div class="row">
-                                        <div class="col-lg-6 col-md-6">
-                                            <h2>Load Statistics <span class="info-icon"
-                                                    data-tooltip="Load Statistics shows the 'Service CPU Load', 'System CPU Load', 'Total CPU Load', 'Service Memory Load', 'System Memory Load'">i</span>
-                                            </h2>
-                                            <div class="chart-container" id="load-chart"></div>
-                                        </div>
-                                        <div class="col-lg-6 col-md-6">
-                                            <h2>CPU Statistics <span class="info-icon"
-                                                    data-tooltip="CPU Statistics shows the 'Cores Used by Service', 'Cores Used by System', 'Total Cores'">i</span>
-                                            </h2>
-                                            <div class="chart-container" id="cpu-chart"></div>
-                                        </div>
-                                        <div class="col-lg-6 col-md-6">
-                                            <h2>Memory Statistics <span class="info-icon"
-                                                    data-tooltip="Memory Statistics shows the 'Memory Used by Service', 'Memory Used by System', 'Available Memory'">i</span>
-                                            </h2>
-                                            <div class="chart-container" id="memory-pie-chart"></div>
-                                        </div>
-                                        <div class="col-lg-6 col-md-6">
-                                            <h2>Heap Memory Usage <span class="info-icon"
-                                                    data-tooltip="Heap Memory Usage shows the 'HeapAlloc', 'HeapSys', 'HeapIdle', 'HeapInuse', 'HeapReleased'">i</span>
-                                            </h2>
-                                            <div class="chart-container" id="heap-memory-chart"></div>
-                                        </div>
-                                    </div>
+                            <div class="card-body" style="position: relative;">
+                                <div class="chart-container" id="load-chart"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card card-block card-stretch card-height">
+                            <div class="card-header d-flex justify-content-between">
+                                <div class="header-title">
+                                    <h4 class="card-title">
+                                        CPU Statistics 
+                                        <span class="info-icon"
+                                            data-tooltip="CPU Statistics shows the 'Cores Used by Service', 'Cores Used by System', 'Total Cores'">i</span>
+                                    </h4>
                                 </div>
+                            </div>
+                            <div class="card-body" style="position: relative;">
+                                <div class="chart-container" id="cpu-chart"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card card-block card-stretch card-height">
+                            <div class="card-header d-flex justify-content-between">
+                                <div class="header-title">
+                                    <h4 class="card-title">
+                                        Memory Statistics <span class="info-icon"
+                                            data-tooltip="Memory Statistics shows the 'Memory Used by Service', 'Memory Used by System', 'Available Memory'">i</span>
+                                    </h4>
+                                </div>
+                            </div>
+                            <div class="card-body" style="position: relative;">
+                                <div class="chart-container" id="memory-pie-chart"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card card-block card-stretch card-height">
+                            <div class="card-header d-flex justify-content-between">
+                                <div class="header-title">
+                                    <h4 class="card-title">
+                                        Heap Memory Usage 
+                                        <span class="info-icon"
+                                            data-tooltip="Heap Memory Usage shows the 'HeapAlloc', 'HeapSys', 'HeapIdle', 'HeapInuse', 'HeapReleased'">i</span>
+                                    </h4>
+                                </div>
+                            </div>
+                            <div class="card-body" style="position: relative;">
+                                <div class="chart-container" id="heap-memory-chart"></div>
                             </div>
                         </div>
                     </div>
@@ -482,89 +547,138 @@ Each metric is weighted and combined to produce a score ranging from 0% to 100%.
                             </div>
                         </div>
                     </div>
-                    <!-- <div class="col-lg-12">
-                     <div class="card card-block card-stretch card-height">
-                         <div class="card-header d-flex align-items-center justify-content-between">
-                             <div class="header-title">
-                                 <h4 class="card-title">Performance Highlights</h4>
-                             </div>
-                             <div class="card-header-toolbar d-flex align-items-center">
-                                 <div class="dropdown">
-                                     <span class="dropdown-toggle dropdown-bg btn" id="dropdownMenuButton006"
-                                         data-toggle="dropdown">
-                                         This Month<i class="ri-arrow-down-s-line ml-1"></i>
-                                     </span>
-                                     <div class="dropdown-menu dropdown-menu-right shadow-none"
-                                         aria-labelledby="dropdownMenuButton006">
-                                         <a class="dropdown-item" href="#">Year</a>
-                                         <a class="dropdown-item" href="#">Month</a>
-                                         <a class="dropdown-item" href="#">Week</a>
-                                     </div>
-                                 </div>
-                             </div>
-                         </div>
-                         <div class="card-body">
-                             <ul class="list-unstyled row top-product mb-0">
-                                 <li class="col-lg-3">
-                                     <div class="card card-block card-stretch card-height mb-0">
-                                         <div class="card-body">
-                                             <div class="bg-warning-light rounded">
-                                                 <img src="../assets/product/01.png"
-                                                     class="style-img img-fluid m-auto p-3" alt="image">
-                                             </div>
-                                             <div class="style-text text-left mt-3">
-                                                 <h5 class="mb-1">Organic Cream</h5>
-                                                 <p class="mb-0">789 Item</p>
-                                             </div>
-                                         </div>
-                                     </div>
-                                 </li>
-                                 <li class="col-lg-3">
-                                     <div class="card card-block card-stretch card-height mb-0">
-                                         <div class="card-body">
-                                             <div class="bg-danger-light rounded">
-                                                 <img src="../assets/product/02.png"
-                                                     class="style-img img-fluid m-auto p-3" alt="image">
-                                             </div>
-                                             <div class="style-text text-left mt-3">
-                                                 <h5 class="mb-1">Rain Umbrella</h5>
-                                                 <p class="mb-0">657 Item</p>
-                                             </div>
-                                         </div>
-                                     </div>
-                                 </li>
-                                 <li class="col-lg-3">
-                                     <div class="card card-block card-stretch card-height mb-0">
-                                         <div class="card-body">
-                                             <div class="bg-info-light rounded">
-                                                 <img src="../assets/product/03.png"
-                                                     class="style-img img-fluid m-auto p-3" alt="image">
-                                             </div>
-                                             <div class="style-text text-left mt-3">
-                                                 <h5 class="mb-1">Serum Bottle</h5>
-                                                 <p class="mb-0">489 Item</p>
-                                             </div>
-                                         </div>
-                                     </div>
-                                 </li>
-                                 <li class="col-lg-3">
-                                     <div class="card card-block card-stretch card-height mb-0">
-                                         <div class="card-body">
-                                             <div class="bg-success-light rounded">
-                                                 <img src="../assets/product/02.png"
-                                                     class="style-img img-fluid m-auto p-3" alt="image">
-                                             </div>
-                                             <div class="style-text text-left mt-3">
-                                                 <h5 class="mb-1">Organic Cream</h5>
-                                                 <p class="mb-0">468 Item</p>
-                                             </div>
-                                         </div>
-                                     </div>
-                                 </li>
-                             </ul>
-                         </div>
-                     </div>
-                     </div>        -->
+                    <div class="col-lg-6">
+                        <div class="card card-block card-stretch card-height">
+                            <div class="card-header d-flex justify-content-between">
+                                <div class="header-title">
+                                    <h4 class="card-title">
+                                        CPU Usage
+                                        <span class="info-icon"
+                                            data-tooltip="CPU Usage shows the 'Total Cores', 'Cores Used by Service', 'Cores Used by System'">i</span>
+                                    </h4>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="controls d-flex">
+                                        <div class="dropdown ml-3">
+                                            <select id="cpu-usage-time-select" class="dropdown-select">
+                                                <option value="5m">5 Minutes</option>
+                                                <option value="15m">15 Minutes</option>
+                                                <option value="30m">30 Minutes</option>
+                                                <option value="1h">1 Hour</option>
+                                                <option value="6h">6 Hours</option>
+                                                <option value="1d">1 Day</option>
+                                                <option value="3d">3 Days</option>
+                                                <option value="7d">1 Week</option>
+                                                <option value="1month">1 Month (Max)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body" style="position: relative;">
+                                <div class="chart-container" id="cpu-usage-chart"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card card-block card-stretch card-height">
+                            <div class="card-header d-flex justify-content-between">
+                                <div class="header-title">
+                                    <h4 class="card-title">
+                                        GoRoutines Statistics
+                                        <span class="info-icon"
+                                            data-tooltip="Goroutines Statistics shows the 'Total Goroutines'">i</span>
+                                    </h4>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="controls d-flex">
+                                        <div class="dropdown ml-3">
+                                            <select id="goroutines-time-select" class="dropdown-select">
+                                                <option value="5m">5 Minutes</option>
+                                                <option value="15m">15 Minutes</option>
+                                                <option value="30m">30 Minutes</option>
+                                                <option value="1h">1 Hour</option>
+                                                <option value="6h">6 Hours</option>
+                                                <option value="1d">1 Day</option>
+                                                <option value="3d">3 Days</option>
+                                                <option value="7d">1 Week</option>
+                                                <option value="1month">1 Month (Max)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body" style="position: relative;">
+                                <div class="chart-container" id="goroutines-chart"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card card-block card-stretch card-height">
+                            <div class="card-header d-flex justify-content-between">
+                                <div class="header-title">
+                                    <h4 class="card-title">
+                                        Load & Memory Statistics
+                                        <span class="info-icon"
+                                            data-tooltip="Load & Memory Statistics shows the 'Service CPU Load', 'System CPU Load', 'Total CPU Load', 'Service Memory Load', 'System Memory Load'">i</span>
+                                    </h4>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="controls d-flex">
+                                        <div class="dropdown ml-3">
+                                            <select id="load-memory-time-select" class="dropdown-select">
+                                                <option value="5m">5 Minutes</option>
+                                                <option value="15m">15 Minutes</option>
+                                                <option value="30m">30 Minutes</option>
+                                                <option value="1h">1 Hour</option>
+                                                <option value="6h">6 Hours</option>
+                                                <option value="1d">1 Day</option>
+                                                <option value="3d">3 Days</option>
+                                                <option value="7d">1 Week</option>
+                                                <option value="1month">1 Month (Max)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body" style="position: relative;">
+                                <div class="chart-container" id="load-memory-chart"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card card-block card-stretch card-height">
+                            <div class="card-header d-flex justify-content-between">
+                                <div class="header-title">
+                                    <h4 class="card-title">
+                                       Health Statistics
+                                        <span class="info-icon"
+                                            data-tooltip="Health Statistics shows the 'Service Health', 'System Health', 'Overall Health'">i</span>
+                                    </h4>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="controls d-flex">
+                                        <div class="dropdown ml-3">
+                                            <select id="health-time-select" class="dropdown-select">
+                                                <option value="5m">5 Minutes</option>
+                                                <option value="15m">15 Minutes</option>
+                                                <option value="30m">30 Minutes</option>
+                                                <option value="1h">1 Hour</option>
+                                                <option value="6h">6 Hours</option>
+                                                <option value="1d">1 Day</option>
+                                                <option value="3d">3 Days</option>
+                                                <option value="7d">1 Week</option>
+                                                <option value="1month">1 Month (Max)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body" style="position: relative;">
+                                <div class="chart-container" id="health-chart"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <!-- Page end  -->
             </div>
@@ -606,8 +720,9 @@ Each metric is weighted and combined to produce a score ranging from 0% to 100%.
     <!-- Javascript -->
     <!-- <script src="./js/core/main.js" defer></script> -->
     <script src="./js/index.js" defer></script>
-    <script src="./js/common.js"></script>
-    <script src="./js/refresh.js"></script>
+    <script src="./js/common.js" defer></script>
+    <script src="./js/refresh.js" defer></script>
+    <script src="./js/historycharts.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
 
     <!-- Backend Bundle JavaScript -->

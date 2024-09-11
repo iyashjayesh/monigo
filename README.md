@@ -1,5 +1,9 @@
 ### Status: In Development 🚧
 
+<p align="center">
+  <img src="./static/assets/monigo-icon.png" width="200" title="Monigo Icon" alt="monigo-icon"/>
+</p>
+
 # MoniGo - Performance Monitoring for Go Applications
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/iyashjayesh/monigo)](https://goreportcard.com/report/github.com/iyashjayesh/monigo)
@@ -8,15 +12,22 @@
 
 **MoniGo** is a performance monitoring library for Go applications. It provides real-time insights into application performance with an intuitive user interface, enabling developers to track and optimize both service-level and function-level metrics.
 
+<div align="center" style="display: flex; flex-wrap: wrap; gap: 10px; border: 2px solid #ccc; padding: 10px;">
+  <img src="./static/assets/ss/d1.png" alt="Dashboard" width="300">
+  <img src="./static/assets/ss/d2.png" alt="Dashboard" width="300">
+  <img src="./static/assets/ss/d3.png" alt="Dashboard" width="300">
+  <img src="./static/assets/ss/d4.png" alt="Dashboard" width="300">
+  <img src="./static/assets/ss/d5.png" alt="Dashboard" width="300">
+  <img src="./static/assets/ss/d6.png" alt="Dashboard" width="300">
+</div>
+
 ## Features
 
 - **Real-Time Monitoring**: Access up-to-date performance metrics for your Go applications.
 - **Detailed Insights**: Track and analyze both service and function-level performance.
 - **Customizable Dashboard**: Manage performance data with an easy-to-use UI.
 - **Visualizations**: Utilize graphs and charts to interpret performance trends.
-
-<img width="1506" alt="Screenshot 2024-09-08 at 4 39 55 PM" src="https://github.com/user-attachments/assets/b7065488-3e8d-4bf9-9653-86e8db6d494f">
-
+- **Custom Thresholds**: Configure custom thresholds for your application's performance and resource usage.
 
 ## Installation
 
@@ -41,41 +52,38 @@ func main() {
 		ServiceName:        "service_name", // **Required**
 		PurgeMonigoStorage: true,       	// Default is false
 		DashboardPort:      8080,       	// Default is 8080
-		DbSyncFrequency:    "10s",       	// Default is 5 Minutes "5m"
-		RetentionPeriod:    "4d",       	// Default is 14 days (2 weeks)
+		DataPointsSyncFrequency:    "10s",       	// Default is 5 Minutes "5m"
+		DataRetentionPeriod:    "4d",       	// Default is 14 days (2 weeks)
 	}
 
-	// 	### Weight Configuration
+	// **Thresholds Explanation:**
 
-	// In the health scoring system, weights determine the importance of each metric:
+	// The `Thresholds` structure defines the performance and resource usage thresholds used to evaluate system health:
 
-	// - **Weight of `1.0`**: Indicates maximum importance. Metrics with this weight have the highest impact on the overall health score.
-	// - **Weights Less Than `1.0`**: Reflect decreasing levels of importance. Metrics with lower weights contribute less to the overall score.
+	// - **Low**: The percentage value below which the system is considered to be in optimal health.
+	// - **Medium**: The percentage value indicating moderate health; usage above this threshold but below the High threshold may be acceptable but should be monitored.
+	// - **High**: The percentage value indicating high usage, suggesting potential performance issues or resource constraints.
+	// - **Critical**: The percentage value where the system is critically stressed and immediate attention is needed.
+	// - **GoroutinesLow**: The lower bound for the number of goroutines; fewer goroutines are considered better.
+	// - **GoroutinesHigh**: The upper bound for the number of goroutines; more goroutines may indicate high load or potential inefficiencies.
 
-	// **Example**:
-	// - Set `MaxLoad.Weight` to `1.0` if CPU load is critical.
-	// - Set `MaxMemory.Weight` to `0.5` if memory usage is moderately important.
-	// - Set `MaxGoroutines.Weight` to `0.2` for less critical metrics.
+	// Example values:
+	// - `Low: 20.0` - The system is healthy if usage is below 20%.
+	// - `Medium: 50.0` - Usage between 20% and 50% is moderate.
+	// - `High: 80.0` - Usage between 50% and 80% is high.
+	// - `Critical: 100.0` - Usage at or above 100% is critical.
 
-	// 1.0 is the maximum weight and 0.0 is the minimum weight.
-	// critical - 1.0
-	// moderate - 0.5
-	// less critical - 0.2
+	// For goroutines:
+	// - `GoroutinesLow: 100` - Ideal number of goroutines is below 100.
+	// - `GoroutinesHigh: 500` - The system may experience performance issues if the number of goroutines exceeds 500.
 
-	// to check overall health of the service
-	monigoInstance.SetServiceThresholds(&models.ServiceHealthThresholds{
-		MaxGoroutines: models.Thresholds{
-			Value:  100, //Default is 100
-			Weight: 1.0, //Default is 0.2
-		},
-		MaxCPULoad: models.Thresholds{
-			Value:  85, //Default is 85%
-			Weight: 0.5, //Default is 0.7
-		},
-		MaxMemory: models.Thresholds{
-			Value:  80, //Default is 85%
-			Weight: 0.2, //Default is 0.7
-		},
+	monigoInstance.ConfigureServiceThresholds(&models.ServiceHealthThresholds{
+		Low:            20.0,  // Default is 20.0
+		Medium:         50.0,  // Default is 50.0
+		High:           80.0,  // Default is 80.0
+		Critical:       100.0, // Default is 100.0
+		GoRoutinesLow:  100,   // Default is 100
+		GoRoutinesHigh: 500,   // Default is 500
 	})
 
 	monigoInstance.Start()
@@ -148,6 +156,19 @@ Reports need to be generated by the user by clicking on the "Generate Report" bu
 | Field Name               | Value (Datatype) |
 | ------------------------ | ---------------- |
 | `overall_health_percent` | `float64`        |
+
+## API Reference
+
+- You can access the MoniGo API by visiting the following URL: http://localhost:8080/monigo/api/v1/<endpoint> (replace `<endpoint>` with the desired endpoint).
+- API endpoints are available for the following:
+
+| Endpoint                           | Description           | Method | Request                                             | Response | Example                                          |
+| ---------------------------------- | --------------------- | ------ | --------------------------------------------------- | -------- | ------------------------------------------------ |
+| `/monigo/api/v1/metrics`           | Get all metrics       | GET    | None                                                | JSON     | [Example](./static/API/Res/metrics.json)           |
+| `/monigo/api/v1/go-routines-stats` | Get go routines stats | GET    | None                                                | JSON     | [Example](./static/API/Res/go-routines-stats.json) |
+| `/monigo/api/v1/service-info`      | Get service info      | GET    | None                                                | JSON     | [Example](./static/API/Res/service-info.json)      |
+| `/monigo/api/v1/service-metrics`   | Get service metrics   | POST   | JSON [Example](./static/API/Req/service-metrics.json) | JSON     | [Example](./static/API/Res/service-metrics.json)   |
+| `/monigo/api/v1/reports`           | Get history data      | POST   | JSON [Example](./static/API/Req/reports.json)         | JSON     | [Example](./static/API/Res/reports.json)           |
 
 ## Contributing
 

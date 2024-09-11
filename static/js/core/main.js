@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function fetchServiceInfo() {
-        fetch(`/service-info`)
+        fetch(`/monigo/api/v1/service-info`)
             .then(response => response.json())
             .then(data => {
                 serviceInfoContainer.innerHTML = '';
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function fetchMetrics(unit) {
         runtimeMetricsContainer.innerHTML = `<div class="service-info">Fetching the data...</div>`;
-        fetch(`/metrics`)
+        fetch(`/monigo/api/v1/metrics`)
             .then(response => response.json())
             .then(metrics => {
 
@@ -389,7 +389,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function fetchGoRoutines() {
-        fetch(`/go-routines-stats`)
+        fetch(`/monigo/api/v1/go-routines-stats`)
             .then(response => response.json())
             .then(data => {
                 console.log(data);
