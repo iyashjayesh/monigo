@@ -198,6 +198,7 @@ func GetReportData(w http.ResponseWriter, r *http.Request) {
 
 	dataByTimestamp := make(map[int64]map[string]float64)
 
+	log.Println("Field Name List: ", fieldNameList)
 	for _, fieldName := range fieldNameList {
 
 		datapoints, err := timeseries.GetDataPoints(fieldName, []tstorage.Label{{Name: labelName, Value: labelValue}}, startTime.Unix(), endTime.Unix())

@@ -24,10 +24,10 @@ import (
 
 var (
 	//go:embed static/*
-	staticFiles      embed.FS
-	serviceStartTime time.Time = time.Now()
-	Once             sync.Once = sync.Once{}
-	BasePath         string
+	staticFiles embed.FS
+	// serviceStartTime time.Time
+	Once     sync.Once = sync.Once{}
+	BasePath string
 )
 
 func init() {
@@ -71,6 +71,13 @@ func (m *Monigo) Start() {
 	// Set the frequency to sync the metrics to the storage
 	m.SetDataPointsSyncFrequency(m.DataPointsSyncFrequency) // Default is 5 Minutes
 
+	location, err := time.LoadLocation("Local")
+	if err != nil {
+		fmt.Println("Error loading location:", err)
+		return
+	}
+
+	serviceStartTime := time.Now().In(location)
 	// TODO: Correct the logs
 
 	m.ProcessId = common.GetProcessId()
@@ -79,12 +86,7 @@ func (m *Monigo) Start() {
 
 	cachePath := BasePath + "/cache.dat"
 	cache := Cache{Data: make(map[string]time.Time)}
-
-	err := cache.LoadFromFile(cachePath)
-	if err != nil {
-		log.Println("Could not load cache, starting fresh")
-	}
-
+	cache.LoadFromFile(cachePath)
 	if _, ok := cache.Data[m.ServiceName]; ok {
 		m.ServiceStartTime = cache.Data[m.ServiceName]
 	}
@@ -204,26 +206,40 @@ func (c *Cache) SaveToFile(filename string) error {
 	return err
 }
 
-func (c *Cache) LoadFromFile(filename string) error {
-	// Open the file
-	file, err := os.Open(filename)
+// handleError is a helper function to log the error and panic
+func handleError(msg string, err error) {
+	log.Panicf("%s: %v", msg, err)
+}
+
+// LoadFromFile loads the cache from a file, or starts fresh if the file does not exist or an error occurs
+func (c *Cache) LoadFromFile(filename string) {
+	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
-		return err
+		handleError("Could not open or create cache file", err)
 	}
 	defer file.Close()
 
-	// Read the Base64 encoded data from the file
+	fileInfo, err := file.Stat()
+	if err != nil {
+		handleError("Could not retrieve file info", err)
+	}
+	if fileInfo.Size() == 0 {
+		log.Println("Cache file is empty, starting fresh")
+		return
+	}
+
 	base64Data, err := ioutil.ReadAll(file)
 	if err != nil {
-		return err
+		handleError("Could not read cache file", err)
 	}
 
-	// Decode the Base64 data
 	jsonData, err := base64.StdEncoding.DecodeString(string(base64Data))
 	if err != nil {
-		return err
+		handleError("Could not decode cache file", err)
 	}
 
-	// Decode the JSON data into the cache
-	return json.Unmarshal(jsonData, &c.Data)
+	err = json.Unmarshal(jsonData, &c.Data)
+	if err != nil {
+		handleError("Could not unmarshal cache data", err)
+	}
 }
