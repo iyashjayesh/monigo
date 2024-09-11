@@ -1,4 +1,4 @@
-### Status: In Development 🚧 Currently working on fetching function metrics and memory leaks
+### Status: In Development 🚧 Currently working on fetching function metrics and memory leaks 📊
 
 <p align="center">
   <img src="./static/assets/monigo-icon.png" width="200" title="Monigo Icon" alt="monigo-icon"/>
