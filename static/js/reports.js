@@ -48,11 +48,15 @@ document.addEventListener('DOMContentLoaded', () => {
             StartTime = new Date(new Date().getTime() - 1440 * 60000); // Subtract 1 day
         } else if (timeframe == "3d") {
             StartTime = new Date(new Date().getTime() - 4320 * 60000); // Subtract 3 days
-        } else if (timeframe == "1week") {
-            StartTime = new Date(new Date().getTime() - 10080 * 60000); // Subtract 1 week
-        } else if (timeframe == "1month") {
-            StartTime = new Date(new Date().getTime() - 43200 * 60000); // Subtract 1 month
-        }
+        } else if (timeRange == "7d") {
+            StartTime = new Date(new Date().getTime() - 10080 * 60000); // Subtract 7 days
+        } 
+        
+        // else if (timeRange == "7d") {
+        //     StartTime = new Date(new Date().getTime() - 10080 * 60000); // Subtract 7 days
+        // } else if (timeRange == "1month") {
+        //     StartTime = new Date(new Date().getTime() - 43200 * 60000); // Subtract 1 month
+        // }
 
         let reqObj = {
             topic: metric,

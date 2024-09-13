@@ -237,3 +237,9 @@ func GetReportData(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonDP)
 }
+
+func GetFunctionTraceDetails(w http.ResponseWriter, r *http.Request) {
+	jsonObjStr, _ := json.Marshal(core.FunctionTraceDetails())
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonObjStr)
+}

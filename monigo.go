@@ -26,8 +26,9 @@ var (
 	//go:embed static/*
 	staticFiles embed.FS
 	// serviceStartTime time.Time
-	Once     sync.Once = sync.Once{}
-	BasePath string
+	Once        sync.Once = sync.Once{}
+	BasePath    string
+	baseAPIPath = "/monigo/api/v1"
 )
 
 func init() {
@@ -36,14 +37,15 @@ func init() {
 
 // Monigo is the main struct to start the monigo service
 type Monigo struct {
-	ServiceName             string    `json:"service_name"`
-	DashboardPort           int       `json:"dashboard_port"`
-	PurgeMonigoStorage      bool      `json:"purge_monigo_storage"`
-	DataPointsSyncFrequency string    `json:"db_sync_frequency"`
-	DataRetentionPeriod     string    `json:"retention_period"`
-	GoVersion               string    `json:"go_version"`
-	ServiceStartTime        time.Time `json:"service_start_time"`
-	ProcessId               int32     `json:"process_id"`
+	ServiceName             string    `json:"service_name"`       // Mandatory field ex. "bachend", "OrderAPI", "PaymentService", etc.
+	DashboardPort           int       `json:"dashboard_port"`     // Default is 8080
+	DataPointsSyncFrequency string    `json:"db_sync_frequency"`  // Default is 5 Minutes
+	DataRetentionPeriod     string    `json:"retention_period"`   // Default is 7 Day
+	TimeZone                string    `json:"time_zone"`          // Default is Local
+	GoVersion               string    `json:"go_version"`         // Dynamically set from runtime.Version()
+	ServiceStartTime        time.Time `json:"service_start_time"` // Dynamically setting it based on the service start time
+	ProcessId               int32     `json:"process_id"`         // Dynamically set from os.Getpid()
+
 }
 
 // MonigoInt is the interface to start the monigo service
@@ -58,31 +60,42 @@ type Cache struct {
 	Data map[string]time.Time
 }
 
+// MonigoInstanceContructor is the constructor for the Monigo struct
+func (m *Monigo) MonigoInstanceContructor() {
+
+	if m.TimeZone == "" {
+		m.TimeZone = "Local"
+	}
+
+	location, err := time.LoadLocation(m.TimeZone)
+	if err != nil {
+		log.Println("setting the default timezone to Local, error occurred:", err)
+		location = time.Local
+	}
+
+	// Set the default values
+	m.DashboardPort = 8080
+	if m.DataPointsSyncFrequency == "" {
+		m.DataPointsSyncFrequency = "5m"
+	}
+	if m.DataRetentionPeriod == "" {
+		m.DataRetentionPeriod = "7d"
+	}
+	m.ServiceStartTime = time.Now().In(location)
+}
+
 func (m *Monigo) Start() {
 
 	if m.ServiceName == "" {
 		log.Panic("service_name is required, please provide the service name")
 	}
 
-	if m.PurgeMonigoStorage {
-		timeseries.PurgeStorage()
-	}
-
-	// Set the frequency to sync the metrics to the storage
-	m.SetDataPointsSyncFrequency(m.DataPointsSyncFrequency) // Default is 5 Minutes
-
-	location, err := time.LoadLocation("Local")
-	if err != nil {
-		fmt.Println("Error loading location:", err)
-		return
-	}
-
-	serviceStartTime := time.Now().In(location)
-	// TODO: Correct the logs
+	m.MonigoInstanceContructor()
+	timeseries.PurgeStorage()                               // Purge the monigo storage to start fresh
+	m.SetDataPointsSyncFrequency(m.DataPointsSyncFrequency) // Set the frequency to sync the metrics to the storage
 
 	m.ProcessId = common.GetProcessId()
 	m.GoVersion = runtime.Version()
-	m.ServiceStartTime = serviceStartTime
 
 	cachePath := BasePath + "/cache.dat"
 	cache := Cache{Data: make(map[string]time.Time)}
@@ -95,7 +108,7 @@ func (m *Monigo) Start() {
 
 	log.Println("Service start time updated in cache, new start time:", m.ServiceStartTime)
 
-	err = cache.SaveToFile(cachePath)
+	err := cache.SaveToFile(cachePath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -116,30 +129,31 @@ func (m *Monigo) ConfigureServiceThresholds(thresholdsValues *models.ServiceHeal
 	core.ConfigureServiceThresholds(thresholdsValues)
 }
 
+func TraceFunction(f func()) {
+	core.TraceFunction(f)
+}
+
 func StartDashboard(port int) {
 
 	if port == 0 {
 		port = 8080 // Default port for the dashboard
 	}
 
-	log.Println("Starting the dashboard at port:", port)
-
-	// Base API path
-	basePath := "/monigo/api/v1"
-
 	// HTML site
 	http.HandleFunc("/", serveHtmlSite)
 
 	// Core Statistics
-	http.HandleFunc(fmt.Sprintf("%s/metrics", basePath), api.NewCoreStatistics)
+	http.HandleFunc(fmt.Sprintf("%s/metrics", baseAPIPath), api.NewCoreStatistics)
 
 	// Service APIs
-	http.HandleFunc(fmt.Sprintf("%s/service-info", basePath), api.GetServiceInfoAPI)
-	http.HandleFunc(fmt.Sprintf("%s/service-metrics", basePath), api.GetServiceMetricsFromStorage)
-	http.HandleFunc(fmt.Sprintf("%s/go-routines-stats", basePath), api.GetGoRoutinesStats)
+	http.HandleFunc(fmt.Sprintf("%s/service-info", baseAPIPath), api.GetServiceInfoAPI)
+	http.HandleFunc(fmt.Sprintf("%s/service-metrics", baseAPIPath), api.GetServiceMetricsFromStorage)
+	http.HandleFunc(fmt.Sprintf("%s/go-routines-stats", baseAPIPath), api.GetGoRoutinesStats)
+
+	http.HandleFunc(fmt.Sprintf("%s/function-trace", baseAPIPath), api.GetFunctionTraceDetails)
 
 	// Reports
-	http.HandleFunc(fmt.Sprintf("%s/reports", basePath), api.GetReportData)
+	http.HandleFunc(fmt.Sprintf("%s/reports", baseAPIPath), api.GetReportData)
 
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
 		log.Panicf("Error starting the dashboard: %v\n", err)

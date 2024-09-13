@@ -5,14 +5,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Monigo - Metrics Dashboard</title>
-
     <!-- Favicon -->
     <link rel="shortcut icon" href="../assets/favicon.ico" />
     <link rel="stylesheet" href="./css/core/backend-plugin.min.css">
     <link rel="stylesheet" href="./css/core/backend.css?v=1.0.0">
     <link rel="stylesheet" href="./css/monigo-styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    
 </head>
 
 <body class="  ">
@@ -24,7 +22,6 @@
     <!-- loader END -->
     <!-- Wrapper Start -->
     <div class="wrapper">
-
         <div class="iq-sidebar  sidebar-default ">
             <div class="iq-sidebar-logo d-flex align-items-center justify-content-between">
                 <a href="./index.html" class="header-logo">
@@ -37,7 +34,7 @@
             <div class="data-scrollbar" data-scroll="1">
                 <nav class="iq-sidebar-menu">
                     <ul id="iq-sidebar-toggle" class="iq-menu">
-                        <li class=" ">
+                        <li class="active">
                             <a href="./index.html" class="svg-icon">
                                 <svg class="svg-icon" id="p-dash1" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -51,7 +48,7 @@
                                 <span class="ml-4">Dashboards</span>
                             </a>
                         </li>
-                        <li class="active">
+                        <li class=" ">
                             <a href="./go-routines-stats.html" class="">
                                 <svg class="svg-icon" id="p-dash1" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -83,8 +80,9 @@
                         </li>
                         <li class=" ">
                             <a href="./function-metrics.html" class="">
-                                <svg class="svg-icon" id="p-dash1" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg class="svg-icon" id="p-dash1" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
                                     <path
                                         d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
                                     </path>
@@ -171,34 +169,37 @@
                     <div class="col-lg-4">
                         <div class="card card-transparent card-block card-stretch card-height border-none">
                             <div class="card-body p-0 mt-lg-2 mt-0">
-                                <h3 class="mb-3">Go Routines Stats</h3>
-                                <p class="mb-0 mr-4">
-                                    Check out this dashboard to see how many Go routines are churning away in your Go app. Want to dive deeper? 
-                                    <br/><br />
-                                    You can also peek at the stack trace for each Go routine. If you spot any bugs or hiccups, don't hesitate to give us a shout on
-                                    GitHub!
-                                    <!-- <br/> -->
-                                    <!-- <br /> -->
-                                    <!-- And if you’ve got any ideas for new features, hit us up with a feature-req issue on GitHub. We love adding
-                                    cool stuff! 🚀 -->
+                                <h3 class="mb-3">Function Metrics</h3>
+                                <p class="mb-0 mr-4">Get the metrics of the functions that are running in your
+                                    application. This will help you to understand the performance of the functions
+                                    and the overall performance of the application. 📊
                                 </p>
-                                <!-- <h3 class="mb-3">Go Routines No:</h3>
-                                <p class="mb-0 mr-4"><span id="goroutine-count">0</span></p> -->
-                                <div class="num-goroutines mt-5">Total Number of Go routines: <span id="goroutine-count">0</span></div>
-                                
                             </div>
                         </div>
                     </div>
-                    <div id="goroutines-page"></div>
                     <div class="col-lg-8">
                         <div class="row">
-                            <div class="col-lg-3 col-md-3">
+                            <div class="col-lg-4 col-md-4">
                                 <div class="card card-block card-stretch card-height">
                                     <div class="card-body">
-                                        <div class="icon iq-icon-box-2 bg-info-light">
-                                            <img src="./assets/product/service.png" class="img-fluid" alt="GoRoutines Image">
+                                        <div class="d-flex align-items-center mb-4 card-total-sale">
+                                            <div class="icon iq-icon-box-2 bg-info-light">
+                                                <img src="./assets/product/service.png" class="img-fluid" alt="image">
+                                            </div>
+                                            <div>
+                                                <p class="mb-2">Total Functions:</p>
+                                                <div id="totalFNumber"></div>
+                                            </div>
                                         </div>
-                                        <div id="service_name"></div>
+                                        <!-- <div class="d-flex align-items-center mb-4 card-total-sale">
+                                            <div class="icon iq-icon-box-2 bg-danger-light">
+                                                <img src="./assets/product/service.png" class="img-fluid" alt="image">
+                                            </div>
+                                            <div>
+                                                <p class="mb-2">Overall Function Performance:</p>
+                                                <h4>$ 4598</h4>
+                                            </div>
+                                        </div> -->
                                         <div class="iq-progress-bar mt-2">
                                             <span class="bg-info iq-progress progress-1" data-percent="100">
                                             </span>
@@ -206,37 +207,21 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-lg-3 col-md-3">
+                            <div class="col-lg-8 col-md-8">
                                 <div class="card card-block card-stretch card-height">
                                     <div class="card-body">
-                                        <div class="icon iq-icon-box-2 bg-info-light">
-                                            <img src="./assets/product/go-version.png" class="img-fluid" alt="GoRoutines Image">
+                                        <div class="d-flex align-items-center mb-4 card-total-sale">
+                                            <div class="icon iq-icon-box-2 bg-success-light">
+                                                <img src="./assets/product/service.png" class="img-fluid" alt="image">
+                                            </div>
+                                            <div>
+                                                <p class="mb-2">Spotting a missing field? Don't be shy, raise a GitHub issue and let the world (or at least us) know!
+                                                    Thanks a ton!</p>
+                                                <h4>Ready to integrate it like it's a piece of cake!</h4>
+                                            </div>
                                         </div>
-                                        <div id="go_version"></div>
                                         <div class="iq-progress-bar mt-2">
-                                            <span class="bg-info iq-progress progress-1" data-percent="100">
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-6 col-md-6">
-                                <div class="card card-block card-stretch card-height">
-                                    <div class="card-body">
-                                        <div class="d-flex align-items-center card-total-sale">
-                                            <div class="icon iq-icon-box-2 bg-info-light">
-                                                <img src="./assets/product/start-time.png" class="img-fluid" alt="Load Image">
-                                            </div>
-                                            <div id="service_start_time"></div>
-                                        </div>
-                                        <div class="d-flex align-items-center card-total-sale">
-                                            <div class="icon iq-icon-box-2 bg-info-light">
-                                                <img src="./assets/product/id.png" class="img-fluid" alt="Load Image">
-                                            </div>
-                                            <div id="process_id"></div>
-                                        </div>
-                                        <div class="iq-progress-bar mt-1">
-                                            <span class="bg-info iq-progress progress-1" data-percent="100">
+                                            <span class="bg-success iq-progress progress-1" data-percent="100">
                                             </span>
                                         </div>
                                     </div>
@@ -250,17 +235,19 @@
                         <div class="card card-transparent card-block card-stretch card-height mb-4">
                             <div class="card-header d-flex align-items-center justify-content-between p-0">
                                 <div class="header-title">
-                                    <h4 class="card-title mb-0">Go Routines Stack View</h4>
+                                    <h4 class="card-title mb-0">Runtime Function Metircs</h4>
                                 </div>
                                 <div class="card-header-toolbar d-flex align-items-center">
-                                    <div><a id="download-stack-view" class="btn btn-primary view-btn font-size-14"><i class="fa fa-download" aria-hidden="true"></i>Download Stack View</a></div>
+                                    <div><a href="#" class="btn btn-primary view-btn font-size-14">View All</a></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                         
                     <div class="col-lg-12">
-                        <div id="goroutines-container"></div>
+                        <div class="fms-container" id="metricsContainer">
+                            <div id="emptyMessage" class="fms-empty-message"></div>
+                        </div>
                     </div>
                 </div>
                 <!-- Page end  -->
@@ -276,37 +263,44 @@
                         <span class="mr-1">
                             <script>document.write(new Date().getFullYear())</script>©
                         </span>
-                        <a href="https://github.com/iyashjayesh/monigo/releases/tag/v1.0.0" class="">Moni<strong><em>GO</em></strong> v1.0.0</a>
+                        <a href="https://github.com/iyashjayesh/monigo/releases/tag/v1.0.0"
+                            class="">Moni<strong><em>GO</em></strong> v1.0.0</a>
                     </div>
-                    
+    
                     <!-- <div class="row">
-                        <div class="col-lg-6">
-                            <ul class="list-inline mb-0">
-                                <li class="list-inline-item"><a href="../backend/privacy-policy.html">Privacy Policy</a>
-                                </li>
-                                <li class="list-inline-item"><a href="../backend/terms-of-service.html">Terms of Use</a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="col-lg-6 text-right">
-                            <span class="mr-1">
-                                <script>document.write(new Date().getFullYear())</script>©
-                            <a href="https://github.com/iyashjayesh/monigo/releases/tag/v1.0.0" class="">Moni<strong><em>GO</em></strong> v1.0.0</a>.
-                        </div>
-                    </div> -->
+                            <div class="col-lg-6">
+                                <ul class="list-inline mb-0">
+                                    <li class="list-inline-item"><a href="../backend/privacy-policy.html">Privacy Policy</a>
+                                    </li>
+                                    <li class="list-inline-item"><a href="../backend/terms-of-service.html">Terms of Use</a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-lg-6 text-right">
+                                <span class="mr-1">
+                                    <script>document.write(new Date().getFullYear())</script>©
+                                </span>
+                                <a href="https://github.com/iyashjayesh/monigo/releases/tag/v1.0.0" class="">Moni<strong><em>GO</em></strong> v1.0.0</a>.
+                            </div>
+                        </div> -->
                 </div>
             </div>
         </div>
     </footer>
+
+    <!-- Javascript -->
+    <!-- <script src="./js/core/main.js" defer></script> -->
+    <!-- <script src="./js/index.js" defe
+        r></script> -->
+    <script src="./js/common.js" defer></script>
+    <!-- <script src="./js/refresh.js" defer></script> -->
+    <!-- <script src="./js/historycharts.js" defer></script> -->
+    <script src="./js/functionTrace.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
+    
     <!-- Backend Bundle JavaScript -->
     <script src="./js/core/backend-bundle.min.js"></script>
     <script src="./js/core/app.js"></script>
-
-    <!-- Main JavaScript -->
-    <!-- <script src="./js/core//main.js" defer></script> -->
-    <script src="./js/index.js" defer></script>
-    <script src="./js/refresh.js"></script>
-    <script src="./js/common.js"></script>
-    <script src="./js/go-routines.js" defer></script>
+</body>
 
 </html>
