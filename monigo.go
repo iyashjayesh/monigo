@@ -24,20 +24,19 @@ import (
 
 var (
 	//go:embed static/*
-	staticFiles embed.FS
-	// serviceStartTime time.Time
-	Once        sync.Once = sync.Once{}
-	BasePath    string
-	baseAPIPath = "/monigo/api/v1"
+	staticFiles embed.FS                         // Embedding the static files
+	Once        sync.Once          = sync.Once{} // Ensures that the storage is initialized only once
+	BasePath    string                           // Base path for the monigo
+	baseAPIPath = "/monigo/api/v1"               // Base API path for the dashboard
 )
 
 func init() {
-	BasePath = common.GetBasePath()
+	BasePath = common.GetBasePath() // Get the base path for the monigo
 }
 
 // Monigo is the main struct to start the monigo service
 type Monigo struct {
-	ServiceName             string    `json:"service_name"`       // Mandatory field ex. "bachend", "OrderAPI", "PaymentService", etc.
+	ServiceName             string    `json:"service_name"`       // Mandatory field ex. "backend", "OrderAPI", "PaymentService", etc.
 	DashboardPort           int       `json:"dashboard_port"`     // Default is 8080
 	DataPointsSyncFrequency string    `json:"db_sync_frequency"`  // Default is 5 Minutes
 	DataRetentionPeriod     string    `json:"retention_period"`   // Default is 7 Day
@@ -51,8 +50,7 @@ type Monigo struct {
 // MonigoInt is the interface to start the monigo service
 type MonigoInt interface {
 	Start()                                                                      // Purge the monigo storage
-	SetDataPointsSyncFrequency(frequency ...string)                              // Set the frequency to sync the metrics to the storage
-	PrintGoRoutinesStats() models.GoRoutinesStatistic                            // Print the Go routines stats
+	GetGoRoutinesStats() models.GoRoutinesStatistic                              // Print the Go routines stats
 	ConfigureServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) // Set the service thresholds to calculate the overall service health
 }
 
@@ -91,9 +89,8 @@ func (m *Monigo) Start() {
 	}
 
 	m.MonigoInstanceContructor()
-	timeseries.PurgeStorage()                               // Purge the monigo storage to start fresh
-	m.SetDataPointsSyncFrequency(m.DataPointsSyncFrequency) // Set the frequency to sync the metrics to the storage
-
+	timeseries.PurgeStorage()                                        // Purge the monigo storage to start fresh
+	timeseries.SetDataPointsSyncFrequency(m.DataPointsSyncFrequency) // Set the frequency to sync the metrics to the storage
 	m.ProcessId = common.GetProcessId()
 	m.GoVersion = runtime.Version()
 
@@ -117,18 +114,17 @@ func (m *Monigo) Start() {
 	go StartDashboard(m.DashboardPort)
 }
 
-func (m *Monigo) SetDataPointsSyncFrequency(frequency ...string) {
-	timeseries.SetDataPointsSyncFrequency(m.DataPointsSyncFrequency)
-}
-
-func (m *Monigo) PrintGoRoutinesStats() models.GoRoutinesStatistic {
+// GetGoRoutinesStats get back the Go routines stats from the core package
+func (m *Monigo) GetGoRoutinesStats() models.GoRoutinesStatistic {
 	return core.CollectGoRoutinesInfo()
 }
 
+// ConfigureServiceThresholds sets the service thresholds to calculate the overall service health
 func (m *Monigo) ConfigureServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) {
 	core.ConfigureServiceThresholds(thresholdsValues)
 }
 
+// TraceFunction traces the function
 func TraceFunction(f func()) {
 	core.TraceFunction(f)
 }
@@ -149,18 +145,17 @@ func StartDashboard(port int) {
 	http.HandleFunc(fmt.Sprintf("%s/service-info", baseAPIPath), api.GetServiceInfoAPI)
 	http.HandleFunc(fmt.Sprintf("%s/service-metrics", baseAPIPath), api.GetServiceMetricsFromStorage)
 	http.HandleFunc(fmt.Sprintf("%s/go-routines-stats", baseAPIPath), api.GetGoRoutinesStats)
-
 	http.HandleFunc(fmt.Sprintf("%s/function", baseAPIPath), api.GetFunctionTraceDetails)
 	http.HandleFunc(fmt.Sprintf("%s/function-details", baseAPIPath), api.ViewFunctionMaetrtics)
 
 	// Reports
 	http.HandleFunc(fmt.Sprintf("%s/reports", baseAPIPath), api.GetReportData)
-
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
 		log.Panicf("Error starting the dashboard: %v\n", err)
 	}
 }
 
+// serveHtmlSite serves the HTML, CSS, JS, and other static files
 func serveHtmlSite(w http.ResponseWriter, r *http.Request) {
 	baseDir := "static"
 	// Map of content types based on file extensions
@@ -200,17 +195,14 @@ func serveHtmlSite(w http.ResponseWriter, r *http.Request) {
 	w.Write(file)
 }
 
+// SaveToFile saves the cache to a file
 func (c *Cache) SaveToFile(filename string) error {
-	// Encode the data as JSON
 	jsonData, err := json.Marshal(c.Data)
 	if err != nil {
 		return err
 	}
 
-	// Encode the JSON data as Base64
 	base64Data := base64.StdEncoding.EncodeToString(jsonData)
-
-	// Save the Base64 encoded data to the file
 	file, err := os.Create(filename)
 	if err != nil {
 		return err

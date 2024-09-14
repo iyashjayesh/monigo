@@ -91,7 +91,7 @@ func main() {
 	monigoInstance.Start()
 
 	// Optinal
-	// routinesStats := monigoInstance.PrintGoRoutinesStats() // Print go routines stats
+	// routinesStats := monigoInstance.GetGoRoutinesStats() // Print go routines stats
 	// log.Println(routinesStats)
 
     select {} // To keep the program running

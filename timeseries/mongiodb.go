@@ -13,21 +13,21 @@ import (
 	"github.com/nakabonne/tstorage"
 )
 
+var (
+	once      sync.Once          // Ensures that the storage is initialized only once
+	basePath  string             // Base path for storage
+	storage   Storage            // Storage instance
+	closeOnce sync.Once          // Ensures that the storage is closed only once
+	ctx       context.Context    // Context for goroutines
+	cancel    context.CancelFunc // Cancel function for goroutines
+)
+
 // Storage defines the methods required for storage operations.
 type Storage interface {
 	InsertRows(rows []tstorage.Row) error
 	Select(metric string, labels []tstorage.Label, start, end int64) ([]*tstorage.DataPoint, error)
 	Close() error
 }
-
-var (
-	once      sync.Once
-	basePath  string
-	storage   Storage
-	closeOnce sync.Once
-	ctx       context.Context
-	cancel    context.CancelFunc
-)
 
 // StorageWrapper wraps the tstorage.Storage to implement the Storage interface.
 type StorageWrapper struct {
@@ -139,7 +139,7 @@ func SetDataPointsSyncFrequency(frequency ...string) {
 		freqTime = 5 * time.Minute
 	}
 
-	// Initialize service metrics once
+	// Initializing service metrics once
 	serviceMetrics := core.GetServiceStats()
 	if err := StoreServiceMetrics(&serviceMetrics); err != nil {
 		log.Panicf("Error storing service metrics: %v\n", err)

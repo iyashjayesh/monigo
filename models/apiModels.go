@@ -138,12 +138,14 @@ type GoRoutinesStatistic struct {
 	StackView          []string `json:"stack_view"`
 }
 
+// FunctionTraceDetails represents the function trace details.
 type FunctionTraceDetails struct {
 	FunctionName      string   `json:"function_name"`
 	CoreProfile       Profiles `json:"core_profile"`
 	FunctionCodeTrace string   `json:"function_code_trace"`
 }
 
+// Profiles represents the profiles.
 type Profiles struct {
 	CPU string `json:"cpu_profile"`
 	Mem string `json:"mem_profile"`
