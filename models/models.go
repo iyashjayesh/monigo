@@ -23,12 +23,9 @@ type GetMetrics struct {
 
 // ServiceHealthThresholds is the struct to store the service health thresholds
 type ServiceHealthThresholds struct {
-	Low            float64 `json:"low"`
-	Medium         float64 `json:"medium"`
-	High           float64 `json:"high"`
-	Critical       float64 `json:"critical"`
-	GoRoutinesLow  int     `json:"go_routines_low"`
-	GoRoutinesHigh int     `json:"go_routines_high"`
+	MaxCPUUsage    float64 `json:"max_cpu_usage"`    // Default is 80%
+	MaxMemoryUsage float64 `json:"max_memory_usage"` // Default is 80%
+	MaxGoRoutines  int     `json:"max_go_routines"`  // Default is 1000
 }
 
 // Thresholds is the struct to store the threshold values

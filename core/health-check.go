@@ -1,7 +1,11 @@
 package core
 
 import (
+	"fmt"
+	"log"
 	"runtime"
+	"strconv"
+	"strings"
 
 	"github.com/iyashjayesh/monigo/common"
 	"github.com/iyashjayesh/monigo/models"
@@ -41,110 +45,148 @@ func getProcessMemoryUsage() (float64, error) {
 	if err != nil {
 		return 0, err
 	}
-	totalMemory := float64(memInfo.RSS) / (1024 * 1024)
-	return totalMemory, nil
+	log.Println("memInfo ", memInfo)
+	log.Println("memInfo.RSS ", memInfo.RSS)
+	usedMemory := float64(memInfo.RSS) / (1024 * 1024)
+
+	// totalaVailableMemory, err := common.GetTotalMemory()
+	// if err != nil {
+	// 	return 0, err
+	// }
+
+	return usedMemory, nil // return in MB
 }
 
-func getHealthScore(usage float64, thresholds models.ServiceHealthThresholds) int {
-	switch {
-	case usage <= thresholds.Low:
-		return 10
-	case usage <= thresholds.Medium:
-		return 7
-	case usage <= thresholds.High:
-		return 4
+// func getHealthScore(usage float64, thresholds models.ServiceHealthThresholds) int {
+// 	switch {
+// 	case usage <= thresholds.Low:
+// 		return 10
+// 	case usage <= thresholds.Medium:
+// 		return 7
+// 	case usage <= thresholds.High:
+// 		return 4
+// 	default:
+// 		return 1
+// 	}
+// }
+
+// func getGoroutineHealthScore(goroutines int, thresholds models.ServiceHealthThresholds) int {
+// 	switch {
+// 	case goroutines <= thresholds.GoRoutinesLow:
+// 		return 10
+// 	case goroutines <= thresholds.GoRoutinesHigh:
+// 		return 7
+// 	default:
+// 		return 4
+// 	}
+// }
+
+// Helper function to convert values to MB
+func convertToMB(value string) (float64, error) {
+	value = strings.TrimSpace(value)
+	value = strings.Replace(value, " ", "", -1)
+	unit := strings.ToUpper(value[len(value)-2:])
+	val, err := strconv.ParseFloat(value[:len(value)-2], 64)
+	if err != nil {
+		return 0, err
+	}
+
+	unit = strings.ToUpper(unit)
+	switch unit {
+	case "TB":
+		return val * 1024 * 1024, nil
+	case "GB":
+		return val * 1024, nil
+	case "MB":
+		return val, nil
+	case "KB":
+		return val / 1024, nil
 	default:
-		return 1
+		return 0, fmt.Errorf("unsupported memory unit: %s", unit)
 	}
 }
 
-func getGoroutineHealthScore(goroutines int, thresholds models.ServiceHealthThresholds) int {
-	switch {
-	case goroutines <= thresholds.GoRoutinesLow:
-		return 10
-	case goroutines <= thresholds.GoRoutinesHigh:
-		return 7
-	default:
-		return 4
-	}
-}
+// Calculate the service health based on CPU and memory usage
+func calculateServiceHealth(stats *models.ServiceStats) (float64, error) {
 
-func calculateServiceHealth(thresholds models.ServiceHealthThresholds) (float64, error) {
-	cpuUsage, err := getProcessCPUUsage()
+	cpuUsage, err := getProcessCPUUsage() // Getting the CPU usage
 	if err != nil {
 		return 0, err
 	}
 
-	memoryUsage, err := getProcessMemoryUsage()
+	totalMemoryMB, err := convertToMB(stats.MemoryStatistics.TotalSystemMemory)
+	if err != nil {
+		return 0, err
+	}
+	usedMemoryMB, err := convertToMB(stats.MemoryStatistics.MemoryUsedByService)
 	if err != nil {
 		return 0, err
 	}
 
-	cpuScore := getHealthScore(cpuUsage, thresholds)
-	memoryScore := getHealthScore(memoryUsage, thresholds)
-
-	healthScore := float64(cpuScore+memoryScore) / 2
-	healthScore = healthScore * 10
-
-	return healthScore, nil
-}
-
-func calculateSystemHealth(thresholds models.ServiceHealthThresholds) (float64, error) {
-	systemCPUUsage, err := getSystemCPUUsage()
-	if err != nil {
-		return 0, err
-	}
-
-	systemMemoryUsage := getSystemMemoryUsage()
-
-	serviceCPUUsage, err := getProcessCPUUsage()
-	if err != nil {
-		return 0, err
-	}
-
-	serviceMemoryUsage, err := getProcessMemoryUsage()
-	if err != nil {
-		return 0, err
-	}
-
-	adjustedCPUUsage := systemCPUUsage - serviceCPUUsage
-	adjustedMemoryUsage := systemMemoryUsage - (serviceMemoryUsage * 100 / (1024 * 1024))
-
-	if adjustedCPUUsage < 0 {
-		adjustedCPUUsage = 0
-	}
-	if adjustedMemoryUsage < 0 {
-		adjustedMemoryUsage = 0
-	}
-
+	// Calculating memory usage percentage
+	memoryUsagePercentage := (usedMemoryMB / totalMemoryMB) * 100
 	goroutines := getGoroutineCount()
 
-	cpuScore := getHealthScore(adjustedCPUUsage, thresholds)
-	memoryScore := getHealthScore(adjustedMemoryUsage, thresholds)
-	goroScore := getGoroutineHealthScore(goroutines, thresholds)
+	// Checking if service is within health thresholds
+	// cpuHealthy := cpuUsage < serviceHealthThresholds.MaxCPUUsage
+	// memoryHealthy := memoryUsagePercentage < serviceHealthThresholds.MaxMemoryUsage
+	// goroutinesHealthy := goroutines < serviceHealthThresholds.MaxGoRoutines
 
-	healthScore := float64(cpuScore+memoryScore+goroScore) / 3
-	healthScore = healthScore * 10
+	// health score
+	cpuHealthScore := (cpuUsage / serviceHealthThresholds.MaxCPUUsage) * 100
+	memoryHealthScore := (memoryUsagePercentage / serviceHealthThresholds.MaxMemoryUsage) * 100
+	goroutinesHealthScore := (float64(goroutines) / float64(serviceHealthThresholds.MaxGoRoutines)) * 100
+	finalScore := 100 - ((cpuHealthScore + memoryHealthScore + goroutinesHealthScore) / 3)
 
-	return healthScore, nil
+	return finalScore, nil
 }
 
-func CalculateHealthScore(thresholds models.ServiceHealthThresholds) (*models.SystemHealthInPercent, error) {
-	systemHealth, err := calculateSystemHealth(thresholds)
+// Calculate the system health based on CPU and memory usage
+func calculateSystemHealth(stats *models.ServiceStats) (float64, error) {
+
+	totalMemoryMB, err := convertToMB(stats.MemoryStatistics.TotalSystemMemory)
+	if err != nil {
+		return 0, err
+	}
+
+	memotryUsedBySystem, err := convertToMB(stats.MemoryStatistics.MemoryUsedBySystem)
+	if err != nil {
+		return 0, err
+	}
+
+	totalUsedBySystem := (memotryUsedBySystem / totalMemoryMB) * 100
+	sysCPUUsage, err := getProcessCPUUsage()
+	if err != nil {
+		return 0, err
+	}
+
+	// cpuHealthy := sysCPUUsage < serviceHealthThresholds.MaxCPUUsage
+	// memoryHealthy := totalUsedBySystem < serviceHealthThresholds.MaxMemoryUsage
+
+	cpuHealthScore := (sysCPUUsage / serviceHealthThresholds.MaxCPUUsage) * 100
+	memoryHealthScore := (totalUsedBySystem / serviceHealthThresholds.MaxMemoryUsage) * 100
+	finalScore := 100 - ((cpuHealthScore + memoryHealthScore) / 2)
+
+	return finalScore, nil
+}
+
+// CalculateHealthScore calculates the health score of the system and the service
+func CalculateHealthScore(serviceStats *models.ServiceStats) (*models.SystemHealthInPercent, error) {
+
+	sysScore, err := calculateSystemHealth(serviceStats)
 	if err != nil {
 		return nil, err
 	}
 
-	serviceHealth, err := calculateServiceHealth(thresholds)
+	servScore, err := calculateServiceHealth(serviceStats)
 	if err != nil {
 		return nil, err
 	}
 
-	overallHealth := (systemHealth + serviceHealth) / 2
-
+	overallHealth := (sysScore + servScore) / 2
 	return &models.SystemHealthInPercent{
-		SystemHealth:  systemHealth,
-		ServiceHealth: serviceHealth,
+		SystemHealth:  sysScore,
+		ServiceHealth: servScore,
 		OverallHealth: overallHealth,
 	}, nil
 }

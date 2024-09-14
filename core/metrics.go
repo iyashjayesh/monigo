@@ -17,14 +17,7 @@ var (
 	mu                      sync.Mutex
 	requestCount            int64
 	totalDuration           time.Duration
-	serviceHealthThresholds = models.ServiceHealthThresholds{ // Default thresholds
-		Low:            20.0,
-		Medium:         50.0,
-		High:           80.0,
-		Critical:       100.0,
-		GoRoutinesLow:  100,
-		GoRoutinesHigh: 500,
-	}
+	serviceHealthThresholds models.ServiceHealthThresholds
 )
 
 func RecordRequestDuration(duration time.Duration) {
@@ -79,9 +72,9 @@ func ConfigureServiceThresholds(thresholdsValues *models.ServiceHealthThresholds
 	serviceHealthThresholds = *thresholdsValues
 }
 
-func GetServiceHealthThresholdsModel() models.ServiceHealthThresholds {
-	return serviceHealthThresholds
-}
+// func GetServiceHealthThresholdsModel() models.ServiceHealthThresholds {
+// 	return serviceHealthThresholds
+// }
 
 // newRecord creates a new Record with appropriate units and human-readable formats.
 func newRecord(name, description string, value interface{}) models.Record {

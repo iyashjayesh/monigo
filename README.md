@@ -58,36 +58,6 @@ func main() {
 		DataRetentionPeriod:    "4d",       	// Default is 14 days (2 weeks)
 	}
 
-	// **Thresholds Explanation:**
-
-	// The `Thresholds` structure defines the performance and resource usage thresholds used to evaluate system health:
-
-	// - **Low**: The percentage value below which the system is considered to be in optimal health.
-	// - **Medium**: The percentage value indicating moderate health; usage above this threshold but below the High threshold may be acceptable but should be monitored.
-	// - **High**: The percentage value indicating high usage, suggesting potential performance issues or resource constraints.
-	// - **Critical**: The percentage value where the system is critically stressed and immediate attention is needed.
-	// - **GoroutinesLow**: The lower bound for the number of goroutines; fewer goroutines are considered better.
-	// - **GoroutinesHigh**: The upper bound for the number of goroutines; more goroutines may indicate high load or potential inefficiencies.
-
-	// Example values:
-	// - `Low: 20.0` - The system is healthy if usage is below 20%.
-	// - `Medium: 50.0` - Usage between 20% and 50% is moderate.
-	// - `High: 80.0` - Usage between 50% and 80% is high.
-	// - `Critical: 100.0` - Usage at or above 100% is critical.
-
-	// For goroutines:
-	// - `GoroutinesLow: 100` - Ideal number of goroutines is below 100.
-	// - `GoroutinesHigh: 500` - The system may experience performance issues if the number of goroutines exceeds 500.
-
-	monigoInstance.ConfigureServiceThresholds(&models.ServiceHealthThresholds{
-		Low:            20.0,  // Default is 20.0
-		Medium:         50.0,  // Default is 50.0
-		High:           80.0,  // Default is 80.0
-		Critical:       100.0, // Default is 100.0
-		GoRoutinesLow:  100,   // Default is 100
-		GoRoutinesHigh: 500,   // Default is 500
-	})
-
 	monigoInstance.Start()
 
 	// Optinal

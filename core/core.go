@@ -66,7 +66,7 @@ func GetServiceStats() models.ServiceStats {
 
 	wg.Wait()
 
-	serviceStats.Health = GetServiceHealth(&serviceStats.LoadStatistics)
+	serviceStats.Health = GetServiceHealth(&serviceStats)
 	// serviceStats.DiskIO = GetDiskIO()                                             // TODO: Need to implement this function
 
 	return serviceStats
@@ -268,10 +268,8 @@ func GetNetworkIO() (float64, float64) {
 }
 
 // GetServiceHealth retrieves the service health statistics.
-func GetServiceHealth(loadStats *models.LoadStatistics) models.ServiceHealth {
-	threshold := GetServiceHealthThresholdsModel()
-
-	healthInPercent, err := CalculateHealthScore(threshold)
+func GetServiceHealth(serviceStats *models.ServiceStats) models.ServiceHealth {
+	healthInPercent, err := CalculateHealthScore(serviceStats)
 	if err != nil {
 		log.Println("Error calculating health score:", err)
 		return models.ServiceHealth{

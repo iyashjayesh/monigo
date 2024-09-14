@@ -296,3 +296,27 @@ func GetDataRetentionPeriod() time.Duration {
 
 	return rententionPeriod
 }
+
+// Helper function to set default string value
+func DefaultIfEmpty(val, def string) string {
+	if val == "" {
+		return def
+	}
+	return val
+}
+
+// Helper function to set default float value
+func DefaultFloatIfZero(val, def float64) float64 {
+	if val == 0 {
+		return def
+	}
+	return val
+}
+
+// Helper function to set default integer value
+func DefaultIntIfZero(val, def int) int {
+	if val == 0 {
+		return def
+	}
+	return val
+}
