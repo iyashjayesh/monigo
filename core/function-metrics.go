@@ -3,128 +3,147 @@ package core
 import (
 	"fmt"
 	"log"
+	"os"
+	"os/exec"
 	"reflect"
 	"runtime"
-	"strings"
 	"time"
+
+	"github.com/iyashjayesh/monigo/common"
+	"github.com/iyashjayesh/monigo/models"
 )
 
-var functionTraceDetails = make(map[string]string)
+var (
+	functionMetrics = make(map[string]*FunctionMetrics)
+	basePath        = common.GetBasePath()
+)
 
-// Metrics struct to hold memory and CPU statistics
-type Metrics struct {
-	Alloc      uint64 // Memory allocated (bytes)
-	TotalAlloc uint64 // Total memory allocated
-	Sys        uint64 // Memory obtained from the system
-	NumGC      uint32 // Number of garbage collections
-	Goroutines int    // Number of goroutines
-	NumCPU     int    // Number of CPUs
-}
-
-// captureMetrics captures memory and CPU statistics
-func captureMetrics() Metrics {
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	return Metrics{
-		Alloc:      m.Alloc,
-		TotalAlloc: m.TotalAlloc,
-		Sys:        m.Sys,
-		NumGC:      m.NumGC,
-		Goroutines: runtime.NumGoroutine(),
-		NumCPU:     runtime.NumCPU(),
-	}
-}
-
-// trace logs the stack trace, execution time, and system metrics
-func trace(start time.Time, beforeMetrics Metrics, fnName string, depth int) string {
-	// Capture stack trace
-	pcs := make([]uintptr, depth)
-	n := runtime.Callers(3, pcs)
-	frames := runtime.CallersFrames(pcs[:n])
-
-	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("Function call stack trace for %s:\n", fnName))
-	for {
-		frame, more := frames.Next()
-		sb.WriteString(fmt.Sprintf("%s\n\t%s:%d\n", frame.Function, frame.File, frame.Line))
-		if !more {
-			break
-		}
-	}
-
-	// Calculate function execution time
-	elapsed := time.Since(start)
-	sb.WriteString(fmt.Sprintf("Execution time: %s\n", elapsed))
-
-	// Log system metrics (after function execution)
-	afterMetrics := captureMetrics()
-	sb.WriteString("System Metrics Before Execution:\n")
-	sb.WriteString(fmt.Sprintf("Alloc = %v MiB\n", beforeMetrics.Alloc/1024/1024))
-	sb.WriteString(fmt.Sprintf("TotalAlloc = %v MiB\n", beforeMetrics.TotalAlloc/1024/1024))
-	sb.WriteString(fmt.Sprintf("Sys = %v MiB\n", beforeMetrics.Sys/1024/1024))
-	sb.WriteString(fmt.Sprintf("NumGC = %v\n", beforeMetrics.NumGC))
-	sb.WriteString(fmt.Sprintf("Goroutines = %v\n", beforeMetrics.Goroutines))
-	sb.WriteString(fmt.Sprintf("CPUs = %v\n", beforeMetrics.NumCPU))
-
-	sb.WriteString("System Metrics After Execution:\n")
-	sb.WriteString(fmt.Sprintf("Alloc = %v MiB\n", afterMetrics.Alloc/1024/1024))
-	sb.WriteString(fmt.Sprintf("TotalAlloc = %v MiB\n", afterMetrics.TotalAlloc/1024/1024))
-	sb.WriteString(fmt.Sprintf("Sys = %v MiB\n", afterMetrics.Sys/1024/1024))
-	sb.WriteString(fmt.Sprintf("NumGC = %v\n", afterMetrics.NumGC))
-	sb.WriteString(fmt.Sprintf("Goroutines = %v\n", afterMetrics.Goroutines))
-	sb.WriteString(fmt.Sprintf("CPUs = %v\n", afterMetrics.NumCPU))
-
-	return sb.String()
-}
-
-// logFunctionExecution logs the performance metrics for the given function
-func TraceFunctionExecution(fn func(), fnName string) {
-	// Initial stack depth
-	initialDepth := 10
-	maxDepth := 100
-	increment := 10
-	depth := initialDepth
-
-	for depth <= maxDepth {
-		beforeMetrics := captureMetrics()
-		start := time.Now()
-		defer func() {
-			if _, ok := functionTraceDetails[fnName]; ok {
-				functionTraceDetails[fnName] = functionTraceDetails[fnName] + trace(start, beforeMetrics, fnName, depth)
-			} else {
-				functionTraceDetails[fnName] = trace(start, beforeMetrics, fnName, depth)
-			}
-		}()
-
-		fn()
-
-		if isSufficientDepth(depth) { // Checking if the depth is sufficient based on analysis
-			break
-		}
-
-		depth += increment // Increasing the depth for the next iteration
-	}
-}
-
-// isSufficientDepth analyzes if the current stack depth is sufficient
-// For simplicity, we assume a fixed threshold here
-func isSufficientDepth(depth int) bool {
-	// In a real scenario, you might analyze the depth or use some heuristics
-	return depth >= 20 // Example threshold
+type FunctionMetrics struct {
+	FunctionLastRanAt  time.Time     `json:"function_last_ran_at"`
+	CPUProfileFilePath string        `json:"cpu_profile_file_path"`
+	MemProfileFilePath string        `json:"mem_profile_file_path"`
+	MemoryUsage        uint64        `json:"memory_usage"`
+	GoroutineCount     int           `json:"goroutine_count"`
+	ExecutionTime      time.Duration `json:"execution_time"`
 }
 
 func TraceFunction(f func()) {
+	name := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name() // Getting the name of the function
 
-	if f == nil {
-		log.Println("Function is nil, cannot register")
+	initialGoroutines := runtime.NumGoroutine() // Capturing the initial number of goroutines
+	var memStatsBefore, memStatsAfter runtime.MemStats
+	runtime.ReadMemStats(&memStatsBefore)
+
+	log.Printf("memStatsBefore = %v\n", memStatsBefore.Alloc)
+
+	folder := fmt.Sprintf("%s/profiles", basePath)
+	if _, err := os.Stat(folder); os.IsNotExist(err) {
+		if err := os.Mkdir(folder, 0755); err != nil {
+			fmt.Printf("Error creating profiles folder: %v\n", err)
+		}
+	}
+	cpuProfileName := fmt.Sprintf("%s_cpu.prof", name)
+	cpuProfFilePath := fmt.Sprintf("%s/%s", folder, cpuProfileName)
+
+	cpuProfileFile, err := StartCPUProfile(cpuProfFilePath)
+	if err != nil {
+		fmt.Printf("Error starting CPU profile for %s: %v\n", name, err)
 		return
 	}
+	defer StopCPUProfile(cpuProfileFile)
 
-	funcName := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
-	log.Println("Tracing function:", funcName)
-	TraceFunctionExecution(f, funcName)
+	memProfName := fmt.Sprintf("%s_mem.prof", name)
+	memProfFilePath := fmt.Sprintf("%s/%s", folder, memProfName)
+
+	start := time.Now()
+	f()
+	elapsed := time.Since(start)
+
+	if err := WriteHeapProfile(memProfFilePath); err != nil {
+		log.Fatal("could not write memory profile: ", err)
+	}
+
+	// Capture final metrics
+	runtime.ReadMemStats(&memStatsAfter)
+	finalGoroutines := runtime.NumGoroutine() - initialGoroutines
+	if finalGoroutines < 0 {
+		finalGoroutines = 0
+	}
+
+	// Calculate memory usage
+	var memoryUsage uint64
+	if memStatsAfter.Alloc >= memStatsBefore.Alloc {
+		memoryUsage = memStatsAfter.Alloc - memStatsBefore.Alloc
+	}
+
+	log.Printf("memStatsAfter = %v\n", memStatsAfter.Alloc)
+	log.Printf("memoryUsage = %v: %s\n", memoryUsage, name)
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	// Recording the metrics
+	functionMetrics[name] = &FunctionMetrics{
+		FunctionLastRanAt:  start,
+		CPUProfileFilePath: cpuProfileFile.Name(),
+		MemProfileFilePath: memProfFilePath,
+		MemoryUsage:        memoryUsage,
+		GoroutineCount:     finalGoroutines,
+		ExecutionTime:      elapsed,
+	}
 }
 
-func FunctionTraceDetails() map[string]string {
-	return functionTraceDetails
+func FunctionTraceDetails() map[string]*FunctionMetrics {
+	mu.Lock()
+	defer mu.Unlock()
+
+	return functionMetrics
+}
+
+func ViewFunctionMetrics(name string, reportType string, metrics *FunctionMetrics) models.FunctionTraceDetails {
+
+	// https://github.com/google/pprof/blob/main/doc/README.md#text-reports
+	// 	Text reports
+	// pprof text reports show the location hierarchy in text format.
+
+	// -text: Prints the location entries, one per line, including the flat and cum values.
+	// -tree: Prints each location entry with its predecessors and successors.
+	// -peek= regex: Print the location entry with all its predecessors and successors, without trimming any entries.
+	// -traces: Prints each sample with a location per line.
+
+	log.Println("Metrics: ", metrics)
+	cmdCpu := exec.Command("go", "tool", "pprof", "-"+reportType, metrics.CPUProfileFilePath)
+	cpu, err := cmdCpu.Output()
+	if err != nil {
+		log.Println("failed to generate cpu profile: %v\n", err)
+	}
+
+	cmdMem := exec.Command("go", "tool", "pprof", "-"+reportType, metrics.MemProfileFilePath)
+	mem, err := cmdMem.Output()
+	if err != nil {
+		log.Println("failed to generate mem profile: %v\n", err)
+	}
+
+	// go tool pprof -list main.highMemoryUsage  monigo/profiles/main.highMemoryUsage_cpu.prof
+	codeStackView := exec.Command("go", "tool", "pprof", "-list", name, metrics.CPUProfileFilePath)
+	codeStack, err := codeStackView.Output()
+	if err != nil {
+		log.Println("failed to generate cpu code stack view: %v\n", err)
+	}
+
+	// codememStackView := exec.Command("go", "tool", "pprof", "-list", name, metrics.MemProfileFilePath)
+	// log.Println("codememStackView: ", codememStackView)
+	// codeMemStack, err := codememStackView.Output()
+	// if err != nil {
+	// 	log.Println("failed to generate mem code stack view: %v\n", err)
+	// }
+
+	return models.FunctionTraceDetails{
+		FunctionName: name,
+		CoreProfile: models.Profiles{
+			CPU: string(cpu),
+			Mem: string(mem),
+		},
+		FunctionCodeTrace: string(codeStack),
+	}
 }

@@ -243,3 +243,36 @@ func GetFunctionTraceDetails(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonObjStr)
 }
+
+// /monigo/api/v1/function-details?name=FunctionName&reportType=text
+func ViewFunctionMaetrtics(w http.ResponseWriter, r *http.Request) {
+
+	name := r.URL.Query().Get("name")
+	reportType := r.URL.Query().Get("reportType")
+	// functions := core.FunctionTraceDetails()
+
+	// // avaiable function name
+	// funcName := make([]string, 0, len(functions))
+	// for k := range functions {
+	// 	funcName = append(funcName, k)
+	// }
+
+	if name == "" {
+		http.Error(w, "Function name is required to get metrics", http.StatusBadRequest)
+		return
+	}
+
+	if reportType == "" {
+		reportType = "text"
+	}
+
+	metrics := core.FunctionTraceDetails()[name]
+	if metrics == nil {
+		http.Error(w, "Function not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/plain")
+	jsonResp, _ := json.Marshal(core.ViewFunctionMetrics(name, reportType, metrics))
+	w.Write(jsonResp)
+}

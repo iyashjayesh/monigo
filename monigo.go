@@ -150,7 +150,8 @@ func StartDashboard(port int) {
 	http.HandleFunc(fmt.Sprintf("%s/service-metrics", baseAPIPath), api.GetServiceMetricsFromStorage)
 	http.HandleFunc(fmt.Sprintf("%s/go-routines-stats", baseAPIPath), api.GetGoRoutinesStats)
 
-	http.HandleFunc(fmt.Sprintf("%s/function-trace", baseAPIPath), api.GetFunctionTraceDetails)
+	http.HandleFunc(fmt.Sprintf("%s/function", baseAPIPath), api.GetFunctionTraceDetails)
+	http.HandleFunc(fmt.Sprintf("%s/function-details", baseAPIPath), api.ViewFunctionMaetrtics)
 
 	// Reports
 	http.HandleFunc(fmt.Sprintf("%s/reports", baseAPIPath), api.GetReportData)

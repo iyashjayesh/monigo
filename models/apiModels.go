@@ -137,3 +137,14 @@ type GoRoutinesStatistic struct {
 	NumberOfGoroutines int      `json:"number_of_goroutines"`
 	StackView          []string `json:"stack_view"`
 }
+
+type FunctionTraceDetails struct {
+	FunctionName      string   `json:"function_name"`
+	CoreProfile       Profiles `json:"core_profile"`
+	FunctionCodeTrace string   `json:"function_code_trace"`
+}
+
+type Profiles struct {
+	CPU string `json:"cpu_profile"`
+	Mem string `json:"mem_profile"`
+}
