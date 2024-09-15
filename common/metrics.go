@@ -54,6 +54,7 @@ func GetMemoryLoad() (serviceMem, systemMem, totalMem string) {
 	return serviceMem, systemMem, totalMem
 }
 
+// GetProcessDetails returns the process ID and process object.
 func GetProcessDetails() (int32, *process.Process) {
 	pid := GetProcessId()
 	proc, err := process.NewProcess(pid)
@@ -63,23 +64,28 @@ func GetProcessDetails() (int32, *process.Process) {
 	return pid, proc
 }
 
+// GetProcessId returns the process ID.
 func GetProcessId() int32 {
 	return int32(os.Getpid())
 }
 
+// GetProcessObject returns the process object.
 func GetProcessObject() *process.Process {
 	_, proc := GetProcessDetails()
 	return proc
 }
 
+// ParseUint64ToFloat64 converts uint64 to float64.
 func ParseUint64ToFloat64(value uint64) float64 {
 	return float64(value)
 }
 
+// ParseFloat64ToString converts float64 to string.
 func ParseFloat64ToString(value float64) string {
 	return strconv.FormatFloat(value, 'f', 2, 64)
 }
 
+// GetVirtualMemory returns the virtual memory statistics.
 func GetVirtualMemory() (*mem.VirtualMemoryStat, error) {
 	return mem.VirtualMemory()
 }

@@ -249,13 +249,6 @@ func ViewFunctionMaetrtics(w http.ResponseWriter, r *http.Request) {
 
 	name := r.URL.Query().Get("name")
 	reportType := r.URL.Query().Get("reportType")
-	// functions := core.FunctionTraceDetails()
-
-	// // avaiable function name
-	// funcName := make([]string, 0, len(functions))
-	// for k := range functions {
-	// 	funcName = append(funcName, k)
-	// }
 
 	if name == "" {
 		http.Error(w, "Function name is required to get metrics", http.StatusBadRequest)

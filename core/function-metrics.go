@@ -14,19 +14,11 @@ import (
 )
 
 var (
-	functionMetrics = make(map[string]*FunctionMetrics)
+	functionMetrics = make(map[string]*models.FunctionMetrics)
 	basePath        = common.GetBasePath()
 )
 
-type FunctionMetrics struct {
-	FunctionLastRanAt  time.Time     `json:"function_last_ran_at"`
-	CPUProfileFilePath string        `json:"cpu_profile_file_path"`
-	MemProfileFilePath string        `json:"mem_profile_file_path"`
-	MemoryUsage        uint64        `json:"memory_usage"`
-	GoroutineCount     int           `json:"goroutine_count"`
-	ExecutionTime      time.Duration `json:"execution_time"`
-}
-
+// TraceFunction traces the function and captures the metrics
 func TraceFunction(f func()) {
 	name := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name() // Getting the name of the function
 
@@ -83,7 +75,7 @@ func TraceFunction(f func()) {
 	defer mu.Unlock()
 
 	// Recording the metrics
-	functionMetrics[name] = &FunctionMetrics{
+	functionMetrics[name] = &models.FunctionMetrics{
 		FunctionLastRanAt:  start,
 		CPUProfileFilePath: cpuProfileFile.Name(),
 		MemProfileFilePath: memProfFilePath,
@@ -93,56 +85,34 @@ func TraceFunction(f func()) {
 	}
 }
 
-func FunctionTraceDetails() map[string]*FunctionMetrics {
+// FunctionTraceDetails returns the function trace details
+func FunctionTraceDetails() map[string]*models.FunctionMetrics {
 	mu.Lock()
 	defer mu.Unlock()
 
 	return functionMetrics
 }
 
-func ViewFunctionMetrics(name string, reportType string, metrics *FunctionMetrics) models.FunctionTraceDetails {
+// ViewFunctionMetrics generates the function metrics
+func ViewFunctionMetrics(name, reportType string, metrics *models.FunctionMetrics) models.FunctionTraceDetails {
 
-	// https://github.com/google/pprof/blob/main/doc/README.md#text-reports
-	// 	Text reports
-	// pprof text reports show the location hierarchy in text format.
-
-	// -text: Prints the location entries, one per line, including the flat and cum values.
-	// -tree: Prints each location entry with its predecessors and successors.
-	// -peek= regex: Print the location entry with all its predecessors and successors, without trimming any entries.
-	// -traces: Prints each sample with a location per line.
-
-	log.Println("Metrics: ", metrics)
-	cmdCpu := exec.Command("go", "tool", "pprof", "-"+reportType, metrics.CPUProfileFilePath)
-	cpu, err := cmdCpu.Output()
-	if err != nil {
-		log.Println("failed to generate cpu profile: %v\n", err)
+	// Function to execute the pprof command and return the output or log an error
+	executePprof := func(profileFilePath, reportType string) string {
+		cmd := exec.Command("go", "tool", "pprof", "-"+reportType, profileFilePath)
+		output, _ := cmd.Output()
+		return string(output)
 	}
 
-	cmdMem := exec.Command("go", "tool", "pprof", "-"+reportType, metrics.MemProfileFilePath)
-	mem, err := cmdMem.Output()
-	if err != nil {
-		log.Println("failed to generate mem profile: %v\n", err)
-	}
-
-	// go tool pprof -list main.highMemoryUsage  monigo/profiles/main.highMemoryUsage_cpu.prof
+	// Generating the function code stack trace for CPU profile
 	codeStackView := exec.Command("go", "tool", "pprof", "-list", name, metrics.CPUProfileFilePath)
-	codeStack, err := codeStackView.Output()
-	if err != nil {
-		log.Println("failed to generate cpu code stack view: %v\n", err)
-	}
+	codeStack, _ := codeStackView.Output()
 
-	// codememStackView := exec.Command("go", "tool", "pprof", "-list", name, metrics.MemProfileFilePath)
-	// log.Println("codememStackView: ", codememStackView)
-	// codeMemStack, err := codememStackView.Output()
-	// if err != nil {
-	// 	log.Println("failed to generate mem code stack view: %v\n", err)
-	// }
-
+	// Return the function trace details
 	return models.FunctionTraceDetails{
 		FunctionName: name,
 		CoreProfile: models.Profiles{
-			CPU: string(cpu),
-			Mem: string(mem),
+			CPU: executePprof(metrics.CPUProfileFilePath, reportType),
+			Mem: executePprof(metrics.MemProfileFilePath, reportType),
 		},
 		FunctionCodeTrace: string(codeStack),
 	}

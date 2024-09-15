@@ -15,24 +15,10 @@ import (
 
 var (
 	mu                      sync.Mutex
-	requestCount            int64
-	totalDuration           time.Duration
 	serviceHealthThresholds models.ServiceHealthThresholds
 )
 
-func RecordRequestDuration(duration time.Duration) {
-	mu.Lock()
-	defer mu.Unlock()
-	requestCount++
-	totalDuration += duration
-}
-
-func GetServiceMetrics() (int64, time.Duration) {
-	mu.Lock()
-	defer mu.Unlock()
-	return requestCount, totalDuration
-}
-
+// GetRequestCount returns the total number of requests
 func GetCPUPrecent() float64 {
 	cpuPercent, err := cpu.Percent(time.Second, false)
 	if err != nil {
@@ -42,6 +28,7 @@ func GetCPUPrecent() float64 {
 	return cpuPercent[0]
 }
 
+// GetVirtualMemoryStats returns the virtual memory statistics
 func GetVirtualMemoryStats() mem.VirtualMemoryStat {
 	memInfo, err := mem.VirtualMemory()
 	if err != nil {
@@ -72,10 +59,6 @@ func ConfigureServiceThresholds(thresholdsValues *models.ServiceHealthThresholds
 	serviceHealthThresholds = *thresholdsValues
 }
 
-// func GetServiceHealthThresholdsModel() models.ServiceHealthThresholds {
-// 	return serviceHealthThresholds
-// }
-
 // newRecord creates a new Record with appropriate units and human-readable formats.
 func newRecord(name, description string, value interface{}) models.Record {
 	switch v := value.(type) {
@@ -103,6 +86,7 @@ func newRecord(name, description string, value interface{}) models.Record {
 	}
 }
 
+// ReadMemStats reads and returns the memory statistics
 func ReadMemStats() *runtime.MemStats {
 	memStats := runtime.MemStats{}
 	runtime.ReadMemStats(&memStats)

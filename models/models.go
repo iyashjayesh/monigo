@@ -14,24 +14,11 @@ type ServiceInfo struct {
 	ProcessId        int32     `json:"process_id"`
 }
 
-// GetMetrics is the struct to get the metrics from the storage
-type GetMetrics struct {
-	Name  string    `json:"name"`
-	Start time.Time `json:"start"`
-	End   time.Time `json:"end"`
-}
-
 // ServiceHealthThresholds is the struct to store the service health thresholds
 type ServiceHealthThresholds struct {
 	MaxCPUUsage    float64 `json:"max_cpu_usage"`    // Default is 80%
 	MaxMemoryUsage float64 `json:"max_memory_usage"` // Default is 80%
 	MaxGoRoutines  int     `json:"max_go_routines"`  // Default is 1000
-}
-
-// Thresholds is the struct to store the threshold values
-type Thresholds struct {
-	Value  float64 `json:"value"`
-	Weight float64 `json:"weight"`
 }
 
 // FetchDataPoints is the struct to fetch the data points from the storage

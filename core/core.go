@@ -15,124 +15,110 @@ import (
 	"github.com/shirou/gopsutil/net"
 )
 
+// GetServiceStats collects statistics related to service and system performance.
 func GetServiceStats() models.ServiceStats {
 
-	var serviceStats models.ServiceStats
-	// timeNow := time.Now()
-	serviceStats.CoreStatistics = GetCoreStatistics()
-	// log.Println("Time taken to get the core statistics: ", time.Since(timeNow))
+	var stats models.ServiceStats
+	stats.CoreStatistics = GetCoreStatistics()
 
 	var wg sync.WaitGroup
 	wg.Add(5)
 
+	// Goroutine to fetch load statistics
 	go func() {
 		defer wg.Done()
-		// timeNow := time.Now()
-		serviceStats.LoadStatistics = GetLoadStatistics()
-		// log.Println("Time taken to get the load statistics: ", time.Since(timeNow))
+		stats.LoadStatistics = GetLoadStatistics()
 	}()
 
+	// Goroutine to fetch memory statistics
 	go func() {
 		defer wg.Done()
-		// timeNow := time.Now()
-		serviceStats.MemoryStatistics = GetMemoryStatistics()
-		// log.Println("Time taken to get the memory statistics: ", time.Since(timeNow))
+		stats.MemoryStatistics = GetMemoryStatistics()
 	}()
 
+	// Goroutine to fetch CPU statistics
 	go func() {
 		defer wg.Done()
-		// timeNow := time.Now()
-		serviceStats.CPUStatistics = GetCPUStatistics()
-		// log.Println("Time taken to get the CPU statistics: ", time.Since(timeNow))
+		stats.CPUStatistics = GetCPUStatistics()
 	}()
 
+	// Goroutine to fetch memory allocation statistics
 	go func() {
 		defer wg.Done()
-		// timeNow := time.Now()
 		memStats := ReadMemStats()
-		serviceStats.HeapAllocByService = common.BytesToUnit(memStats.HeapAlloc)
-		serviceStats.HeapAllocBySystem = common.BytesToUnit(memStats.HeapSys)
-		serviceStats.TotalAllocByService = common.BytesToUnit(memStats.TotalAlloc)
-		serviceStats.TotalMemoryByOS = common.BytesToUnit(memStats.Sys)
-		// log.Println("Time taken to get the memory stats: ", time.Since(timeNow))
+		stats.HeapAllocByService = common.BytesToUnit(memStats.HeapAlloc)
+		stats.HeapAllocBySystem = common.BytesToUnit(memStats.HeapSys)
+		stats.TotalAllocByService = common.BytesToUnit(memStats.TotalAlloc)
+		stats.TotalMemoryByOS = common.BytesToUnit(memStats.Sys)
 	}()
 
+	// Goroutine to fetch network I/O statistics
 	go func() {
 		defer wg.Done()
-		// timeNow := time.Now()
-		serviceStats.NetworkIO.BytesReceived, serviceStats.NetworkIO.BytesSent = GetNetworkIO()
-		// log.Println("Time taken to get the network stats: ", time.Since(timeNow))
+		stats.NetworkIO.BytesReceived, stats.NetworkIO.BytesSent = GetNetworkIO()
 	}()
 
 	wg.Wait()
 
-	serviceStats.Health = GetServiceHealth(&serviceStats)
-	// serviceStats.DiskIO = GetDiskIO()                                             // TODO: Need to implement this function
+	stats.Health = GetServiceHealth(&stats)
+	// stats.DiskIO = GetDiskIO()  // TODO: Implement Disk I/O collection logic
 
-	return serviceStats
+	return stats
 }
 
+// formatUptime returns a formatted string based on the service uptime duration
+func formatUptime(uptime time.Duration) string {
+	hours := uptime.Hours()
+
+	switch {
+	case hours > 12*30*24: // More than a year
+		return fmt.Sprintf("%.2f y", hours/(12*30*24))
+	case hours > 30*24: // More than a month
+		return fmt.Sprintf("%.2f mo", hours/(30*24))
+	case hours > 24: // More than a day
+		return fmt.Sprintf("%.2f d", hours/24)
+	case hours > 1: // More than an hour
+		return fmt.Sprintf("%.2f h", hours)
+	case uptime.Minutes() > 1: // More than a minute
+		return fmt.Sprintf("%.2f m", uptime.Minutes())
+	default: // Less than a minute
+		return fmt.Sprintf("%.2f s", uptime.Seconds())
+	}
+}
+
+// GetCoreStatistics retrieves core statistics like goroutines, request count, uptime, and total request duration
 func GetCoreStatistics() models.CoreStatistics {
-	rcount, durationTook := GetServiceMetrics()
 
 	serviceInfo := common.GetServiceInfo()
-
 	uptime := time.Since(serviceInfo.ServiceStartTime)
-	uptimeStr := fmt.Sprintf("%.2f s", uptime.Seconds())
-
-	// Formatting uptime based on its duration
-	if uptime.Seconds() > 60 {
-		uptimeStr = fmt.Sprintf("%.2f m", uptime.Minutes())
-	}
-	if uptime.Minutes() > 60 {
-		uptimeStr = fmt.Sprintf("%.2f h", uptime.Hours())
-	}
-	if uptime.Hours() > 24 {
-		uptimeStr = fmt.Sprintf("%.2f d", uptime.Hours()/24)
-	}
-	if uptime.Hours() > 30*24 {
-		uptimeStr = fmt.Sprintf("%.2f mo", uptime.Hours()/(30*24))
-	}
-	if uptime.Hours() > 12*30*24 {
-		uptimeStr = fmt.Sprintf("%.2f y", uptime.Hours()/(12*30*24))
-	}
+	uptimeFormatted := formatUptime(uptime)
 
 	return models.CoreStatistics{
-		Goroutines:                 runtime.NumGoroutine(),
-		RequestCount:               rcount,
-		Uptime:                     uptimeStr,
-		TotalDurationTookByRequest: durationTook,
+		Goroutines: runtime.NumGoroutine(),
+		Uptime:     uptimeFormatted,
 	}
 }
 
+// GetLoadStatistics retrieves load statistics for CPU, memory, and optionally disk usage.
 func GetLoadStatistics() models.LoadStatistics {
 
-	serviceCPU, systemCPU, totalCPU := common.GetCPULoad()
+	// Fetch CPU load statistics
+	serviceCPULoad, systemCPULoad, totalCPULoad := common.GetCPULoad()
 
-	// fmt.Printf("Service CPU Load: %.2f%%\n", serviceCPU)
-	// fmt.Printf("System CPU Load: %.2f%%\n", systemCPU)
-	// fmt.Printf("Total CPU Load: %.2f%%\n", totalCPU)
-
-	serviceMem, systemMem, totalMem := common.GetMemoryLoad()
-	// fmt.Printf("Service Memory Usage: %.2f%%\n", serviceMem)
-	// fmt.Printf("System Memory Usage: %.2f%%\n", systemMem)
-	// fmt.Printf("Total Memory Available: %.2f MB\n", totalMem/1024/1024)
-
-	// serviceDisk, systemDisk, totalDisk := common.GetDiskLoad()
-	// fmt.Printf("Service Disk Usage: %.2f MB\n", serviceDisk/1024/1024)
-	// fmt.Printf("System Disk Usage: %.2f%%\n", systemDisk)
-	// fmt.Printf("Total Disk Capacity: %.2f GB\n", totalDisk/1024/1024/1024)
+	// Fetch memory load statistics
+	serviceMemLoad, systemMemLoad, totalMemAvailable := common.GetMemoryLoad()
 
 	return models.LoadStatistics{
-		ServiceCPULoad:       serviceCPU,
-		SystemCPULoad:        systemCPU,
-		TotalCPULoad:         totalCPU,
-		ServiceMemLoad:       serviceMem,
-		SystemMemLoad:        systemMem,
-		TotalMemLoad:         common.ConvertToReadableUnit(totalMem),
-		OverallLoadOfService: CalculateOverallLoad(serviceCPU, serviceMem),
-		// ServiceDiskLoad: common.ParseFloat64ToString(serviceDisk),
-		// SystemDiskLoad:  common.ParseFloat64ToString(systemDisk),
+		ServiceCPULoad:       serviceCPULoad,
+		SystemCPULoad:        systemCPULoad,
+		TotalCPULoad:         totalCPULoad,
+		ServiceMemLoad:       serviceMemLoad,
+		SystemMemLoad:        systemMemLoad,
+		TotalMemLoad:         common.ConvertToReadableUnit(totalMemAvailable),
+		OverallLoadOfService: CalculateOverallLoad(serviceCPULoad, serviceMemLoad),
+		// Disk load can be added later if required
+		// ServiceDiskLoad: common.ParseFloat64ToString(serviceDisk), @TODO: Need to work on this
+		// SystemDiskLoad:  common.ParseFloat64ToString(systemDisk),  @TODO: Need to work on this
 		// TotalDiskLoad:   common.ParseFloat64ToString(totalDisk),
 	}
 }
@@ -257,9 +243,7 @@ func GetNetworkIO() (float64, float64) {
 	}
 
 	var totalBytesReceived, totalBytesSent float64
-
-	// Aggregate statistics from all network interfaces
-	for _, iface := range netIO {
+	for _, iface := range netIO { // Aggregate statistics from all network interfaces
 		totalBytesReceived += float64(iface.BytesRecv)
 		totalBytesSent += float64(iface.BytesSent)
 	}

@@ -78,11 +78,11 @@ func generateCoreStatsRows(serviceMetrics *models.ServiceStats, label tstorage.L
 			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: float64(serviceMetrics.CoreStatistics.Goroutines)},
 			Labels:    []tstorage.Label{label},
 		},
-		{
-			Metric:    "request_count",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: float64(serviceMetrics.CoreStatistics.RequestCount)},
-			Labels:    []tstorage.Label{label},
-		},
+		// {
+		// 	Metric:    "request_count",
+		// 	DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: float64(serviceMetrics.CoreStatistics.RequestCount)},
+		// 	Labels:    []tstorage.Label{label},
+		// },
 	}
 }
 

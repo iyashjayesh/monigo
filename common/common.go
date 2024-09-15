@@ -143,11 +143,7 @@ func ConstructJsonFieldDescription() map[string]string {
 	}`
 
 	var serviceInfo map[string]string
-	err := json.Unmarshal([]byte(data), &serviceInfo)
-	if err != nil {
-		log.Fatalf("Error unmarshalling JSON: %v", err)
-	}
-
+	_ = json.Unmarshal([]byte(data), &serviceInfo)
 	return serviceInfo
 }
 
@@ -160,9 +156,7 @@ func ParseStringToFloat64(value string) float64 {
 
 // RoundFloat64 rounds the float64 value to the specified precision.
 func RoundFloat64(value float64, precision int) float64 {
-	output := fmt.Sprintf("%."+fmt.Sprintf("%d", precision)+"f", value)
-	result := ParseStringToFloat64(output)
-	return result
+	return ParseStringToFloat64(fmt.Sprintf("%."+fmt.Sprintf("%d", precision)+"f", value))
 }
 
 // ConvertToReadableUnit converts the input value to a more human-readable unit.
@@ -183,7 +177,6 @@ func ConvertToReadableUnit(value interface{}) string {
 		return ""
 	}
 
-	// Now determine the appropriate unit
 	var unit string
 	switch {
 	case num < 1024:
@@ -210,8 +203,7 @@ func ConvertToReadableUnit(value interface{}) string {
 
 // BytesToUnit converts a float64 value (representing bytes) to a human-readable unit (KB, MB, GB, TB) based on its magnitude
 func BytesToUnit(value uint64) string {
-	var num float64
-	num = float64(value)
+	num := float64(value)
 	var unit string
 	switch {
 	case num < 1024:
@@ -260,6 +252,7 @@ func GetServiceStartTime() time.Time {
 	return serviceInfo.ServiceStartTime
 }
 
+// parseDuration parses the duration string.
 func parseDuration(input string) (time.Duration, error) {
 	if strings.HasSuffix(input, "d") {
 		daysStr := strings.TrimSuffix(input, "d")
@@ -319,4 +312,29 @@ func DefaultIntIfZero(val, def int) int {
 		return def
 	}
 	return val
+}
+
+// Helper function to convert values to MB
+func ConvertToMB(value string) (float64, error) {
+	value = strings.TrimSpace(value)
+	value = strings.Replace(value, " ", "", -1)
+	unit := strings.ToUpper(value[len(value)-2:])
+	val, err := strconv.ParseFloat(value[:len(value)-2], 64)
+	if err != nil {
+		return 0, err
+	}
+
+	unit = strings.ToUpper(unit)
+	switch unit {
+	case "TB":
+		return val * 1024 * 1024, nil
+	case "GB":
+		return val * 1024, nil
+	case "MB":
+		return val, nil
+	case "KB":
+		return val / 1024, nil
+	default:
+		return 0, fmt.Errorf("unsupported memory unit: %s", unit)
+	}
 }

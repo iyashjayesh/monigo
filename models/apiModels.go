@@ -28,10 +28,10 @@ type ServiceStats struct {
 
 // CoreStatistics represents the core statistics of the service.
 type CoreStatistics struct {
-	Goroutines                 int           `json:"goroutines"`
-	RequestCount               int64         `json:"request_count"`
-	Uptime                     string        `json:"uptime"`
-	TotalDurationTookByRequest time.Duration `json:"total_duration_took_by_request"`
+	Goroutines int    `json:"goroutines"`
+	Uptime     string `json:"uptime"`
+	// RequestCount               int64         `json:"request_count"`
+	// TotalDurationTookByRequest time.Duration `json:"total_duration_took_by_request"`
 }
 
 // LoadStatistics represents the load statistics of the service.
@@ -100,38 +100,6 @@ type Record struct {
 	Unit        string      `json:"record_unit,omitempty"` // Added Unit to support different units like bytes, MB, GB, etc.
 }
 
-// ServiceMetrics represents the metrics of the service.
-type ServiceMetrics struct {
-	Load                   float64       `json:"load"`
-	Cores                  float64       `json:"cores"`
-	MemoryUsed             float64       `json:"memory_used"`
-	NumberOfReqServerd     float64       `json:"number_of_req_served"`
-	GoRoutines             float64       `json:"go_routines"`
-	TotalAlloc             float64       `json:"total_alloc"`
-	MemoryAllocSys         float64       `json:"memory_alloc_sys"`
-	HeapAlloc              float64       `json:"heap_alloc"`
-	HeapAllocSys           float64       `json:"heap_alloc_sys"`
-	TotalDurationTookByAPI time.Duration `json:"total_duration_took_by_api"`
-	Health                 ServiceHealth `json:"health"`
-}
-
-// FieldName represents the field names of the service.
-type FieldName struct {
-	HeapAllocByService           float64
-	HeapAllocBySystem            float64
-	TotalAllocByService          float64
-	TotalMemoryByOS              float64
-	MemoryUsedInPercentByService float64
-	GCPauseDuration              float64
-	NumberOfGoroutines           float64
-	CPUUsageByService            float64
-	StackMemoryUsage             float64
-	TotalSwapMemory              float64
-	FreeSwapMemory               float64
-	DiskIO                       float64
-	NetworkIO                    float64
-}
-
 // GoRoutinesStatistic represents the Go routines statistics.
 type GoRoutinesStatistic struct {
 	NumberOfGoroutines int      `json:"number_of_goroutines"`
@@ -149,4 +117,14 @@ type FunctionTraceDetails struct {
 type Profiles struct {
 	CPU string `json:"cpu_profile"`
 	Mem string `json:"mem_profile"`
+}
+
+// FunctionMetrics represents the function metrics.
+type FunctionMetrics struct {
+	FunctionLastRanAt  time.Time     `json:"function_last_ran_at"`
+	CPUProfileFilePath string        `json:"cpu_profile_file_path"`
+	MemProfileFilePath string        `json:"mem_profile_file_path"`
+	MemoryUsage        uint64        `json:"memory_usage"`
+	GoroutineCount     int           `json:"goroutine_count"`
+	ExecutionTime      time.Duration `json:"execution_time"`
 }
