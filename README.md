@@ -9,6 +9,9 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/iyashjayesh/monigo)](https://goreportcard.com/report/github.com/iyashjayesh/monigo)
 [![GoDoc](https://godoc.org/github.com/iyashjayesh/monigo?status.svg)](https://pkg.go.dev/github.com/iyashjayesh/monigo)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+![Visitors](https://api.visitorbadge.io/api/visitors?path=iyashjayesh%2Fmonigo%20&countColor=%23263759&style=flat)
+[![Github All Releases](https://img.shields.io/github/downloads/iyashjayesh/monigo/total.svg)](https://GitHub.com/iyashjayesh/monigo/releases/)
+![GitHub last commit](https://img.shields.io/github/last-commit/iyashjayesh/monigo)
 
 **MoniGo** is a performance monitoring library for Go applications. It provides real-time insights into application performance with an intuitive user interface, enabling developers to track and optimize both service-level and function-level metrics.
 
