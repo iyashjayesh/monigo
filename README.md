@@ -15,7 +15,7 @@
 <div align="center" style="display: flex; flex-wrap: wrap; gap: 10px; border: 2px solid #ccc; padding: 10px;">
   <img src="./static/assets/ss/d1.png" alt="Dashboard" width="300">
   <img src="./static/assets/ss/d10.png" alt="Dashboard" width="300">
-  <!-- <img src="./static/assets/ss/d2.png" alt="Dashboard" width="300"> -->
+  <img src="./static/assets/ss/d2.png" alt="Dashboard" width="300">
   <img src="./static/assets/ss/d7.png" alt="Dashboard" width="300">
   <img src="./static/assets/ss/d8.png" alt="Dashboard" width="300">
   <img src="./static/assets/ss/d3.png" alt="Dashboard" width="300">
