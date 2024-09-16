@@ -2,6 +2,7 @@ package timeseries
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -127,7 +128,7 @@ func PurgeStorage() {
 }
 
 // SetDataPointsSyncFrequency sets the frequency at which data points are synchronized.
-func SetDataPointsSyncFrequency(frequency ...string) {
+func SetDataPointsSyncFrequency(frequency ...string) error {
 	freqStr := "5m"
 	if len(frequency) > 0 {
 		freqStr = frequency[0]
@@ -142,7 +143,7 @@ func SetDataPointsSyncFrequency(frequency ...string) {
 	// Initializing service metrics once
 	serviceMetrics := core.GetServiceStats()
 	if err := StoreServiceMetrics(&serviceMetrics); err != nil {
-		log.Panicf("Error storing service metrics: %v\n", err)
+		return errors.New("error storing service metrics, err: " + err.Error())
 	}
 
 	timer := time.NewTimer(freqTime)
@@ -155,7 +156,7 @@ func SetDataPointsSyncFrequency(frequency ...string) {
 			case <-timer.C:
 				serviceMetrics := core.GetServiceStats()
 				if err := StoreServiceMetrics(&serviceMetrics); err != nil {
-					log.Panicf("Error storing service metrics: %v\n", err)
+					log.Printf("Error storing service metrics: %v\n", err)
 				}
 				size := common.GetDirSize(basePath + "/data")
 				log.Println("Size of data directory: ", size)
@@ -163,4 +164,6 @@ func SetDataPointsSyncFrequency(frequency ...string) {
 			}
 		}
 	}()
+
+	return nil
 }

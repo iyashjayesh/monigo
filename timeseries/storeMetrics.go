@@ -2,7 +2,6 @@ package timeseries
 
 import (
 	"fmt"
-	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -35,12 +34,7 @@ func StoreServiceMetrics(serviceMetrics *models.ServiceStats) error {
 
 	currentTime := time.Now().In(location)
 	timestamp := currentTime.Unix()
-
-	log.Println("currentTime", currentTime)
-	log.Println("timestamp in unix", timestamp)
-
 	label := tstorage.Label{Name: "host", Value: "server1"}
-
 	var rows []tstorage.Row
 	rows = append(rows, generateCoreStatsRows(serviceMetrics, label, timestamp)...)
 	rows = append(rows, generateLoadStatsRows(serviceMetrics, label, timestamp)...)
@@ -52,8 +46,6 @@ func StoreServiceMetrics(serviceMetrics *models.ServiceStats) error {
 	if err := sto.InsertRows(rows); err != nil {
 		return fmt.Errorf("error storing service metrics: %w", err)
 	}
-
-	log.Println("Stored service metrics, timestamp:", timestamp)
 	return nil
 }
 

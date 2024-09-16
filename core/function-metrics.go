@@ -26,12 +26,10 @@ func TraceFunction(f func()) {
 	var memStatsBefore, memStatsAfter runtime.MemStats
 	runtime.ReadMemStats(&memStatsBefore)
 
-	log.Printf("memStatsBefore = %v\n", memStatsBefore.Alloc)
-
 	folder := fmt.Sprintf("%s/profiles", basePath)
 	if _, err := os.Stat(folder); os.IsNotExist(err) {
 		if err := os.Mkdir(folder, 0755); err != nil {
-			fmt.Printf("Error creating profiles folder: %v\n", err)
+			log.Panic("could not create profiles folder: ", err)
 		}
 	}
 	cpuProfileName := fmt.Sprintf("%s_cpu.prof", name)
@@ -39,8 +37,7 @@ func TraceFunction(f func()) {
 
 	cpuProfileFile, err := StartCPUProfile(cpuProfFilePath)
 	if err != nil {
-		fmt.Printf("Error starting CPU profile for %s: %v\n", name, err)
-		return
+		log.Println("could not start CPU profile for function: ", name, " error: ", err, " It will get generated in the next run")
 	}
 	defer StopCPUProfile(cpuProfileFile)
 
@@ -52,7 +49,7 @@ func TraceFunction(f func()) {
 	elapsed := time.Since(start)
 
 	if err := WriteHeapProfile(memProfFilePath); err != nil {
-		log.Fatal("could not write memory profile: ", err)
+		log.Println("could not write memory profile: ", err, " for function: ", name, " It will get generated in the next run")
 	}
 
 	// Capture final metrics
@@ -67,9 +64,6 @@ func TraceFunction(f func()) {
 	if memStatsAfter.Alloc >= memStatsBefore.Alloc {
 		memoryUsage = memStatsAfter.Alloc - memStatsBefore.Alloc
 	}
-
-	log.Printf("memStatsAfter = %v\n", memStatsAfter.Alloc)
-	log.Printf("memoryUsage = %v: %s\n", memoryUsage, name)
 
 	mu.Lock()
 	defer mu.Unlock()

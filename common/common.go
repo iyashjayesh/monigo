@@ -1,8 +1,10 @@
 package common
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math"
 	"os"
@@ -337,4 +339,58 @@ func ConvertToMB(value string) (float64, error) {
 	default:
 		return 0, fmt.Errorf("unsupported memory unit: %s", unit)
 	}
+}
+
+// Cache is the struct to store the cache data
+type Cache struct {
+	Data map[string]time.Time
+}
+
+// SaveToFile saves the cache to a file
+func (c *Cache) SaveToFile(filename string) error {
+	jsonData, err := json.Marshal(c.Data)
+	if err != nil {
+		return err
+	}
+
+	base64Data := base64.StdEncoding.EncodeToString(jsonData)
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.WriteString(base64Data)
+	return err
+}
+
+// LoadFromFile loads the cache from a file, or starts fresh if the file does not exist or an error occurs
+func (c *Cache) LoadFromFile(filename string) error {
+	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to open cache file: %w", err)
+	}
+	defer file.Close()
+
+	if stat, err := file.Stat(); err != nil {
+		return fmt.Errorf("failed to stat cache file: %w", err)
+	} else if stat.Size() == 0 {
+		return nil
+	}
+
+	base64Data, err := ioutil.ReadAll(file)
+	if err != nil {
+		return fmt.Errorf("failed to read cache file: %w", err)
+	}
+
+	jsonData, err := base64.StdEncoding.DecodeString(string(base64Data))
+	if err != nil {
+		return fmt.Errorf("failed to decode base64 data: %w", err)
+	}
+
+	if err := json.Unmarshal(jsonData, &c.Data); err != nil {
+		return fmt.Errorf("failed to unmarshal cache data: %w", err)
+	}
+
+	return nil
 }

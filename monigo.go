@@ -2,24 +2,19 @@ package monigo
 
 import (
 	"embed"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
 	"runtime"
 	"sync"
 	"time"
 
-	"github.com/iyashjayesh/monigo/models"
-	"github.com/iyashjayesh/monigo/timeseries"
-
 	"github.com/iyashjayesh/monigo/api"
 	"github.com/iyashjayesh/monigo/common"
 	"github.com/iyashjayesh/monigo/core"
+	"github.com/iyashjayesh/monigo/models"
+	"github.com/iyashjayesh/monigo/timeseries"
 )
 
 var (
@@ -46,14 +41,13 @@ type Monigo struct {
 	ProcessId               int32     `json:"process_id"`         // Dynamically set from os.Getpid()
 	MaxCPUUsage             float64   `json:"max_cpu_usage"`      // Default is 80%
 	MaxMemoryUsage          float64   `json:"max_memory_usage"`   // Default is 80%
-	MaxGoRoutines           int       `json:"max_go_routines"`    // Default is 1000
+	MaxGoRoutines           int       `json:"max_go_routines"`    // Default is 100
 }
 
 // MonigoInt is the interface to start the monigo service
 type MonigoInt interface {
 	Start()                                         // Purge the monigo storage
 	GetGoRoutinesStats() models.GoRoutinesStatistic // Print the Go routines stats
-	// ConfigureServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) // Set the service thresholds to calculate the overall service health
 }
 
 // Cache is the struct to store the cache data
@@ -82,7 +76,7 @@ func (m *Monigo) MonigoInstanceConstructor() {
 	m.DataRetentionPeriod = common.DefaultIfEmpty(m.DataRetentionPeriod, "7d")
 	m.MaxCPUUsage = common.DefaultFloatIfZero(m.MaxCPUUsage, 80)
 	m.MaxMemoryUsage = common.DefaultFloatIfZero(m.MaxMemoryUsage, 80)
-	m.MaxGoRoutines = common.DefaultIntIfZero(m.MaxGoRoutines, 1000)
+	m.MaxGoRoutines = common.DefaultIntIfZero(m.MaxGoRoutines, 100)
 
 	core.ConfigureServiceThresholds(&models.ServiceHealthThresholds{
 		MaxCPUUsage:    m.MaxCPUUsage,
@@ -93,42 +87,43 @@ func (m *Monigo) MonigoInstanceConstructor() {
 	m.ServiceStartTime = time.Now().In(location) // Setting the service start time
 }
 
-// Starting the monigo service with the provided configurations
+// Function to start the monigo service
 func (m *Monigo) Start() {
-
+	// Validate service name
 	if m.ServiceName == "" {
 		log.Panic("service_name is required, please provide the service name")
 	}
-	m.MonigoInstanceConstructor() // Initializing the Monigo instance
 
-	// Purging storage and setting sync frequency for metrics
-	timeseries.PurgeStorage()
-	timeseries.SetDataPointsSyncFrequency(m.DataPointsSyncFrequency)
+	m.MonigoInstanceConstructor()
+	timeseries.PurgeStorage() // Purge storage and set sync frequency for metrics
+	if err := timeseries.SetDataPointsSyncFrequency(m.DataPointsSyncFrequency); err != nil {
+		log.Panic("failed to set data points sync frequency: ", err)
+	}
 
-	// Fetch runtime details
+	// Fetching runtime details
 	m.ProcessId = common.GetProcessId()
 	m.GoVersion = runtime.Version()
 
 	cachePath := BasePath + "/cache.dat"
-	cache := Cache{Data: make(map[string]time.Time)}
+	cache := common.Cache{Data: make(map[string]time.Time)}
 	if err := cache.LoadFromFile(cachePath); err != nil {
-		log.Printf("Failed to load cache from file: %v", err)
+		log.Panic("failed to load cache from file: ", err)
 	}
 
-	// Update service start time from cache if present
+	// Updating the service start time in the cache
 	if startTime, exists := cache.Data[m.ServiceName]; exists {
 		m.ServiceStartTime = startTime
 	} else {
+		m.ServiceStartTime = time.Now()
 		cache.Data[m.ServiceName] = m.ServiceStartTime
 	}
 
 	// Save the cache data to file
 	if err := cache.SaveToFile(cachePath); err != nil {
-		log.Printf("Error saving cache to file: %v\n", err)
-		log.Println("Proceeding without saving the cache")
+		log.Panic("error saving cache to file: ", err)
 	}
 
-	// Set common service information
+	// Setting common service information
 	common.SetServiceInfo(
 		m.ServiceName,
 		m.ServiceStartTime,
@@ -137,8 +132,9 @@ func (m *Monigo) Start() {
 		m.DataRetentionPeriod,
 	)
 
-	// Start the dashboard in a separate goroutine
-	go StartDashboard(m.DashboardPort)
+	if err := StartDashboard(m.DashboardPort); err != nil {
+		log.Panic("error starting the dashboard: ", err)
+	}
 }
 
 // GetGoRoutinesStats get back the Go routines stats from the core package
@@ -146,17 +142,13 @@ func (m *Monigo) GetGoRoutinesStats() models.GoRoutinesStatistic {
 	return core.CollectGoRoutinesInfo()
 }
 
-// ConfigureServiceThresholds sets the service thresholds to calculate the overall service health
-// func (m *Monigo) ConfigureServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) {
-// 	core.ConfigureServiceThresholds(thresholdsValues)
-// }
-
 // TraceFunction traces the function
 func TraceFunction(f func()) {
 	core.TraceFunction(f)
 }
 
-func StartDashboard(port int) {
+// StartDashboard starts the dashboard on the specified port
+func StartDashboard(port int) error {
 
 	if port == 0 {
 		port = 8080 // Default port for the dashboard
@@ -178,8 +170,10 @@ func StartDashboard(port int) {
 	// Reports
 	http.HandleFunc(fmt.Sprintf("%s/reports", baseAPIPath), api.GetReportData)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
-		log.Panicf("Error starting the dashboard: %v\n", err)
+		return fmt.Errorf("error starting the dashboard: %v", err)
 	}
+
+	return nil
 }
 
 // serveHtmlSite serves the HTML, CSS, JS, and other static files
@@ -220,54 +214,4 @@ func serveHtmlSite(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", contentType)
 	w.Write(file)
-}
-
-// SaveToFile saves the cache to a file
-func (c *Cache) SaveToFile(filename string) error {
-	jsonData, err := json.Marshal(c.Data)
-	if err != nil {
-		return err
-	}
-
-	base64Data := base64.StdEncoding.EncodeToString(jsonData)
-	file, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	_, err = file.WriteString(base64Data)
-	return err
-}
-
-// LoadFromFile loads the cache from a file, or starts fresh if the file does not exist or an error occurs
-func (c *Cache) LoadFromFile(filename string) error {
-	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
-	if err != nil {
-		return fmt.Errorf("failed to open cache file: %w", err)
-	}
-	defer file.Close()
-
-	if stat, err := file.Stat(); err != nil {
-		return fmt.Errorf("failed to stat cache file: %w", err)
-	} else if stat.Size() == 0 {
-		log.Println("Cache file is empty, starting fresh")
-		return nil
-	}
-
-	base64Data, err := ioutil.ReadAll(file)
-	if err != nil {
-		return fmt.Errorf("failed to read cache file: %w", err)
-	}
-
-	jsonData, err := base64.StdEncoding.DecodeString(string(base64Data))
-	if err != nil {
-		return fmt.Errorf("failed to decode base64 data: %w", err)
-	}
-
-	if err := json.Unmarshal(jsonData, &c.Data); err != nil {
-		return fmt.Errorf("failed to unmarshal cache data: %w", err)
-	}
-
-	return nil
 }

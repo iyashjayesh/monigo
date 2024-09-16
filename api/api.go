@@ -36,19 +36,14 @@ func GetServiceInfoAPI(w http.ResponseWriter, r *http.Request) {
 
 // GetServiceInfoAPI returns the service metrics detailed information
 func NewCoreStatistics(w http.ResponseWriter, r *http.Request) {
-
-	startTime := time.Now()
 	if fieldDescription == nil {
 		log.Println("Field Description is nil")
 		fieldDescription = common.ConstructJsonFieldDescription()
 	}
 
-	serviceStats := core.GetServiceStats()
-
-	jsonMetrics, _ := json.Marshal(serviceStats)
+	jsonMetrics, _ := json.Marshal(core.GetServiceStats())
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(jsonMetrics))
-	log.Println("Time taken to get the service stats Final: ", time.Since(startTime))
 }
 
 func GetGoRoutinesStats(w http.ResponseWriter, r *http.Request) {
@@ -77,6 +72,7 @@ var NameMap = map[string]string{
 	"other_sys":       "OtherSys",
 }
 
+// GetServiceMetricsFromStorage returns the service metrics from the storage
 func GetServiceMetricsFromStorage(w http.ResponseWriter, r *http.Request) {
 	var req models.FetchDataPoints
 
@@ -100,8 +96,6 @@ func GetServiceMetricsFromStorage(w http.ResponseWriter, r *http.Request) {
 	serviceStartTime := common.GetServiceStartTime()
 
 	if startTime.Before(serviceStartTime) {
-		log.Println("Start time is before service start time, setting start time to service start time")
-		log.Println("Service Start Time: " + serviceStartTime.String() + " Requested Start Time: " + startTime.String())
 		startTime = serviceStartTime
 	}
 
@@ -152,6 +146,7 @@ func GetServiceMetricsFromStorage(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonDP)
 }
 
+// GetReportData returns the report data
 func GetReportData(w http.ResponseWriter, r *http.Request) {
 
 	var reqObj models.ReportsRequest
@@ -197,8 +192,6 @@ func GetReportData(w http.ResponseWriter, r *http.Request) {
 	labelValue := "server1"
 
 	dataByTimestamp := make(map[int64]map[string]float64)
-
-	log.Println("Field Name List: ", fieldNameList)
 	for _, fieldName := range fieldNameList {
 
 		datapoints, err := timeseries.GetDataPoints(fieldName, []tstorage.Label{{Name: labelName, Value: labelValue}}, startTime.Unix(), endTime.Unix())
@@ -238,6 +231,7 @@ func GetReportData(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonDP)
 }
 
+// GetFunctionTraceDetails returns the function trace details
 func GetFunctionTraceDetails(w http.ResponseWriter, r *http.Request) {
 	jsonObjStr, _ := json.Marshal(core.FunctionTraceDetails())
 	w.Header().Set("Content-Type", "application/json")
