@@ -1,0 +1,6 @@
+# Ignore all files in the vendor directory
+vendor/*
+
+# MoniGO specific files
+monigo/*
+
