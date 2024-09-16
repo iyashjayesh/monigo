@@ -51,7 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch(`/monigo/api/v1/service-info`)
             .then(response => response.json())
             .then(data => {
-                serviceInfoContainer.innerHTML = '';
                 service_name.innerHTML = '';
                 go_version.innerHTML = '';
                 service_start_time.innerHTML = '';
