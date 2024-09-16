@@ -9849,13 +9849,13 @@ a.text-light-gray:focus {
 }
 
 .sidebar-default .sidebar-bottom {
-  padding: 120px 15px 0px !important;
+  padding: 120px 16px 0px !important;
 }
 .sidebar-default .sidebar-bottom .sidebarbottom-content {
   text-align: center;
 }
 .sidebar-default .sidebar-bottom .image {
-  margin-top: -30px;
+  margin-top: -10px;
 }
 
 .iq-sidebar-menu .iq-menu li a .iq-arrow-right.arrow-active {
@@ -26202,7 +26202,7 @@ pre {
 }
 
 .gauge>svg>text {
-  font-size: 12px;
+  font-size: 11px;
   text-anchor: middle;
   alignment-baseline: central;
   fill: var(--fill-color);

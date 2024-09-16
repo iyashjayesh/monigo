@@ -8771,13 +8771,13 @@ a.text-light-gray:hover {
   padding-left: 0;
 }
 .sidebar-default .sidebar-bottom {
-  padding: 120px 15px 0 !important;
+  padding: 120px 16px 0 !important;
 }
 .sidebar-default .sidebar-bottom .sidebarbottom-content {
   text-align: center;
 }
 .sidebar-default .sidebar-bottom .image {
-  margin-top: -30px;
+  margin-top: -10px;
 }
 .iq-sidebar-menu .iq-menu li a .iq-arrow-right.arrow-active {
   -webkit-opacity: 1;
