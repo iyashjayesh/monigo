@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch(`/monigo/api/v1/service-info`)
             .then(response => response.json())
             .then(data => {
-                // serviceInfoContainer.innerHTML = '';
+                serviceInfoContainer.innerHTML = '';
                 service_name.innerHTML = '';
                 go_version.innerHTML = '';
                 service_start_time.innerHTML = '';
@@ -680,7 +680,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 function updateGauge(gaugeId, health) {
-    console.log('Health: in gauge', health);
     const srevPercentage = health.service_health.percent;
     const sysPercentage = health.system_health.percent;
     const iconSysMsg = health.system_health.icon_msg;

@@ -176,13 +176,7 @@
                                     <br/><br />
                                     You can also peek at the stack trace for each Go routine. If you spot any bugs or hiccups, don't hesitate to give us a shout on
                                     GitHub!
-                                    <!-- <br/> -->
-                                    <!-- <br /> -->
-                                    <!-- And if you’ve got any ideas for new features, hit us up with a feature-req issue on GitHub. We love adding
-                                    cool stuff! 🚀 -->
                                 </p>
-                                <!-- <h3 class="mb-3">Go Routines No:</h3>
-                                <p class="mb-0 mr-4"><span id="goroutine-count">0</span></p> -->
                                 <div class="num-goroutines mt-5">Total Number of Go routines: <span id="goroutine-count">0</span></div>
                                 
                             </div>
@@ -190,56 +184,9 @@
                     </div>
                     <div id="goroutines-page"></div>
                     <div class="col-lg-8">
-                        <div class="row">
-                            <div class="col-lg-3 col-md-3">
-                                <div class="card card-block card-stretch card-height">
-                                    <div class="card-body">
-                                        <div class="icon iq-icon-box-2 bg-info-light">
-                                            <img src="./assets/product/service.png" class="img-fluid" alt="GoRoutines Image">
-                                        </div>
-                                        <div id="service_name"></div>
-                                        <div class="iq-progress-bar mt-2">
-                                            <span class="bg-info iq-progress progress-1" data-percent="100">
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-3 col-md-3">
-                                <div class="card card-block card-stretch card-height">
-                                    <div class="card-body">
-                                        <div class="icon iq-icon-box-2 bg-info-light">
-                                            <img src="./assets/product/go-version.png" class="img-fluid" alt="GoRoutines Image">
-                                        </div>
-                                        <div id="go_version"></div>
-                                        <div class="iq-progress-bar mt-2">
-                                            <span class="bg-info iq-progress progress-1" data-percent="100">
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-6 col-md-6">
-                                <div class="card card-block card-stretch card-height">
-                                    <div class="card-body">
-                                        <div class="d-flex align-items-center card-total-sale">
-                                            <div class="icon iq-icon-box-2 bg-info-light">
-                                                <img src="./assets/product/start-time.png" class="img-fluid" alt="Load Image">
-                                            </div>
-                                            <div id="service_start_time"></div>
-                                        </div>
-                                        <div class="d-flex align-items-center card-total-sale">
-                                            <div class="icon iq-icon-box-2 bg-info-light">
-                                                <img src="./assets/product/id.png" class="img-fluid" alt="Load Image">
-                                            </div>
-                                            <div id="process_id"></div>
-                                        </div>
-                                        <div class="iq-progress-bar mt-1">
-                                            <span class="bg-info iq-progress progress-1" data-percent="100">
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="card card-block card-stretch card-height">
+                            <div class="card-body" style="position: relative;">
+                                <div class="chart-container" id="goroutines-chart"></div>
                             </div>
                         </div>
                     </div>
@@ -310,5 +257,6 @@
     <script src="./js/refresh.js"></script>
     <script src="./js/common.js"></script>
     <script src="./js/goroutines.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
 
 </html>
