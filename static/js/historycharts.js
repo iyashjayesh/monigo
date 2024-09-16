@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (metricName == "load-memory") {
             metricList = ["overall_load_of_service", "service_cpu_load", "service_memory_load", "system_cpu_load", "system_memory_load"];
         } else if (metricName == "health") {
-            metricList = ["service_health_percent", "system_health_percent", "overall_health_percent"];
+            metricList = ["service_health_percent", "system_health_percent"];
         }
 
         let data = {
@@ -92,9 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(data),
             }).then(response => response.json())
             .then(data => {
-                // console.log('Fetching data for metric:', metricName, 'and time range:', timeRange);
-                // console.log('API REQ:', data);
-
                 let rawData = [];
                 for (let i = 0; i < data.length; i++) {
                     const timestamp = new Date(data[i].time);
@@ -128,7 +125,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderHealthChart(data) {
         const healthChart = echarts.init(elements.healthChart);
         const time = data.map(entry => entry.time);
-        const overallHealthPercent = data.map(entry => entry.value.overall_health_percent);
         const serviceHealthPercent = data.map(entry => entry.value.service_health_percent);
         const systemHealthPercent = data.map(entry => entry.value.system_health_percent);
 
@@ -141,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 trigger: 'axis'
             },
             legend: {
-                data: ['Overall Health', 'Service Health', 'System Health'],
+                data: ['Service Health', 'System Health'],
                 top: 30
             },
             grid: {
@@ -159,11 +155,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 type: 'value'
             },
             series: [
-                {
-                    name: 'Overall Health',
-                    type: 'line',
-                    data: overallHealthPercent
-                },
                 {
                     name: 'Service Health',
                     type: 'line',

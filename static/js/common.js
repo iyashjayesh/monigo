@@ -27,12 +27,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     health
                 } = data;
                 const healthIndicator = document.getElementById('health-indicator');
-                if (health.overall_health.healthy) {
+                if (health.service_health.healthy) {
                     healthIndicator.classList.add('healthy');
-                    document.getElementById('health-message').textContent = health.overall_health.message;
+                    document.getElementById('health-message').textContent = health.service_health.message;
                 } else {
                     healthIndicator.classList.add('unhealthy');
-                    document.getElementById('health-message').textContent =health.overall_health.message;
+                    document.getElementById('health-message').textContent =health.service_health.message;
                 }
             })
             .catch(error => {

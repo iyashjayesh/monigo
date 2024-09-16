@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch(`/monigo/api/v1/go-routines-stats`)
             .then(response => response.json())
             .then(data => {
-                console.log(data);
                 goRoutinesNumber.innerHTML = data.number_of_goroutines;
                 const container = document.getElementById('goroutines-container');
                 const countElement = document.getElementById('goroutine-count');

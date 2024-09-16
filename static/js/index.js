@@ -29,7 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
         cpuChart: document.getElementById('cpu-chart'),
         memoryPieChart: document.getElementById('memory-pie-chart'),
         heapUsageChart: document.getElementById('heap-memory-chart'),
-        healthTag: document.getElementById('health-tag'),
         serviceHealthTag : document.getElementById('service-health-tag'),
         systemHealthTag : document.getElementById('system-health-tag'),
         memoryDetailButton: document.getElementById('memory-detail-button'),
@@ -122,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } 
             
             if (label == 'Cores:') {
-                console.log('Cores: ', obj);
                 elements.coreUsageDetailButton.innerHTML = '';
                 elements.coreUsageDetailButton.innerHTML = `
                     <div class="d-flex align-items-center mb-1 card-total-sale">
@@ -212,12 +210,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateElement(elements.uptime, 'Uptime:', core_statistics?.uptime ?? 'N/A', 'Uptime of the service', core_statistics);
 
                 const healthIndicator = document.getElementById('health-indicator');
-                if (health.overall_health.healthy) {
+                if (health.service_health.healthy) {
                     healthIndicator.classList.add('healthy');
-                    document.getElementById('health-message').textContent = health.overall_health.message;
+                    document.getElementById('health-message').textContent = health.service_health.message;
                 } else {
                     healthIndicator.classList.add('unhealthy');
-                    document.getElementById('health-message').textContent = health.overall_health.message;
+                    document.getElementById('health-message').textContent = health.service_health.message;
                 }
 
                 renderCharts(data);
@@ -534,8 +532,6 @@ document.addEventListener('DOMContentLoaded', () => {
             start_time: toLocalISOString(StartTime),
             end_time: toLocalISOString(EndTime)
         };
-        // console.log('Fetching data for metric:', metricName, 'and time range:', timeRange);
-        // console.log('API REQ:', data);
 
         fetch(`/monigo/api/v1/service-metrics`, {
                 method: 'POST',
@@ -545,8 +541,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(data),
             }).then(response => response.json())
             .then(data => {
-                // console.log('API RES:', data);
-
                 let rawData = [];
                 for (let i = 0; i < data.length; i++) {
                     const timestamp = new Date(data[i].time);
@@ -556,8 +550,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
 
-
-                // console.log('New Constructed DATA:', rawData);
                 const seriesData = {};
                 rawData.forEach(dataPoint => {
                     const timeLabel = dataPoint.time.toLocaleString();
@@ -664,57 +656,81 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 
-    function updateGauge(gaugeId, health) {
-        const percentage = health.overall_health.percent;
-        const gauge = document.getElementById(gaugeId);
-        const guageText = gauge.querySelector('text');
-        guageText.textContent = `${percentage}%`;
-
-        // Determine the fill color based on the percentage
-        let fillColor;
-        let tag;
-        if (percentage >= 80) {
-            fillColor = 'var(--green)';
-            tag = 'Smooth Sailing 🛳️';
-        } else if (percentage >= 60) {
-            fillColor = 'var(--lightgreen)';
-            tag = 'System Looking Good 👍';
-        } else if (percentage >= 50) {
-            fillColor = 'var(--yellow)';
-            tag = 'Fairly Balanced 🌟';
-        } else if (percentage >= 40) {
-            fillColor = 'var(--orange)';
-            tag = 'System Under Stress 😟';
-        } else {
-            fillColor = 'var(--red)';
-            tag = 'Critical Condition 🚨';
-        }
-
-        elements.healthTag.innerHTML = `
-            <p class="mb-0">${tag} : ${percentage}%</p>
-        `
-        // <span class="info-icon" data-tooltip="${health.service_health.message}">i</span>
-        elements.serviceHealthTag.innerHTML = `
-            <h6 class="mb-0">Service Health  : ${health.service_health.percent}%</h6>
-        `
-
-        elements.systemHealthTag.innerHTML = `
-            <h6 class="mb-0">System Health : ${health.system_health.percent}%</h6>
-        `
-
-
-        // Reset the --o property to 0 to restart the animation
-        gauge.style.setProperty('--o', 0);
-
-        // Trigger a reflow to reset the animation (forces a repaint)
-        void gauge.offsetWidth;
-
-        // Set the custom properties for the gauge
-        gauge.style.setProperty('--fill-percentage', percentage);
-        gauge.style.setProperty('--fill-color', fillColor);
-
-        // Now update --o to the target percentage to animate
-        gauge.style.setProperty('--o', percentage);
+    function getStatus(percentage) {
+    let fillColor;
+    let tag;
+    if (percentage >= 80) {
+        fillColor = "var(--green)";
+        tag = "Smooth Sailing 🛳️";
+    } else if (percentage >= 60) {
+        fillColor = "var(--lightgreen)";
+        tag = "System Looking Good 👍";
+    } else if (percentage >= 50) {
+        fillColor = "var(--yellow)";
+        tag = "Fairly Balanced 🌟";
+    } else if (percentage >= 40) {
+        fillColor = "var(--orange)";
+        tag = "System Under Stress 😟";
+    } else {
+        fillColor = "var(--red)";
+        tag = "Critical Condition 🚨";
     }
+    return [fillColor, tag];  // Return an array
+}
+
+
+function updateGauge(gaugeId, health) {
+    console.log('Health: in gauge', health);
+    const srevPercentage = health.service_health.percent;
+    const sysPercentage = health.system_health.percent;
+    const iconSysMsg = health.system_health.icon_msg;
+    const iconServMsg = health.service_health.icon_msg;
+    const gauge = document.getElementById(gaugeId);
+    const gaugeText = gauge.querySelector('text');  // Correct typo here
+    gaugeText.textContent = `${srevPercentage}%`;
+
+    if (elements.healthMessage.textContent === '') {
+        elements.healthMessage.textContent = health.service_health.message;
+    }
+
+    let fillColorServ, tagServ;
+    [fillColorServ, tagServ] = getStatus(srevPercentage);
+
+    let fillColorSys, tagSys;
+    [fillColorSys, tagSys] = getStatus(sysPercentage);
+
+    if (srevPercentage == 0) {
+        elements.serviceHealthTag.innerHTML = `
+            <h6 class="mb-0 mt-1">Service: ${tagServ} <br> Not in a Good State, Kindly check! <span class="info-icon" data-tooltip="${iconServMsg}">i</span></h6>
+        `;
+    } else {
+        elements.serviceHealthTag.innerHTML = `
+            <h6 class="mb-0">Service: ${tagServ} : ${srevPercentage}% <span class="info-icon" data-tooltip="${iconServMsg}">i</span></h6>
+        `;
+    }
+
+    if (sysPercentage == 0) {
+        elements.systemHealthTag.innerHTML = `
+            <h6 class="mb-0">System: ${tagSys} <br> Not in a Good State, Kindly check! <span class="info-icon" data-tooltip="${iconSysMsg}">i</span></h6>
+        `;
+    } else {
+        elements.systemHealthTag.innerHTML = `
+            <h6 class="mb-0">System: ${tagSys} : ${sysPercentage}% <span class="info-icon" data-tooltip="${iconSysMsg}">i</span></h6>
+        `;
+    }
+
+    // Reset the --o property to 0 to restart the animation
+    gauge.style.setProperty('--o', 0);
+
+    // Trigger a reflow to reset the animation (forces a repaint)
+    void gauge.offsetWidth;
+
+    // Set the custom properties for the gauge
+    gauge.style.setProperty('--fill-percentage', srevPercentage);  // Use percentage for fill
+    gauge.style.setProperty('--fill-color', fillColorServ);  // Use color for fill
+
+    // Now update --o to the target percentage to animate
+    gauge.style.setProperty('--o', srevPercentage);
+}
 
 });

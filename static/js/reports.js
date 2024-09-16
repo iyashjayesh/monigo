@@ -65,8 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
             time_frame: timeframe
         };
 
-        console.log(reqObj);
-
         fetch('/monigo/api/v1/reports', {
             method: 'POST',
             headers: {
@@ -76,23 +74,17 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .then(response => response.json())
         .then(data => {
-            console.log('Success:', data);
-            // const sectionTitle = document.getElementById('sectionTitle');
             const tablesContainer = document.getElementById('tablesContainer');
 
             if (data.length > 0) {
-                // sectionTitle.textContent = `${metric} - ${timeframe}`;
                 const table = createTable(topic, data);
                 tablesContainer.appendChild(table);
-
-                // Show the download button
                 const downloadBtn = document.getElementById('downloadBtn');
                 if (downloadBtn) {
                     downloadBtn.style.display = 'block';
                     downloadBtn.addEventListener('click', () => downloadCSV(data, metric));
                 }
             } else {
-                // sectionTitle.textContent = 'No Data Available';
                 tablesContainer.innerHTML = '';
                 const downloadBtn = document.getElementById('downloadBtn');
                 if (downloadBtn) {
