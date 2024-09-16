@@ -251,6 +251,28 @@ func GetNetworkIO() (float64, float64) {
 	return totalBytesReceived, totalBytesSent
 }
 
+// getStatusMessage returns a status message based on the health score.
+func getStatusMessage(healthScore float64) string {
+
+	var message string
+	switch {
+	case healthScore >= 90:
+		message = "[Outstanding] The Overall Health is rocking it! Everything’s running smoothly and life is good."
+	case healthScore >= 85:
+		message = "[Impressive] The Overall Health is doing great—just a few hiccups that need a tweak here and there."
+	case healthScore >= 70:
+		message = "[Solid] The Overall Health is holding up well. A bit of fine-tuning could make it shine even brighter."
+	case healthScore >= 50:
+		message = "[Fair] The Overall Health is functional but could use a bit of TLC. Time to check those resources!"
+	case healthScore >= 30:
+		message = "[Wobbly] The Overall Health is feeling the heat. Roll up your sleeves and dig into those logs!"
+	default:
+		message = "[Oops] The Overall Health is in rough shape. Time to call in the cavalry and get things back on track!"
+	}
+
+	return message
+}
+
 // GetServiceHealth retrieves the service health statistics.
 func GetServiceHealth(serviceStats *models.ServiceStats) models.ServiceHealth {
 	healthInPercent, err := CalculateHealthScore(serviceStats)
@@ -259,41 +281,28 @@ func GetServiceHealth(serviceStats *models.ServiceStats) models.ServiceHealth {
 		return models.ServiceHealth{
 			SystemHealth:  models.Health{Percent: 0, Healthy: false, Message: "Oops! We hit a snag while calculating the health score."},
 			ServiceHealth: models.Health{Percent: 0, Healthy: false, Message: "Oops! We hit a snag while calculating the health score."},
-			OverallHealth: models.Health{Percent: 0, Healthy: false, Message: "Oops! We hit a snag while calculating the health score."},
 		}
 	}
 
 	var healthData models.ServiceHealth
-	healthData.ServiceHealth.Percent = healthInPercent.ServiceHealth
-	healthData.SystemHealth.Percent = healthInPercent.SystemHealth
-	healthData.OverallHealth.Percent = healthInPercent.OverallHealth
+	healthData.ServiceHealth.Percent = healthInPercent.ServiceHealth.Percentage
+	healthData.SystemHealth.Percent = healthInPercent.SystemHealth.Percentage
 
-	overallHealth := healthInPercent.OverallHealth
-	healthy := overallHealth > 50
-	var message string
+	// serviceHealth := healthData.ServiceHealth.Percent
+	// systemHealth := healthData.SystemHealth.Percent
 
-	switch {
-	case overallHealth >= 90:
-		message = "[Outstanding] The Overall Health is rocking it! Everything’s running smoothly and life is good."
-	case overallHealth >= 85:
-		message = "[Impressive] The Overall Health is doing great—just a few hiccups that need a tweak here and there."
-	case overallHealth >= 70:
-		message = "[Solid] The Overall Health is holding up well. A bit of fine-tuning could make it shine even brighter."
-	case overallHealth >= 50:
-		message = "[Fair] The Overall Health is functional but could use a bit of TLC. Time to check those resources!"
-	case overallHealth >= 30:
-		message = "[Wobbly] The Overall Health is feeling the heat. Roll up your sleeves and dig into those logs!"
-	default:
-		message = "[Oops] The Overall Health is in rough shape. Time to call in the cavalry and get things back on track!"
+	healthData.ServiceHealth = models.Health{
+		Percent: healthData.ServiceHealth.Percent,
+		Healthy: healthData.ServiceHealth.Percent > 50,
+		Message: getStatusMessage(healthData.ServiceHealth.Percent),
+		IconMsg: healthInPercent.ServiceHealth.Message,
 	}
-
-	healthData.ServiceHealth.Healthy = healthy
-	healthData.ServiceHealth.Message = message
-	healthData.SystemHealth.Healthy = healthy
-	healthData.SystemHealth.Message = message
-	healthData.OverallHealth.Healthy = healthy
-	healthData.OverallHealth.Message = message
-
+	healthData.SystemHealth = models.Health{
+		Percent: healthData.SystemHealth.Percent,
+		Healthy: healthData.SystemHealth.Percent > 50,
+		Message: getStatusMessage(healthData.SystemHealth.Percent),
+		IconMsg: healthInPercent.SystemHealth.Message,
+	}
 	return healthData
 }
 

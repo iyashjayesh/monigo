@@ -76,7 +76,6 @@ type MemoryStatistics struct {
 type ServiceHealth struct {
 	SystemHealth  Health `json:"system_health"`
 	ServiceHealth Health `json:"service_health"`
-	OverallHealth Health `json:"overall_health"`
 }
 
 // Health represents the health of the service.
@@ -84,6 +83,7 @@ type Health struct {
 	Percent float64 `json:"percent"`
 	Healthy bool    `json:"healthy"`
 	Message string  `json:"message"`
+	IconMsg string  `json:"icon_msg"`
 }
 
 // RawMemStatsRecords holds a list of raw memory statistic records.

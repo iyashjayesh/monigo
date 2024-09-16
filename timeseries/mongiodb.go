@@ -117,11 +117,9 @@ func CloseStorage() {
 // PurgeStorage removes all storage data and closes the storage.
 func PurgeStorage() {
 	basePath := GetBasePath()
-	log.Println("Purging storage from path:", basePath)
 	if err := os.RemoveAll(basePath); err != nil {
 		log.Fatalf("Error purging storage: %v\n", err)
 	}
-
 	if err := os.RemoveAll("./data"); err != nil {
 		log.Fatalf("Error purging storage: %v\n", err)
 	}

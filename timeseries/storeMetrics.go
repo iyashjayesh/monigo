@@ -295,10 +295,5 @@ func generateHealthStatsRows(serviceMetrics *models.ServiceStats, label tstorage
 			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.Health.SystemHealth.Percent},
 			Labels:    []tstorage.Label{label},
 		},
-		{
-			Metric:    "overall_health_percent",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.Health.OverallHealth.Percent},
-			Labels:    []tstorage.Label{label},
-		},
 	}
 }

@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"runtime"
 
 	"github.com/iyashjayesh/monigo/common"
@@ -8,8 +9,13 @@ import (
 )
 
 // getProcessCPUUsage returns the CPU usage of the process
-func getProcessCPUUsage() (float64, error) {
+func getServiceCPUUsage() (float64, error) {
 	return common.GetProcessObject().CPUPercent()
+}
+
+// getServiceGoroutines returns the number of goroutines in the service
+func getServiceGoroutines() int {
+	return runtime.NumGoroutine()
 }
 
 // calculateMemoryUsagePercentage calculates memory usage percentage
@@ -25,70 +31,116 @@ func calculateMemoryUsagePercentage(usedMemory, totalMemory string) (float64, er
 	return (usedMemoryMB / totalMemoryMB) * 100, nil
 }
 
-// calculateHealthScore calculates the health score based on usage and thresholds
-func calculateHealthScore(usage, maxThreshold float64) float64 {
-	return (usage / maxThreshold) * 100
-}
-
 // calculateServiceHealth calculates service health based on CPU, memory, and goroutines
-func calculateServiceHealth(stats *models.ServiceStats) (float64, error) {
-	cpuUsage, err := getProcessCPUUsage() // Get CPU usage
+func calculateServiceHealth(stats *models.ServiceStats) (float64, string, error) {
+	cpuUsage, err := getServiceCPUUsage()
 	if err != nil {
-		return 0, err
+		return 0, "", fmt.Errorf("failed to get service CPU usage: %w", err)
 	}
 
-	memoryUsagePercentage, err := calculateMemoryUsagePercentage(stats.MemoryStatistics.MemoryUsedByService, stats.MemoryStatistics.TotalSystemMemory)
+	totalAvailableCores := stats.CPUStatistics.TotalCores
+	cpuUsagePercentage := (cpuUsage / float64(totalAvailableCores)) * 100
+
+	// Calculating memory usage percentage for the service
+	memoryUsagePercentage, err := calculateMemoryUsagePercentage(
+		stats.MemoryStatistics.MemoryUsedByService,
+		stats.MemoryStatistics.TotalSystemMemory,
+	)
 	if err != nil {
-		return 0, err
+		return 0, "", fmt.Errorf("failed to calculate memory usage percentage: %w", err)
 	}
 
-	// Calculating health scores
-	cpuHealthScore := calculateHealthScore(cpuUsage, serviceHealthThresholds.MaxCPUUsage)
-	memoryHealthScore := calculateHealthScore(memoryUsagePercentage, serviceHealthThresholds.MaxMemoryUsage)
-	goroutinesHealthScore := calculateHealthScore(float64(runtime.NumGoroutine()), float64(serviceHealthThresholds.MaxGoRoutines))
+	// Calculating the health ratios for CPU, memory, and goroutines
+	cpuUsageRatio := (cpuUsagePercentage / serviceHealthThresholds.MaxCPUUsage) * 100
+	memoryUsageRatio := (memoryUsagePercentage / serviceHealthThresholds.MaxMemoryUsage) * 100
+	goRoutinesRatio := (float64(getServiceGoroutines()) / float64(serviceHealthThresholds.MaxGoRoutines)) * 100
+	finalScore := (cpuUsageRatio + memoryUsageRatio + goRoutinesRatio) / 3
 
-	// Final health score calculation
-	finalScore := 100 - ((cpuHealthScore + memoryHealthScore + goroutinesHealthScore) / 3)
-	return finalScore, nil
+	var message string
+	if finalScore > 100 {
+		finalScore = 100
+		message = fmt.Sprintf(
+			"Service usage exceeds allowed limits: CPU Usage %.2f%% / %.2f%%, Memory Usage %.2f%% / %.2f%%, Goroutines %.2f / %d",
+			cpuUsageRatio, serviceHealthThresholds.MaxCPUUsage,
+			memoryUsageRatio, serviceHealthThresholds.MaxMemoryUsage,
+			goRoutinesRatio, serviceHealthThresholds.MaxGoRoutines,
+		)
+	} else {
+		finalScore = 100 - finalScore
+		message = fmt.Sprintf(
+			"Service usage is within limits: CPU Usage %.2f%% / %.2f%%, Memory Usage %.2f%% / %.2f%%, Goroutines %.2f / %d",
+			cpuUsageRatio, serviceHealthThresholds.MaxCPUUsage,
+			memoryUsageRatio, serviceHealthThresholds.MaxMemoryUsage,
+			goRoutinesRatio, serviceHealthThresholds.MaxGoRoutines,
+		)
+	}
+
+	return finalScore, message, nil
 }
 
 // calculateSystemHealth calculates system health based on CPU and memory
-func calculateSystemHealth(stats *models.ServiceStats) (float64, error) {
-	memoryUsagePercentage, err := calculateMemoryUsagePercentage(stats.MemoryStatistics.MemoryUsedBySystem, stats.MemoryStatistics.TotalSystemMemory)
+func calculateSystemHealth(stats *models.ServiceStats) (float64, string, error) {
+
+	systemCPUUsage := GetCPUPrecent()
+	totalAvailableCores := stats.CPUStatistics.TotalCores
+	cpuUsagePercentage := (systemCPUUsage / float64(totalAvailableCores)) * 100
+
+	// Calculating memory usage percentage for the system
+	memoryUsagePercentage, err := calculateMemoryUsagePercentage(
+		stats.MemoryStatistics.MemoryUsedBySystem,
+		stats.MemoryStatistics.TotalSystemMemory,
+	)
 	if err != nil {
-		return 0, err
+		return 0, "", fmt.Errorf("failed to calculate memory usage percentage: %w", err)
 	}
 
-	sysCPUUsage, err := getProcessCPUUsage()
-	if err != nil {
-		return 0, err
+	cpuUsageRatio := (cpuUsagePercentage / serviceHealthThresholds.MaxCPUUsage) * 100
+	memoryUsageRatio := (memoryUsagePercentage / serviceHealthThresholds.MaxMemoryUsage) * 100
+	finalScore := (cpuUsageRatio + memoryUsageRatio) / 2
+	var message string
+	if finalScore > 100 {
+		finalScore = 0
+		message = fmt.Sprintf(
+			"System usage exceeds allowed limits: CPU Usage %.2f%% / %.2f%%, Memory Usage %.2f%% / %.2f%%",
+			cpuUsageRatio, serviceHealthThresholds.MaxCPUUsage,
+			memoryUsageRatio, serviceHealthThresholds.MaxMemoryUsage,
+		)
+	} else {
+		finalScore = 100 - finalScore
+		message = fmt.Sprintf(
+			"System usage is within limits: CPU Usage %.2f%% / %.2f%%, Memory Usage %.2f%% / %.2f%%",
+			cpuUsageRatio, serviceHealthThresholds.MaxCPUUsage,
+			memoryUsageRatio, serviceHealthThresholds.MaxMemoryUsage,
+		)
 	}
 
-	// Calculating the health scores
-	cpuHealthScore := calculateHealthScore(sysCPUUsage, serviceHealthThresholds.MaxCPUUsage)
-	memoryHealthScore := calculateHealthScore(memoryUsagePercentage, serviceHealthThresholds.MaxMemoryUsage)
-
-	// Final system health score calculation
-	finalScore := 100 - ((cpuHealthScore + memoryHealthScore) / 2)
-	return finalScore, nil
+	return finalScore, message, nil
 }
 
-// CalculateHealthScore calculates the health score of the system and the service
+// CalculateHealthScore calculates the health score of both the system and service
 func CalculateHealthScore(serviceStats *models.ServiceStats) (*models.SystemHealthInPercent, error) {
-	sysScore, err := calculateSystemHealth(serviceStats)
+	// Calculating system health
+	systemScore, systemMsg, err := calculateSystemHealth(serviceStats)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to calculate system health: %w", err)
 	}
 
-	servScore, err := calculateServiceHealth(serviceStats)
+	// CalcCalculating service health
+	serviceScore, serviceMsg, err := calculateServiceHealth(serviceStats)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to calculate service health: %w", err)
 	}
 
-	overallHealth := (sysScore + servScore) / 2
 	return &models.SystemHealthInPercent{
-		SystemHealth:  common.RoundFloat64(sysScore, 2),
-		ServiceHealth: common.RoundFloat64(servScore, 2),
-		OverallHealth: common.RoundFloat64(overallHealth, 0),
+		SystemHealth: models.HealthFields{
+			Percentage:    common.RoundFloat64(systemScore, 2),
+			AllowedByUser: serviceHealthThresholds.MaxCPUUsage,
+			Message:       systemMsg,
+		},
+		ServiceHealth: models.HealthFields{
+			Percentage:    common.RoundFloat64(serviceScore, 2),
+			AllowedByUser: serviceHealthThresholds.MaxCPUUsage,
+			Message:       serviceMsg,
+		},
 	}, nil
 }

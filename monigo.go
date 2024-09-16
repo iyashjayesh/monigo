@@ -157,8 +157,8 @@ func StartDashboard(port int) error {
 	// HTML site
 	http.HandleFunc("/", serveHtmlSite)
 
-	// Core Statistics
-	http.HandleFunc(fmt.Sprintf("%s/metrics", baseAPIPath), api.NewCoreStatistics)
+	// API to get Service Statistics
+	http.HandleFunc(fmt.Sprintf("%s/metrics", baseAPIPath), api.GetServiceStatistics)
 
 	// Service APIs
 	http.HandleFunc(fmt.Sprintf("%s/service-info", baseAPIPath), api.GetServiceInfoAPI)

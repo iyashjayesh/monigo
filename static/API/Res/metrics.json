@@ -1,53 +1,51 @@
 {
     "core_statistics": {
-        "goroutines": 11,
-        "request_count": 0,
-        "uptime": "1.24 d",
-        "total_duration_took_by_request": 0
+        "goroutines": 7,
+        "uptime": "43.03 m"
     },
     "load_statistics": {
-        "service_cpu_load": "0.29%",
-        "system_cpu_load": "27.17%",
-        "total_cpu_load": "27.75%",
-        "service_memory_load": "0.19%",
-        "system_memory_load": "76.52%",
+        "service_cpu_load": "0.04%",
+        "system_cpu_load": "11.21%",
+        "total_cpu_load": "11.28%",
+        "service_memory_load": "0.10%",
+        "system_memory_load": "78.61%",
         "total_memory_load": "16.00 GB",
-        "overall_load_of_service": "0.24%"
+        "overall_load_of_service": "0.07%"
     },
     "cpu_statistics": {
         "total_cores": 10,
         "total_logical_cores": 10,
-        "cores_used_by_system": 2.796,
-        "cores_used_by_service": 0.029,
-        "cores_used_by_service_in_percent": "0.03%",
-        "cores_used_by_system_in_percent": "2.80%"
+        "cores_used_by_system": 1.131,
+        "cores_used_by_service": 0.004,
+        "cores_used_by_service_in_percent": "0.00%",
+        "cores_used_by_system_in_percent": "1.13%"
     },
     "memory_statistics": {
         "total_system_memory": "16.00 GB",
-        "memory_used_by_system": "12.34 GB",
-        "memory_used_by_service": "6.40 MB",
-        "available_memory": "3.66 GB",
-        "gc_pause_duration": "7.64 ms",
-        "stack_memory_usage": "864.00 KB",
+        "memory_used_by_system": "12.58 GB",
+        "memory_used_by_service": "865.34 KB",
+        "available_memory": "3.42 GB",
+        "gc_pause_duration": "11.28 ms",
+        "stack_memory_usage": "704.00 KB",
         "total_swap_memory": "2.00 GB",
-        "free_swap_memory": "1.69 GB",
+        "free_swap_memory": "1.25 GB",
         "mem_stats_records": [
             {
                 "record_name": "Alloc",
                 "record_description": "Bytes of allocated heap objects.",
-                "record_value": 6.399925231933594,
-                "record_unit": "MB"
+                "record_value": 865.34375,
+                "record_unit": "KB"
             },
             {
                 "record_name": "TotalAlloc",
                 "record_description": "Cumulative bytes allocated for heap objects.",
-                "record_value": 73.77659606933594,
+                "record_value": 88.43869018554688,
                 "record_unit": "MB"
             },
             {
                 "record_name": "Sys",
                 "record_description": "Total bytes of memory obtained from the OS.",
-                "record_value": 25.534194946289062,
+                "record_value": 23.15747833251953,
                 "record_unit": "MB"
             },
             {
@@ -59,73 +57,73 @@
             {
                 "record_name": "Mallocs",
                 "record_description": "Cumulative count of heap objects allocated.",
-                "record_value": 199.1201171875,
+                "record_value": 73.4013671875,
                 "record_unit": "KB"
             },
             {
                 "record_name": "Frees",
                 "record_description": "Cumulative count of heap objects freed.",
-                "record_value": 186.12109375,
+                "record_value": 70.55859375,
                 "record_unit": "KB"
             },
             {
                 "record_name": "HeapAlloc",
                 "record_description": "Bytes of allocated heap objects.",
-                "record_value": 6.399925231933594,
-                "record_unit": "MB"
+                "record_value": 865.34375,
+                "record_unit": "KB"
             },
             {
                 "record_name": "HeapSys",
                 "record_description": "Bytes of heap memory obtained from the OS.",
-                "record_value": 19.15625,
+                "record_value": 15.3125,
                 "record_unit": "MB"
             },
             {
                 "record_name": "HeapIdle",
                 "record_description": "Bytes in idle (unused) spans.",
-                "record_value": 11.6328125,
+                "record_value": 13.5546875,
                 "record_unit": "MB"
             },
             {
                 "record_name": "HeapInuse",
                 "record_description": "Bytes in in-use spans.",
-                "record_value": 7.5234375,
+                "record_value": 1.7578125,
                 "record_unit": "MB"
             },
             {
                 "record_name": "HeapReleased",
                 "record_description": "Bytes of physical memory returned to the OS.",
-                "record_value": 8.0078125,
+                "record_value": 12.46875,
                 "record_unit": "MB"
             },
             {
                 "record_name": "HeapObjects",
                 "record_description": "Number of allocated heap objects.",
-                "record_value": 12.9990234375,
+                "record_value": 2.8427734375,
                 "record_unit": "KB"
             },
             {
                 "record_name": "StackInuse",
                 "record_description": "Bytes in stack spans.",
-                "record_value": 864,
+                "record_value": 704,
                 "record_unit": "KB"
             },
             {
                 "record_name": "StackSys",
                 "record_description": "Bytes of stack memory obtained from the OS.",
-                "record_value": 864,
+                "record_value": 704,
                 "record_unit": "KB"
             },
             {
                 "record_name": "MSpanInuse",
                 "record_description": "Bytes of allocated mspan structures.",
-                "record_value": 155.859375,
+                "record_value": 121.40625,
                 "record_unit": "KB"
             },
             {
                 "record_name": "MSpanSys",
                 "record_description": "Bytes of memory obtained from the OS for mspan structures.",
-                "record_value": 175.0546875,
+                "record_value": 143.2265625,
                 "record_unit": "KB"
             },
             {
@@ -143,43 +141,43 @@
             {
                 "record_name": "BuckHashSys",
                 "record_description": "Bytes of memory in profiling bucket hash tables.",
-                "record_value": 4.1962890625,
-                "record_unit": "KB"
+                "record_value": 1.3863096237182617,
+                "record_unit": "MB"
             },
             {
                 "record_name": "GCSys",
                 "record_description": "Bytes of memory in garbage collection metadata.",
-                "record_value": 3.8499755859375,
+                "record_value": 3.628448486328125,
                 "record_unit": "MB"
             },
             {
                 "record_name": "OtherSys",
                 "record_description": "Bytes of memory in miscellaneous off-heap runtime allocations.",
-                "record_value": 1.4942922592163086,
+                "record_value": 1.9879732131958008,
                 "record_unit": "MB"
             },
             {
                 "record_name": "NextGC",
                 "record_description": "Target heap size of the next GC cycle.",
-                "record_value": 8.878074645996094,
+                "record_value": 4,
                 "record_unit": "MB"
             },
             {
                 "record_name": "LastGC",
                 "record_description": "Time the last garbage collection finished (nanoseconds since the UNIX epoch).",
-                "record_value": 1607366336.433824,
+                "record_value": 1607924212.7972786,
                 "record_unit": "GB"
             },
             {
                 "record_name": "PauseTotalNs",
                 "record_description": "Cumulative nanoseconds in GC stop-the-world pauses since program start.",
-                "record_value": 7.288419723510742,
+                "record_value": 10.7582426071167,
                 "record_unit": "MB"
             },
             {
                 "record_name": "NumGC",
                 "record_description": "Number of completed GC cycles.",
-                "record_value": 20,
+                "record_value": 34,
                 "record_unit": "bytes"
             },
             {
@@ -191,26 +189,26 @@
             {
                 "record_name": "GCCPUFraction",
                 "record_description": "Fraction of this program's available CPU time used by the GC.",
-                "record_value": 0.000019900251505266286,
+                "record_value": 0.000006618374769890565,
                 "record_unit": "fraction"
             }
         ],
         "raw_mem_stats_records": [
             {
                 "record_name": "alloc",
-                "record_value": 6710.808
+                "record_value": 886.112
             },
             {
                 "record_name": "total_alloc",
-                "record_value": 77360.368
+                "record_value": 92734.688
             },
             {
                 "record_name": "sys",
-                "record_value": 26774.544
+                "record_value": 24282.376
             },
             {
                 "record_name": "sys",
-                "record_value": 26774.544
+                "record_value": 24282.376
             },
             {
                 "record_name": "lookups",
@@ -218,51 +216,51 @@
             },
             {
                 "record_name": "mallocs",
-                "record_value": 203.899
+                "record_value": 75.163
             },
             {
                 "record_name": "frees",
-                "record_value": 190.588
+                "record_value": 72.252
             },
             {
                 "record_name": "heap_alloc",
-                "record_value": 6710.808
+                "record_value": 886.112
             },
             {
                 "record_name": "heap_sys",
-                "record_value": 20086.784
+                "record_value": 16056.32
             },
             {
                 "record_name": "heap_idle",
-                "record_value": 12197.888
+                "record_value": 14213.12
             },
             {
                 "record_name": "heap_inuse",
-                "record_value": 7888.896
+                "record_value": 1843.2
             },
             {
                 "record_name": "heap_released",
-                "record_value": 8396.8
+                "record_value": 13074.432
             },
             {
                 "record_name": "heap_objects",
-                "record_value": 13.311
+                "record_value": 2.911
             },
             {
                 "record_name": "stack_inuse",
-                "record_value": 884.736
+                "record_value": 720.896
             },
             {
                 "record_name": "stack_sys",
-                "record_value": 884.736
+                "record_value": 720.896
             },
             {
                 "record_name": "m_span_inuse",
-                "record_value": 159.6
+                "record_value": 124.32
             },
             {
                 "record_name": "m_span_sys",
-                "record_value": 179.256
+                "record_value": 146.664
             },
             {
                 "record_name": "m_cache_inuse",
@@ -274,31 +272,31 @@
             },
             {
                 "record_name": "buck_hash_sys",
-                "record_value": 4.297
+                "record_value": 1453.651
             },
             {
                 "record_name": "gc_sys",
-                "record_value": 4036.992
+                "record_value": 3804.704
             },
             {
                 "record_name": "other_sys",
-                "record_value": 1566.879
+                "record_value": 2084.541
             },
             {
                 "record_name": "next_gc",
-                "record_value": 9309.336
+                "record_value": 4194.304
             },
             {
                 "record_name": "last_gc",
-                "record_value": 1725896461918652
+                "record_value": 1726495477102714
             },
             {
                 "record_name": "pause_total_ns",
-                "record_value": 7642.462
+                "record_value": 11280.835
             },
             {
                 "record_name": "num_gc",
-                "record_value": 0.02
+                "record_value": 0.034
             },
             {
                 "record_name": "num_forced_gc",
@@ -306,33 +304,30 @@
             },
             {
                 "record_name": "gc_cpu_fraction",
-                "record_value": 1.9900251505266287e-8
+                "record_value": 6.618374769890565e-9
             }
         ]
     },
-    "heap_alloc_by_service": "6.40 MB",
-    "heap_alloc_by_system": "19.16 MB",
-    "total_alloc_by_service": "73.78 MB",
-    "total_memory_by_os": "25.53 MB",
+    "heap_alloc_by_service": "865.34 KB",
+    "heap_alloc_by_system": "15.31 MB",
+    "total_alloc_by_service": "88.44 MB",
+    "total_memory_by_os": "23.16 MB",
     "network_io": {
-        "bytes_sent": 17758594855,
-        "bytes_received": 17853480212
+        "bytes_sent": 6356356846,
+        "bytes_received": 11929894738
     },
     "health": {
         "system_health": {
-            "percent": 80,
-            "healthy": true,
-            "message": "[Solid] The Overall Health is holding up well. A bit of fine-tuning could make it shine even brighter."
+            "percent": 0,
+            "healthy": false,
+            "message": "[Oops] The Overall Health is in rough shape. Time to call in the cavalry and get things back on track!",
+            "icon_msg": "System usage exceeds allowed limits: CPU Usage 198.33% / 90.00%, Memory Usage 87.36% / 90.00%"
         },
         "service_health": {
-            "percent": 85,
+            "percent": 97.53,
             "healthy": true,
-            "message": "[Solid] The Overall Health is holding up well. A bit of fine-tuning could make it shine even brighter."
-        },
-        "overall_health": {
-            "percent": 82.5,
-            "healthy": true,
-            "message": "[Solid] The Overall Health is holding up well. A bit of fine-tuning could make it shine even brighter."
+            "message": "[Outstanding] The Overall Health is rocking it! Everything’s running smoothly and life is good.",
+            "icon_msg": "Service usage is within limits: CPU Usage 0.40% / 90.00%, Memory Usage 0.01% / 90.00%, Goroutines 7.00 / 100"
         }
     }
 }

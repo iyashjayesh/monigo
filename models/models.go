@@ -44,7 +44,12 @@ type ReportsRequest struct {
 
 // SystemHealthInPercent is the struct to store the system health in percentage
 type SystemHealthInPercent struct {
-	SystemHealth  float64 `json:"system_health_percentage"`
-	ServiceHealth float64 `json:"service_health_percentage"`
-	OverallHealth float64 `json:"overall_health_percentage"`
+	SystemHealth  HealthFields `json:"system_health_percentage"`
+	ServiceHealth HealthFields `json:"service_health_percentage"`
+}
+
+type HealthFields struct {
+	Percentage    float64 `json:"percentage"`
+	AllowedByUser float64 `json:"allowed_by_user"`
+	Message       string  `json:"message"`
 }
