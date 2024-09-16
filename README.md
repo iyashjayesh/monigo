@@ -1,6 +1,4 @@
-### Status: In Development 🚧
-
-### Currently working on fetching function metrics and memory leaks 📊
+### Status: Testing going on for v1 release 🚀
 
 <p align="center">
   <img src="./static/assets/monigo-icon.png" width="200" title="Monigo Icon" alt="monigo-icon"/>
@@ -55,20 +53,37 @@ import (
 func main() {
 
 	monigoInstance := &monigo.Monigo{
-		ServiceName:        "service_name", // **Required**
-		PurgeMonigoStorage: true,       	// Default is false
-		DashboardPort:      8080,       	// Default is 8080
-		DataPointsSyncFrequency:    "10s",       	// Default is 5 Minutes "5m"
-		DataRetentionPeriod:    "4d",       	// Default is 14 days (2 weeks)
+		ServiceName:             "data-api", // Mandatory field
+		DashboardPort:           8080,       // Default is 8080
+		DataPointsSyncFrequency: "5s",       // Default is 5 Minutes
+		DataRetentionPeriod:     "4d",       // Default is 7 days. Supported values: "1h", "1d", "1w", "1m"
+		TimeZone:                "Local",    // Default is Local timezone. Supported values: "Local", "UTC", "Asia/Kolkata", "America/New_York" etc. (https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
+		// MaxCPUUsage:             90,         // Default is 95%
+		// MaxMemoryUsage:          90,         // Default is 95%
+		// MaxGoRoutines:           100,        // Default is 100
 	}
 
-	monigoInstance.Start()
+   monigo.TraceFunction(highCPUUsage) // Trace function, when the function is called, it will be traced and the metrics will be displayed on the dashboard
 
-	// Optinal
-	// routinesStats := monigoInstance.GetGoRoutinesStats() // Print go routines stats
+	go monigoInstance.Start() // Starting monigo dashboard
+	log.Println("Monigo dashboard started at port 8080")
+
+  // Optional
+	// routinesStats := monigoInstance.GetGoRoutinesStats() // Get go routines stats
 	// log.Println(routinesStats)
 
-    select {} // To keep the program running
+
+
+  select {} // To keep the program running
+}
+
+// highCPUUsage is a function that simulates high CPU usage
+func highCPUUsage() {
+	// Simulate high CPU usage by performing heavy computations
+	var sum float64
+	for i := 0; i < 1e8; i++ { // 100 million iterations
+		sum += math.Sqrt(float64(i))
+	}
 }
 ```
 
