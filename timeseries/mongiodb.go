@@ -70,7 +70,7 @@ func GetStorageInstance() (Storage, error) {
 			tstorage.WithRetention(common.GetDataRetentionPeriod()),
 		)
 		if err != nil {
-			log.Fatalf("Error initializing storage: %v\n", err)
+			log.Panicf("Error initializing storage: %v\n", err)
 		}
 		storage = &StorageWrapper{storage: tstorageInstance}
 
@@ -106,9 +106,8 @@ func CloseStorage() {
 			cancel() // Stop any goroutines
 		}
 		if storage != nil {
-			log.Println("Closing storage instance")
 			if err := storage.Close(); err != nil {
-				log.Printf("Error closing storage: %v\n", err)
+				log.Panic("Error closing storage: %v\n", err)
 			}
 		}
 	})
@@ -118,10 +117,10 @@ func CloseStorage() {
 func PurgeStorage() {
 	basePath := GetBasePath()
 	if err := os.RemoveAll(basePath); err != nil {
-		log.Fatalf("Error purging storage: %v\n", err)
+		log.Panicf("Error purging storage: %v\n", err)
 	}
 	if err := os.RemoveAll("./data"); err != nil {
-		log.Fatalf("Error purging storage: %v\n", err)
+		log.Panicf("Error purging storage: %v\n", err)
 	}
 }
 
@@ -156,8 +155,6 @@ func SetDataPointsSyncFrequency(frequency ...string) error {
 				if err := StoreServiceMetrics(&serviceMetrics); err != nil {
 					log.Printf("Error storing service metrics: %v\n", err)
 				}
-				size := common.GetDirSize(basePath + "/data")
-				log.Println("Size of data directory: ", size)
 				timer.Reset(freqTime)
 			}
 		}

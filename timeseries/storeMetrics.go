@@ -81,12 +81,6 @@ func generateCoreStatsRows(serviceMetrics *models.ServiceStats, label tstorage.L
 // generateLoadStatsRows generates rows for load statistics.
 func generateLoadStatsRows(serviceMetrics *models.ServiceStats, label tstorage.Label, timestamp int64) []tstorage.Row {
 
-	// log.Println("overall_load_of_service" + serviceMetrics.LoadStatistics.OverallLoadOfService)
-	// log.Println("service_cpu_load", serviceMetrics.LoadStatistics.ServiceCPULoad)
-	// log.Println("service_memory_load", serviceMetrics.LoadStatistics.ServiceMemLoad)
-	// log.Println("system_cpu_load", serviceMetrics.LoadStatistics.SystemCPULoad)
-	// log.Println("system_memory_load", serviceMetrics.LoadStatistics.SystemMemLoad)
-
 	return []tstorage.Row{
 		{
 			Metric:    "overall_load_of_service",
@@ -141,13 +135,11 @@ func extractFloat(s string) float64 {
 	re := regexp.MustCompile(`\d+(\.\d+)?`)
 	match := re.FindString(strings.TrimSpace(s))
 	if match == "" {
-		fmt.Println("No numeric value found in:", s) // Debugging line
 		return 0.0
 	}
 
 	value, err := strconv.ParseFloat(match, 64)
 	if err != nil {
-		fmt.Println("Error parsing float:", err)
 		return 0.0
 	}
 
@@ -156,28 +148,6 @@ func extractFloat(s string) float64 {
 
 // generateMemoryStatsRows generates rows for memory statistics.
 func generateMemoryStatsRows(serviceMetrics *models.ServiceStats, label tstorage.Label, timestamp int64) []tstorage.Row {
-	// [total_system_memory memory_used_by_system memory_used_by_service available_memory gc_pause_duration stack_memory_usage]
-	// log.Println("total_system_memory", serviceMetrics.MemoryStatistics.TotalSystemMemory)
-	// log.Println("memory_used_by_system", serviceMetrics.MemoryStatistics.MemoryUsedBySystem)
-	// log.Println("memory_used_by_service", serviceMetrics.MemoryStatistics.MemoryUsedByService)
-	// log.Println("available_memory", serviceMetrics.MemoryStatistics.AvailableMemory)
-	// log.Println("gc_pause_duration", serviceMetrics.MemoryStatistics.GCPauseDuration)
-	// log.Println("stack_memory_usage", serviceMetrics.MemoryStatistics.StackMemoryUsage)
-
-	// log.Println("total_system_memory ", extractFloat(serviceMetrics.MemoryStatistics.TotalSystemMemory))
-	// log.Println("memory_used_by_system ", extractFloat(serviceMetrics.MemoryStatistics.MemoryUsedBySystem))
-	// log.Println("memory_used_by_service ", extractFloat(serviceMetrics.MemoryStatistics.MemoryUsedByService))
-	// log.Println("available_memory ", extractFloat(serviceMetrics.MemoryStatistics.AvailableMemory))
-	// log.Println("gc_pause_duration ", extractFloat(serviceMetrics.MemoryStatistics.GCPauseDuration))
-	// log.Println("stack_memory_usage ", extractFloat(serviceMetrics.MemoryStatistics.StackMemoryUsage))
-
-	// 	2024/09/12 02:29:02 total_system_memory 16.00 GB
-	// 2024/09/12 02:29:02 memory_used_by_system 11.13 GB
-	// 2024/09/12 02:29:02 memory_used_by_service 1.60 MB
-	// 2024/09/12 02:29:02 available_memory 4.87 GB
-	// 2024/09/12 02:29:02 gc_pause_duration 0.00 ms
-	// 2024/09/12 02:29:02 stack_memory_usage 480.00 KB
-
 	rows := []tstorage.Row{
 		{
 			Metric:    "total_system_memory",
@@ -219,26 +189,6 @@ func generateMemoryStatsRows(serviceMetrics *models.ServiceStats, label tstorage
 			Labels:    []tstorage.Label{label},
 		})
 	}
-
-	// log.Println("HeapAllocByService", serviceMetrics.HeapAllocByService)
-	// log.Println("HeapAllocBySystem", serviceMetrics.HeapAllocBySystem)
-	// log.Println("TotalAllocByService", serviceMetrics.TotalAllocByService)
-	// log.Println("TotalMemoryByOS", serviceMetrics.TotalMemoryByOS)
-
-	// log.Println("HeapAllocByService", StringToFloat(serviceMetrics.HeapAllocByService))
-	// log.Println("HeapAllocBySystem", StringToFloat(serviceMetrics.HeapAllocBySystem))
-	// log.Println("TotalAllocByService", StringToFloat(serviceMetrics.TotalAllocByService))
-	// log.Println("TotalMemoryByOS", StringToFloat(serviceMetrics.TotalMemoryByOS))
-
-	// log.Println("HeapAllocByService", extractFloat(serviceMetrics.HeapAllocByService))
-	// log.Println("HeapAllocBySystem", extractFloat(serviceMetrics.HeapAllocBySystem))
-	// log.Println("TotalAllocByService", extractFloat(serviceMetrics.TotalAllocByService))
-	// log.Println("TotalMemoryByOS", extractFloat(serviceMetrics.TotalMemoryByOS))
-
-	// 2024/09/12 02:41:47 HeapAllocByService 210.09 KB
-	// 2024/09/12 02:41:47 HeapAllocBySystem 3.62 MB
-	// 2024/09/12 02:41:47 TotalAllocByService 210.09 KB
-	// 2024/09/12 02:41:47 TotalMemoryByOS 7.41 MB
 
 	// Adding additional memory statistics
 	rows = append(rows, []tstorage.Row{

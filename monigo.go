@@ -39,9 +39,9 @@ type Monigo struct {
 	GoVersion               string    `json:"go_version"`         // Dynamically set from runtime.Version()
 	ServiceStartTime        time.Time `json:"service_start_time"` // Dynamically setting it based on the service start time
 	ProcessId               int32     `json:"process_id"`         // Dynamically set from os.Getpid()
-	MaxCPUUsage             float64   `json:"max_cpu_usage"`      // Default is 80%
-	MaxMemoryUsage          float64   `json:"max_memory_usage"`   // Default is 80%
-	MaxGoRoutines           int       `json:"max_go_routines"`    // Default is 100
+	MaxCPUUsage             float64   `json:"max_cpu_usage"`      // Default is 95%, You can set it to 100% if you want to monitor 100% CPU usage
+	MaxMemoryUsage          float64   `json:"max_memory_usage"`   // Default is 95%, You can set it to 100% if you want to monitor 100% Memory usage
+	MaxGoRoutines           int       `json:"max_go_routines"`    // Default is 100, You can set it to any number based on your service
 }
 
 // MonigoInt is the interface to start the monigo service
@@ -66,7 +66,7 @@ func (m *Monigo) MonigoInstanceConstructor() {
 	// Loading the time zone location
 	location, err := time.LoadLocation(m.TimeZone)
 	if err != nil {
-		log.Println("Error loading timezone. Setting to Local:", err)
+		log.Println("Error loading timezone. Setting to Local, Error: ", err)
 		location = time.Local
 	}
 
@@ -74,8 +74,8 @@ func (m *Monigo) MonigoInstanceConstructor() {
 	m.DashboardPort = 8080
 	m.DataPointsSyncFrequency = common.DefaultIfEmpty(m.DataPointsSyncFrequency, "5m")
 	m.DataRetentionPeriod = common.DefaultIfEmpty(m.DataRetentionPeriod, "7d")
-	m.MaxCPUUsage = common.DefaultFloatIfZero(m.MaxCPUUsage, 80)
-	m.MaxMemoryUsage = common.DefaultFloatIfZero(m.MaxMemoryUsage, 80)
+	m.MaxCPUUsage = common.DefaultFloatIfZero(m.MaxCPUUsage, 95)
+	m.MaxMemoryUsage = common.DefaultFloatIfZero(m.MaxMemoryUsage, 95)
 	m.MaxGoRoutines = common.DefaultIntIfZero(m.MaxGoRoutines, 100)
 
 	core.ConfigureServiceThresholds(&models.ServiceHealthThresholds{

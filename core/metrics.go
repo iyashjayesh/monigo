@@ -20,12 +20,18 @@ var (
 
 // GetRequestCount returns the total number of requests
 func GetCPUPrecent() float64 {
-	cpuPercent, err := cpu.Percent(time.Second, false)
+	cpuPercents, err := cpu.Percent(time.Second, false)
 	if err != nil {
 		log.Panicf("Error fetching CPU usage: %v\n", err)
 		return 0
 	}
-	return cpuPercent[0]
+
+	var total float64
+	for _, percent := range cpuPercents {
+		total += percent
+	}
+
+	return total / float64(len(cpuPercents))
 }
 
 // GetVirtualMemoryStats returns the virtual memory statistics

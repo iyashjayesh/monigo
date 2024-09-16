@@ -176,12 +176,12 @@ func GetMemoryStatistics() models.MemoryStatistics {
 
 	memInfo, err := mem.VirtualMemory() // Fetcing system memory statistics
 	if err != nil {
-		log.Fatalf("Error fetching virtual memory info: %v", err)
+		log.Panicf("Error fetching virtual memory info: %v", err)
 	}
 
 	swapInfo, err := mem.SwapMemory() // Fetching swap memory statistics
 	if err != nil {
-		log.Fatalf("Error fetching swap memory info: %v", err)
+		log.Panicf("Error fetching swap memory info: %v", err)
 	}
 
 	m := ReadMemStats() // Get the memory statistics for the service
@@ -239,7 +239,7 @@ func GetNetworkIO() (float64, float64) {
 	// Fetch network I/O statistics
 	netIO, err := net.IOCounters(true)
 	if err != nil {
-		log.Fatalf("Error fetching network I/O statistics: %v", err)
+		log.Panicf("Error fetching network I/O statistics: %v", err)
 	}
 
 	var totalBytesReceived, totalBytesSent float64
@@ -257,17 +257,17 @@ func getStatusMessage(healthScore float64) string {
 	var message string
 	switch {
 	case healthScore >= 90:
-		message = "[Outstanding] The Overall Health is rocking it! Everything’s running smoothly and life is good."
+		message = "[Outstanding] The Service Health is rocking it! 🤘🏻 Everything’s running smoothly and life is good."
 	case healthScore >= 85:
-		message = "[Impressive] The Overall Health is doing great—just a few hiccups that need a tweak here and there."
+		message = "[Impressive] The Service Health is doing great—just a few hiccups that need a tweak here and there. 💡"
 	case healthScore >= 70:
-		message = "[Solid] The Overall Health is holding up well. A bit of fine-tuning could make it shine even brighter."
+		message = "[Solid] The Service Health is holding up well. ⚡️ A bit of fine-tuning could make it shine even brighter."
 	case healthScore >= 50:
-		message = "[Fair] The Overall Health is functional but could use a bit of TLC. Time to check those resources!"
+		message = "[Fair] The Service Health is functional but could use a bit of TLC. Time to check those resources! 🛠️"
 	case healthScore >= 30:
-		message = "[Wobbly] The Overall Health is feeling the heat. Roll up your sleeves and dig into those logs!"
+		message = "[Wobbly] The Service Health is feeling the heat.🔥 Roll up your sleeves and dig into those logs!"
 	default:
-		message = "[Oops] The Overall Health is in rough shape. Time to call in the cavalry and get things back on track!"
+		message = "[Oops] The Service Health is in rough shape. ‼️ Time to call in the cavalry and get things back on track! 🚑"
 	}
 
 	return message
@@ -277,7 +277,6 @@ func getStatusMessage(healthScore float64) string {
 func GetServiceHealth(serviceStats *models.ServiceStats) models.ServiceHealth {
 	healthInPercent, err := CalculateHealthScore(serviceStats)
 	if err != nil {
-		log.Println("Error calculating health score:", err)
 		return models.ServiceHealth{
 			SystemHealth:  models.Health{Percent: 0, Healthy: false, Message: "Oops! We hit a snag while calculating the health score."},
 			ServiceHealth: models.Health{Percent: 0, Healthy: false, Message: "Oops! We hit a snag while calculating the health score."},

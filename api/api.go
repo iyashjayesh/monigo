@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"sort"
 	"sync"
@@ -37,7 +36,6 @@ func GetServiceInfoAPI(w http.ResponseWriter, r *http.Request) {
 // GetServiceStatistics returns the service metrics detailed information
 func GetServiceStatistics(w http.ResponseWriter, r *http.Request) {
 	if fieldDescription == nil {
-		log.Println("Field Description is nil")
 		fieldDescription = common.ConstructJsonFieldDescription()
 	}
 
