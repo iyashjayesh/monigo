@@ -3,7 +3,6 @@ package timeseries
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -64,7 +63,7 @@ func (s *StorageWrapper) Close() error {
 func GetStorageInstance() (Storage, error) {
 	var err error
 	once.Do(func() {
-		basePath = GetBasePath()
+		basePath = common.GetBasePath()
 		tstorageInstance, err := tstorage.NewStorage(
 			tstorage.WithDataPath(basePath+"/data"),
 			tstorage.WithRetention(common.GetDataRetentionPeriod()),
@@ -78,25 +77,6 @@ func GetStorageInstance() (Storage, error) {
 		ctx, cancel = context.WithCancel(context.Background())
 	})
 	return storage, err
-}
-
-// GetBasePath returns the base path for storage.
-func GetBasePath() string {
-	const monigoFolder string = "monigo"
-
-	var path string
-	appPath, _ := os.Getwd()
-	if appPath == "/" {
-		path = fmt.Sprintf("%s%s", appPath, monigoFolder)
-	} else {
-		path = fmt.Sprintf("%s/%s", appPath, monigoFolder)
-	}
-
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		os.Mkdir(path, os.ModePerm)
-	}
-
-	return path
 }
 
 // CloseStorage closes the storage instance and stops any running goroutines.
@@ -115,7 +95,7 @@ func CloseStorage() {
 
 // PurgeStorage removes all storage data and closes the storage.
 func PurgeStorage() {
-	basePath := GetBasePath()
+	basePath := common.GetBasePath()
 	if err := os.RemoveAll(basePath); err != nil {
 		log.Panicf("Error purging storage: %v\n", err)
 	}

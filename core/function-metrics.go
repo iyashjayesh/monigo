@@ -26,14 +26,13 @@ func TraceFunction(f func()) {
 	var memStatsBefore, memStatsAfter runtime.MemStats
 	runtime.ReadMemStats(&memStatsBefore)
 
-	folder := fmt.Sprintf("%s/profiles", basePath)
-	if _, err := os.Stat(folder); os.IsNotExist(err) {
-		if err := os.Mkdir(folder, 0755); err != nil {
-			log.Panic("could not create profiles folder: ", err)
-		}
+	folderPath := fmt.Sprintf("%s/profiles", basePath)
+
+	if _, err := os.Stat(folderPath); os.IsNotExist(err) {
+		os.Mkdir(folderPath, os.ModePerm)
 	}
 	cpuProfileName := fmt.Sprintf("%s_cpu.prof", name)
-	cpuProfFilePath := fmt.Sprintf("%s/%s", folder, cpuProfileName)
+	cpuProfFilePath := fmt.Sprintf("%s/%s", folderPath, cpuProfileName)
 
 	cpuProfileFile, err := StartCPUProfile(cpuProfFilePath)
 	if err != nil {
@@ -42,7 +41,7 @@ func TraceFunction(f func()) {
 	defer StopCPUProfile(cpuProfileFile)
 
 	memProfName := fmt.Sprintf("%s_mem.prof", name)
-	memProfFilePath := fmt.Sprintf("%s/%s", folder, memProfName)
+	memProfFilePath := fmt.Sprintf("%s/%s", folderPath, memProfName)
 
 	start := time.Now()
 	f()
