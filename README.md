@@ -1,5 +1,4 @@
-### Status: Testing going on for v1 release 🚀
-
+<!-- ### Status: Testing going on for v1 release 🚀 -->
 <p align="center">
   <img src="./static/assets/monigo-icon.png" width="200" title="Monigo Icon" alt="monigo-icon"/>
 </p>
@@ -10,8 +9,9 @@
 [![GoDoc](https://godoc.org/github.com/iyashjayesh/monigo?status.svg)](https://pkg.go.dev/github.com/iyashjayesh/monigo)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![Visitors](https://api.visitorbadge.io/api/visitors?path=iyashjayesh%2Fmonigo%20&countColor=%23263759&style=flat)
-[![Github All Releases](https://img.shields.io/github/downloads/iyashjayesh/monigo/total.svg)](https://GitHub.com/iyashjayesh/monigo/releases/)
 ![GitHub last commit](https://img.shields.io/github/last-commit/iyashjayesh/monigo)
+
+<!-- [![Github All Releases](https://img.shields.io/github/downloads/iyashjayesh/monigo/total.svg)](https://GitHub.com/iyashjayesh/monigo/releases/) -->
 
 **MoniGo** is a performance monitoring library for Go applications. It provides real-time insights into application performance with an intuitive user interface, enabling developers to track and optimize both service-level and function-level metrics.
 
@@ -41,10 +41,10 @@
 To install MoniGo, use the following command:
 
 ```bash
-go get github.com/iyashjayesh/monigo
+go get github.com/iyashjayesh/monigo@latest
 ```
 
-## Example: 
+## Example:
 
 ```go
 package main
@@ -92,7 +92,8 @@ For more detailed usage instructions, refer to the documentation.
 By default, the dashboard will be available at `http://localhost:8080/`.
 
 ## Bellow Reports are available
-#### Note: You can download the reports in excel format. 
+
+#### Note: You can download the reports in excel format.
 
 1. **Load Statistics**: Provides an overview of the overall load of the service, CPU load, memory load, and system load.
 
