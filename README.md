@@ -10,6 +10,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![Visitors](https://api.visitorbadge.io/api/visitors?path=iyashjayesh%2Fmonigo%20&countColor=%23263759&style=flat)
 ![GitHub last commit](https://img.shields.io/github/last-commit/iyashjayesh/monigo)
+<a href="https://www.producthunt.com/posts/monigo?embed=true&utm_source=badge-featured&utm_medium=badge&utm_souce=badge-monigo" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=487815&theme=light" alt="MoniGO - Go&#0032;App&#0032;Performance&#0032;Dashboard&#0032;in&#0032;10&#0032;Seconds&#0032;with&#0032;R&#0045;T&#0032;Insight&#0033; | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
 
 <!-- [![Github All Releases](https://img.shields.io/github/downloads/iyashjayesh/monigo/total.svg)](https://GitHub.com/iyashjayesh/monigo/releases/) -->
 
