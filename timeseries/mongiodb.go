@@ -87,7 +87,7 @@ func CloseStorage() {
 		}
 		if storage != nil {
 			if err := storage.Close(); err != nil {
-				log.Panic("Error closing storage: %v\n", err)
+				log.Panicf("Error closing storage: %v\n", err)
 			}
 		}
 	})
@@ -97,9 +97,6 @@ func CloseStorage() {
 func PurgeStorage() {
 	basePath := common.GetBasePath()
 	if err := os.RemoveAll(basePath); err != nil {
-		log.Panicf("Error purging storage: %v\n", err)
-	}
-	if err := os.RemoveAll("./data"); err != nil {
 		log.Panicf("Error purging storage: %v\n", err)
 	}
 }

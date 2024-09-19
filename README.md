@@ -90,7 +90,29 @@ func highCPUUsage() {
 ```
 
 For more detailed usage instructions, refer to the documentation.
-By default, the dashboard will be available at `http://localhost:8080/`.
+By default, the dashboard will be available at `http://localhost:8080/` else at the port you have provided.
+
+### Note:
+
+The `monigo.TraceFunction(func())` method accept `func(){}` as a type.
+
+### Example Usage:
+
+```go
+func apiHandler(w http.ResponseWriter, r *http.Request) {
+    // Trace function: when the highMemoryUsage function is called, it will be traced.
+    monigo.TraceFunction(highMemoryUsage)
+    w.Write([]byte("API1 response: memexpensiveFunc"))
+}
+
+func highMemoryUsage() {
+    // Simulate high memory usage by allocating a large slice
+    largeSlice := make([]float64, 1e8) // 100 million elements
+    for i := 0; i < len(largeSlice); i++ {
+        largeSlice[i] = float64(i)
+    }
+}
+```
 
 ## Bellow Reports are available
 
@@ -171,9 +193,9 @@ We welcome contributions! If you encounter any issues or have suggestions, pleas
 
 For questions or feedback, please open an issue or contact me at `iyashjayesh@gmail.com` or at [LinkedIn](https://www.linkedin.com/in/iyashjayesh/)
 
-<!-- ## Star History
+## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=iyashjayesh/monigo&type=Date)](https://star-history.com/#iyashjayesh/monigo&Date) -->
+[![Star History Chart](https://api.star-history.com/svg?repos=iyashjayesh/monigo&type=Date)](https://star-history.com/#iyashjayesh/monigo&Date)
 
 ## License
 

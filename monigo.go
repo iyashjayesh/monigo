@@ -58,20 +58,20 @@ type Cache struct {
 // MonigoInstanceConstructor is the constructor for the Monigo struct
 func (m *Monigo) MonigoInstanceConstructor() {
 
-	// Setting default TimeZone if not provided
-	if m.TimeZone == "" {
+	if m.TimeZone == "" { // Setting default TimeZone if not provided
 		m.TimeZone = "Local"
 	}
 
-	// Loading the time zone location
-	location, err := time.LoadLocation(m.TimeZone)
+	location, err := time.LoadLocation(m.TimeZone) // Loading the time zone location
 	if err != nil {
 		log.Println("Error loading timezone. Setting to Local, Error: ", err)
 		location = time.Local
 	}
 
-	// Setting default values
-	m.DashboardPort = 8080
+	if m.DashboardPort == 0 {
+		// Setting default values in case the dashboard port is not provided
+		m.DashboardPort = 8080
+	}
 	m.DataPointsSyncFrequency = common.DefaultIfEmpty(m.DataPointsSyncFrequency, "5m")
 	m.DataRetentionPeriod = common.DefaultIfEmpty(m.DataRetentionPeriod, "7d")
 	m.MaxCPUUsage = common.DefaultFloatIfZero(m.MaxCPUUsage, 95)
