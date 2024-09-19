@@ -151,7 +151,7 @@ func GetCPUStatistics() models.CPUStatistics {
 
 	procCPUPercent, _, err := getProcessUsage(common.GetProcessObject(), &memInfo)
 	if err != nil {
-		log.Panicf("Error fetching process usage: %v\n", err)
+		log.Panicf("[MoniGo] Error fetching process usage: %v\n", err)
 	}
 
 	totalLogicalCores, _ := cpu.Counts(true)
@@ -176,12 +176,12 @@ func GetMemoryStatistics() models.MemoryStatistics {
 
 	memInfo, err := mem.VirtualMemory() // Fetcing system memory statistics
 	if err != nil {
-		log.Panicf("Error fetching virtual memory info: %v", err)
+		log.Panicf("[MoniGo] Error fetching virtual memory info: %v", err)
 	}
 
 	swapInfo, err := mem.SwapMemory() // Fetching swap memory statistics
 	if err != nil {
-		log.Panicf("Error fetching swap memory info: %v", err)
+		log.Panicf("[MoniGo] Error fetching swap memory info: %v", err)
 	}
 
 	m := ReadMemStats() // Get the memory statistics for the service
@@ -239,7 +239,7 @@ func GetNetworkIO() (float64, float64) {
 	// Fetch network I/O statistics
 	netIO, err := net.IOCounters(true)
 	if err != nil {
-		log.Panicf("Error fetching network I/O statistics: %v", err)
+		log.Panicf("[MoniGo] Error fetching network I/O statistics: %v", err)
 	}
 
 	var totalBytesReceived, totalBytesSent float64
