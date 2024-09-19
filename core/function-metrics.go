@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"reflect"
 	"runtime"
 	"time"
@@ -27,38 +28,36 @@ func TraceFunction(f func()) {
 	runtime.ReadMemStats(&memStatsBefore)
 
 	folderPath := fmt.Sprintf("%s/profiles", basePath)
-
-	if _, err := os.Stat(folderPath); os.IsNotExist(err) {
-		os.Mkdir(folderPath, os.ModePerm)
+	if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
+		log.Panicf("could not create profiles directory: %v", err)
 	}
-	cpuProfileName := fmt.Sprintf("%s_cpu.prof", name)
-	cpuProfFilePath := fmt.Sprintf("%s/%s", folderPath, cpuProfileName)
+
+	cpuProfName := fmt.Sprintf("%s_cpu.prof", name)
+	cpuProfFilePath := filepath.Join(folderPath, cpuProfName)
+
+	memProfName := fmt.Sprintf("%s_mem.prof", name)
+	memProfFilePath := filepath.Join(folderPath, memProfName)
 
 	cpuProfileFile, err := StartCPUProfile(cpuProfFilePath)
 	if err != nil {
-		log.Println("could not start CPU profile for function: ", name, " error: ", err, " It will get generated in the next run")
+		log.Printf("could not start CPU profile for function: " + name + " : Error: " + err.Error() + " will be retrying in the next iteration")
 	}
 	defer StopCPUProfile(cpuProfileFile)
-
-	memProfName := fmt.Sprintf("%s_mem.prof", name)
-	memProfFilePath := fmt.Sprintf("%s/%s", folderPath, memProfName)
 
 	start := time.Now()
 	f()
 	elapsed := time.Since(start)
 
 	if err := WriteHeapProfile(memProfFilePath); err != nil {
-		log.Println("could not write memory profile: ", err, " for function: ", name, " It will get generated in the next run")
+		log.Printf("could not write memory profile for function: " + name + " : Error: " + err.Error() + " will be retrying in the next iteration")
 	}
 
-	// Capture final metrics
 	runtime.ReadMemStats(&memStatsAfter)
 	finalGoroutines := runtime.NumGoroutine() - initialGoroutines
 	if finalGoroutines < 0 {
 		finalGoroutines = 0
 	}
 
-	// Calculate memory usage
 	var memoryUsage uint64
 	if memStatsAfter.Alloc >= memStatsBefore.Alloc {
 		memoryUsage = memStatsAfter.Alloc - memStatsBefore.Alloc
@@ -67,10 +66,9 @@ func TraceFunction(f func()) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	// Recording the metrics
 	functionMetrics[name] = &models.FunctionMetrics{
 		FunctionLastRanAt:  start,
-		CPUProfileFilePath: cpuProfileFile.Name(),
+		CPUProfileFilePath: cpuProfFilePath,
 		MemProfileFilePath: memProfFilePath,
 		MemoryUsage:        memoryUsage,
 		GoroutineCount:     finalGoroutines,
