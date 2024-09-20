@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/iyashjayesh/monigo/common"
@@ -21,7 +22,7 @@ var (
 
 // TraceFunction traces the function and captures the metrics
 func TraceFunction(f func()) {
-	name := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name() // Getting the name of the function
+	name := strings.ReplaceAll(runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(), "/", "-") // Getting the name of the function
 
 	initialGoroutines := runtime.NumGoroutine() // Capturing the initial number of goroutines
 	var memStatsBefore, memStatsAfter runtime.MemStats
@@ -86,7 +87,6 @@ func FunctionTraceDetails() map[string]*models.FunctionMetrics {
 
 // ViewFunctionMetrics generates the function metrics
 func ViewFunctionMetrics(name, reportType string, metrics *models.FunctionMetrics) models.FunctionTraceDetails {
-
 	// Function to execute the pprof command and return the output or log an error
 	executePprof := func(profileFilePath, reportType string) string {
 		cmd := exec.Command("go", "tool", "pprof", "-"+reportType, profileFilePath)
