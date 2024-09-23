@@ -175,7 +175,7 @@ func ConvertToReadableUnit(value interface{}) string {
 	case reflect.String:
 		num = ParseStringToFloat64(v.String())
 	default:
-		log.Panic("unsupported type: ", v.Kind())
+		log.Panic("[MoniGo] unsupported type: ", v.Kind())
 		return ""
 	}
 
@@ -285,7 +285,7 @@ func GetDataRetentionPeriod() time.Duration {
 
 	rententionPeriod, err := parseDuration(rententionPeriod)
 	if err != nil {
-		log.Printf("Error parsing retention period, using default retention period (7d): %v", err)
+		log.Printf("[MoniGo] Error parsing retention period, using default retention period (7d): %v", err)
 		rententionPeriod = time.Duration(7) * 24 * time.Hour
 	}
 

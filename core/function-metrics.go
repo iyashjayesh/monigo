@@ -29,7 +29,7 @@ func TraceFunction(f func()) {
 
 	folderPath := fmt.Sprintf("%s/profiles", basePath)
 	if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
-		log.Panicf("could not create profiles directory: %v", err)
+		log.Panicf("[MoniGo] could not create profiles directory: %v", err)
 	}
 
 	cpuProfName := fmt.Sprintf("%s_cpu.prof", name)
@@ -40,7 +40,7 @@ func TraceFunction(f func()) {
 
 	cpuProfileFile, err := StartCPUProfile(cpuProfFilePath)
 	if err != nil {
-		log.Printf("could not start CPU profile for function: " + name + " : Error: " + err.Error() + " will be retrying in the next iteration")
+		log.Printf("[MoniGo] could not start CPU profile for function: " + name + " : Error: " + err.Error() + " will be retrying in the next iteration")
 	}
 	defer StopCPUProfile(cpuProfileFile)
 
@@ -49,7 +49,7 @@ func TraceFunction(f func()) {
 	elapsed := time.Since(start)
 
 	if err := WriteHeapProfile(memProfFilePath); err != nil {
-		log.Printf("could not write memory profile for function: " + name + " : Error: " + err.Error() + " will be retrying in the next iteration")
+		log.Printf("[MoniGo] could not write memory profile for function: " + name + " : Error: " + err.Error() + " will be retrying in the next iteration")
 	}
 
 	runtime.ReadMemStats(&memStatsAfter)

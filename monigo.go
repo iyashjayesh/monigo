@@ -4,6 +4,7 @@ import (
 	"embed"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"path/filepath"
 	"runtime"
@@ -55,6 +56,31 @@ type Cache struct {
 	Data map[string]time.Time
 }
 
+// setDashboardPort sets the dashboard port
+func setDashboardPort(m *Monigo) {
+	defaultPort := 8080
+
+	if m.DashboardPort < 1 || m.DashboardPort > 65535 { // Validating the port range and check if no port is provided
+		if m.DashboardPort == 0 {
+			log.Println("[MoniGo] Port not provided. Setting to default port:", defaultPort)
+		} else {
+			log.Println("[MoniGo] Invalid port provided. Setting to default port:", defaultPort)
+		}
+		m.DashboardPort = defaultPort
+	}
+
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", m.DashboardPort)) // Attempting to listen on the provided or default port
+	if err != nil {
+		log.Printf("[MoniGo] Port %d in use. Setting to default port: %d\n", m.DashboardPort, defaultPort)
+		m.DashboardPort = defaultPort
+		listener, err = net.Listen("tcp", fmt.Sprintf(":%d", m.DashboardPort))
+		if err != nil {
+			log.Panicf("[MoniGo] Failed to bind to default port %d: %v\n", defaultPort, err)
+		}
+	}
+	defer listener.Close()
+}
+
 // MonigoInstanceConstructor is the constructor for the Monigo struct
 func (m *Monigo) MonigoInstanceConstructor() {
 
@@ -64,14 +90,11 @@ func (m *Monigo) MonigoInstanceConstructor() {
 
 	location, err := time.LoadLocation(m.TimeZone) // Loading the time zone location
 	if err != nil {
-		log.Println("Error loading timezone. Setting to Local, Error: ", err)
+		log.Println("[MoniGo] Error loading timezone. Setting to Local, Error: ", err)
 		location = time.Local
 	}
 
-	if m.DashboardPort == 0 {
-		// Setting default values in case the dashboard port is not provided
-		m.DashboardPort = 8080
-	}
+	setDashboardPort(m) // Setting the dashboard port
 	m.DataPointsSyncFrequency = common.DefaultIfEmpty(m.DataPointsSyncFrequency, "5m")
 	m.DataRetentionPeriod = common.DefaultIfEmpty(m.DataRetentionPeriod, "7d")
 	m.MaxCPUUsage = common.DefaultFloatIfZero(m.MaxCPUUsage, 95)
@@ -91,13 +114,13 @@ func (m *Monigo) MonigoInstanceConstructor() {
 func (m *Monigo) Start() {
 	// Validate service name
 	if m.ServiceName == "" {
-		log.Panic("service_name is required, please provide the service name")
+		log.Panic("[MoniGo] service_name is required, please provide the service name")
 	}
 
 	m.MonigoInstanceConstructor()
 	timeseries.PurgeStorage() // Purge storage and set sync frequency for metrics
 	if err := timeseries.SetDataPointsSyncFrequency(m.DataPointsSyncFrequency); err != nil {
-		log.Panic("failed to set data points sync frequency: ", err)
+		log.Panic("[MoniGo] failed to set data points sync frequency: ", err)
 	}
 
 	// Fetching runtime details
@@ -107,7 +130,7 @@ func (m *Monigo) Start() {
 	cachePath := BasePath + "/cache.dat"
 	cache := common.Cache{Data: make(map[string]time.Time)}
 	if err := cache.LoadFromFile(cachePath); err != nil {
-		log.Panic("failed to load cache from file: ", err)
+		log.Panic("[MoniGo] failed to load cache from file: ", err)
 	}
 
 	// Updating the service start time in the cache
@@ -120,7 +143,7 @@ func (m *Monigo) Start() {
 
 	// Save the cache data to file
 	if err := cache.SaveToFile(cachePath); err != nil {
-		log.Panic("error saving cache to file: ", err)
+		log.Panic("[MoniGo] error saving cache to file: ", err)
 	}
 
 	// Setting common service information
@@ -133,7 +156,7 @@ func (m *Monigo) Start() {
 	)
 
 	if err := StartDashboard(m.DashboardPort); err != nil {
-		log.Panic("error starting the dashboard: ", err)
+		log.Panic("[MoniGo] error starting the dashboard: ", err)
 	}
 }
 

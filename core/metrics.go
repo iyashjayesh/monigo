@@ -22,7 +22,7 @@ var (
 func GetCPUPrecent() float64 {
 	cpuPercents, err := cpu.Percent(time.Second, false)
 	if err != nil {
-		log.Panicf("Error fetching CPU usage: %v\n", err)
+		log.Panicf("[MoniGo] Error fetching CPU usage: %v\n", err)
 		return 0
 	}
 
@@ -38,7 +38,7 @@ func GetCPUPrecent() float64 {
 func GetVirtualMemoryStats() mem.VirtualMemoryStat {
 	memInfo, err := mem.VirtualMemory()
 	if err != nil {
-		log.Panicf("Error fetching memory usage: %v\n", err)
+		log.Panicf("[MoniGo] Error fetching memory usage: %v\n", err)
 		return mem.VirtualMemoryStat{}
 	}
 

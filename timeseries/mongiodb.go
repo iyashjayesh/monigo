@@ -69,7 +69,7 @@ func GetStorageInstance() (Storage, error) {
 			tstorage.WithRetention(common.GetDataRetentionPeriod()),
 		)
 		if err != nil {
-			log.Panicf("Error initializing storage: %v\n", err)
+			log.Panicf("[MoniGo] Error initializing storage: %v\n", err)
 		}
 		storage = &StorageWrapper{storage: tstorageInstance}
 
@@ -87,7 +87,7 @@ func CloseStorage() {
 		}
 		if storage != nil {
 			if err := storage.Close(); err != nil {
-				log.Panicf("Error closing storage: %v\n", err)
+				log.Panicf("[MoniGo] Error closing storage: %v\n", err)
 			}
 		}
 	})
@@ -97,7 +97,7 @@ func CloseStorage() {
 func PurgeStorage() {
 	basePath := common.GetBasePath()
 	if err := os.RemoveAll(basePath); err != nil {
-		log.Panicf("Error purging storage: %v\n", err)
+		log.Panicf("[MoniGo] Error purging storage: %v\n", err)
 	}
 }
 
@@ -110,14 +110,14 @@ func SetDataPointsSyncFrequency(frequency ...string) error {
 
 	freqTime, err := time.ParseDuration(freqStr)
 	if err != nil {
-		log.Printf("Invalid frequency format: %v. Using default of 5m.\n", err)
+		log.Printf("[MoniGo] Invalid frequency format: %v. Using default of 5m.\n", err)
 		freqTime = 5 * time.Minute
 	}
 
 	// Initializing service metrics once
 	serviceMetrics := core.GetServiceStats()
 	if err := StoreServiceMetrics(&serviceMetrics); err != nil {
-		return errors.New("error storing service metrics, err: " + err.Error())
+		return errors.New("[MoniGo] error storing service metrics, err: " + err.Error())
 	}
 
 	timer := time.NewTimer(freqTime)
@@ -130,7 +130,7 @@ func SetDataPointsSyncFrequency(frequency ...string) error {
 			case <-timer.C:
 				serviceMetrics := core.GetServiceStats()
 				if err := StoreServiceMetrics(&serviceMetrics); err != nil {
-					log.Printf("Error storing service metrics: %v\n", err)
+					log.Printf("[MoniGo] Error storing service metrics: %v\n", err)
 				}
 				timer.Reset(freqTime)
 			}
