@@ -8,9 +8,11 @@ import (
 	"net/http"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/iyashjayesh/monigo/api"
 	"github.com/iyashjayesh/monigo/common"
 	"github.com/iyashjayesh/monigo/core"
@@ -24,6 +26,8 @@ var (
 	Once        sync.Once          = sync.Once{} // Ensures that the storage is initialized only once
 	BasePath    string                           // Base path for the monigo
 	baseAPIPath = "/monigo/api/v1"               // Base API path for the dashboard
+	router      interface{}                      // Router to register the dashboard routes
+	routePath   string             = "/"         // Route path for the dashboard
 )
 
 func init() {
@@ -61,11 +65,6 @@ func setDashboardPort(m *Monigo) {
 	defaultPort := 8080
 
 	if m.DashboardPort < 1 || m.DashboardPort > 65535 { // Validating the port range and check if no port is provided
-		if m.DashboardPort == 0 {
-			log.Println("[MoniGo] Port not provided. Setting to default port:", defaultPort)
-		} else {
-			log.Println("[MoniGo] Invalid port provided. Setting to default port:", defaultPort)
-		}
 		m.DashboardPort = defaultPort
 	}
 
@@ -94,7 +93,6 @@ func (m *Monigo) MonigoInstanceConstructor() {
 		location = time.Local
 	}
 
-	setDashboardPort(m) // Setting the dashboard port
 	m.DataPointsSyncFrequency = common.DefaultIfEmpty(m.DataPointsSyncFrequency, "5m")
 	m.DataRetentionPeriod = common.DefaultIfEmpty(m.DataRetentionPeriod, "7d")
 	m.MaxCPUUsage = common.DefaultFloatIfZero(m.MaxCPUUsage, 95)
@@ -108,6 +106,35 @@ func (m *Monigo) MonigoInstanceConstructor() {
 	})
 
 	m.ServiceStartTime = time.Now().In(location) // Setting the service start time
+}
+
+func RegisterDashboardRoute(routerType interface{}, rPath string) {
+
+	// Supported Routers are mentioned below:
+	// 1. *http.ServeMux
+	// 2. *gin.Engine 	(In Progress)
+	// 3. *mux.Router 	(In Progress)
+	// 4. *chi.Mux 		(In Progress)
+	// 5. *echo.Echo 	(In Progress)
+	// 6. *gorilla.Mux 	(In Progress)
+	// If the router is not provided, then the default router *http.ServeMux will be used
+
+	// In case you want to need a router support for any other router
+	// please raise a feature request on the GitHub repository, I will try to add the support for the same in the next release
+	// Thanks, Yash!
+
+	switch r := routerType.(type) {
+	case *http.ServeMux:
+		router = r
+		routePath = rPath
+
+	case *gin.Engine:
+		router = r
+		routePath = rPath
+
+	default:
+		log.Println("[MoniGo] Invalid router type. Supported types are *http.ServeMux and *gin.Engine, Setting to default router *http.ServeMux")
+	}
 }
 
 // Function to start the monigo service
@@ -154,10 +181,10 @@ func (m *Monigo) Start() {
 		m.ProcessId,
 		m.DataRetentionPeriod,
 	)
-
-	if err := StartDashboard(m.DashboardPort); err != nil {
-		log.Panic("[MoniGo] error starting the dashboard: ", err)
+	if routePath == "/" {
+		setDashboardPort(m) // Set the dashboard port
 	}
+	startDashboard(router, routePath, m.DashboardPort) // Start the dashboard
 }
 
 // GetGoRoutinesStats get back the Go routines stats from the core package
@@ -170,40 +197,44 @@ func TraceFunction(f func()) {
 	core.TraceFunction(f)
 }
 
-// StartDashboard starts the dashboard on the specified port
-func StartDashboard(port int) error {
-
-	if port == 0 {
-		port = 8080 // Default port for the dashboard
+// startDashboard starts the dashboard on the specified port
+func startDashboard(router interface{}, path string, port int) {
+	if port != 0 && router == nil {
+		log.Println("[MoniGo] Port and router not provided. Setting to default port and router (Default Port: 8080 and Default Router: *http.ServeMux)")
+		r := http.NewServeMux()
+		r.HandleFunc("/", serveStaticFiles("static", "/"))                                             // Serve the HTML site
+		r.HandleFunc(fmt.Sprintf("%s/metrics", baseAPIPath), api.GetServiceStatistics)                 // Service Statistics API
+		r.HandleFunc(fmt.Sprintf("%s/service-info", baseAPIPath), api.GetServiceInfoAPI)               // Service API to get the service information
+		r.HandleFunc(fmt.Sprintf("%s/service-metrics", baseAPIPath), api.GetServiceMetricsFromStorage) // Service API to get the service metrics
+		r.HandleFunc(fmt.Sprintf("%s/go-routines-stats", baseAPIPath), api.GetGoRoutinesStats)         // Service API to get the Go routines stats
+		r.HandleFunc(fmt.Sprintf("%s/function", baseAPIPath), api.GetFunctionTraceDetails)             // Service API to get the function trace details
+		r.HandleFunc(fmt.Sprintf("%s/function-details", baseAPIPath), api.ViewFunctionMaetrtics)       // Service API to get the function metrics
+		r.HandleFunc(fmt.Sprintf("%s/reports", baseAPIPath), api.GetReportData)                        // Reports API to get the reports
+		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), r))
+	} else {
+		switch router := router.(type) {
+		case *http.ServeMux:
+			log.Println("[MoniGo] Starting the dashboard on the provided router path and port:", path)
+			router.HandleFunc("/", serveStaticFiles("static", path)) // Serve the HTML site
+			router.HandleFunc(fmt.Sprintf("%s/metrics", baseAPIPath), api.GetServiceStatistics)
+			router.HandleFunc(fmt.Sprintf("%s/service-info", baseAPIPath), api.GetServiceInfoAPI)
+			router.HandleFunc(fmt.Sprintf("%s/service-metrics", baseAPIPath), api.GetServiceMetricsFromStorage)
+			router.HandleFunc(fmt.Sprintf("%s/go-routines-stats", baseAPIPath), api.GetGoRoutinesStats)
+			router.HandleFunc(fmt.Sprintf("%s/function", baseAPIPath), api.GetFunctionTraceDetails)
+			router.HandleFunc(fmt.Sprintf("%s/function-details", baseAPIPath), api.ViewFunctionMaetrtics)
+			router.HandleFunc(fmt.Sprintf("%s/reports", baseAPIPath), api.GetReportData)
+		case *gin.Engine:
+			log.Println("[MoniGo] Starting the dashboard on the provided router: ", router)
+			// @TODO: Need to work on the gin router
+		default:
+			log.Panic("[MoniGo] Invalid router type. Supported types are *http.ServeMux and *gin.Engine")
+		}
 	}
-
-	// HTML site
-	http.HandleFunc("/", serveHtmlSite)
-
-	// API to get Service Statistics
-	http.HandleFunc(fmt.Sprintf("%s/metrics", baseAPIPath), api.GetServiceStatistics)
-
-	// Service APIs
-	http.HandleFunc(fmt.Sprintf("%s/service-info", baseAPIPath), api.GetServiceInfoAPI)
-	http.HandleFunc(fmt.Sprintf("%s/service-metrics", baseAPIPath), api.GetServiceMetricsFromStorage)
-	http.HandleFunc(fmt.Sprintf("%s/go-routines-stats", baseAPIPath), api.GetGoRoutinesStats)
-	http.HandleFunc(fmt.Sprintf("%s/function", baseAPIPath), api.GetFunctionTraceDetails)
-	http.HandleFunc(fmt.Sprintf("%s/function-details", baseAPIPath), api.ViewFunctionMaetrtics)
-
-	// Reports
-	http.HandleFunc(fmt.Sprintf("%s/reports", baseAPIPath), api.GetReportData)
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
-		return fmt.Errorf("error starting the dashboard: %v", err)
-	}
-
-	return nil
 }
 
-// serveHtmlSite serves the HTML, CSS, JS, and other static files
-func serveHtmlSite(w http.ResponseWriter, r *http.Request) {
-	baseDir := "static"
-	// Map of content types based on file extensions
-	contentTypes := map[string]string{
+// serveStaticFiles serves HTML, CSS, JS, and other static files from the specified base directory.
+func serveStaticFiles(baseDir, basePath string) http.HandlerFunc {
+	contentTypes := map[string]string{ // Mapping of file extensions to content types
 		".html":  "text/html",
 		".ico":   "image/x-icon",
 		".css":   "text/css",
@@ -216,25 +247,29 @@ func serveHtmlSite(w http.ResponseWriter, r *http.Request) {
 		".woff2": "font/woff2",
 	}
 
-	filePath := baseDir + r.URL.Path
-	if r.URL.Path == "/" {
-		filePath = baseDir + "/index.html"
-	} else if r.URL.Path == "/favicon.ico" {
-		filePath = baseDir + "/assets/favicon.ico"
-	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		trimmedPath := strings.TrimPrefix(r.URL.Path, basePath)
+		if trimmedPath == "" || trimmedPath == "/" {
+			trimmedPath = "/index.html"
+		} else if trimmedPath == "/favicon.ico" {
+			trimmedPath = "/assets/favicon.ico"
+		}
 
-	ext := filepath.Ext(filePath) // getting the file extension
-	contentType, ok := contentTypes[ext]
-	if !ok {
-		contentType = "application/octet-stream"
-	}
+		filePath := filepath.Join(baseDir, trimmedPath)
+		ext := filepath.Ext(filePath)
+		contentType := contentTypes[ext]
+		if contentType == "" {
+			contentType = "application/octet-stream"
+		}
 
-	file, err := staticFiles.ReadFile(filePath)
-	if err != nil {
-		http.Error(w, "Could not load "+filePath, http.StatusInternalServerError)
-		return
-	}
+		log.Println("[MoniGo] Requested path:", r.URL.Path, ", File path:", filePath)
 
-	w.Header().Set("Content-Type", contentType)
-	w.Write(file)
+		file, err := staticFiles.ReadFile(filePath)
+		if err != nil {
+			http.Error(w, "Could not load "+filePath, http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", contentType)
+		w.Write(file)
+	}
 }
