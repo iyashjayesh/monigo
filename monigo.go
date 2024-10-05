@@ -224,12 +224,46 @@ func startDashboard(router interface{}, path string, port int) {
 			router.HandleFunc(fmt.Sprintf("%s/function-details", baseAPIPath), api.ViewFunctionMaetrtics)
 			router.HandleFunc(fmt.Sprintf("%s/reports", baseAPIPath), api.GetReportData)
 		case *gin.Engine:
-			log.Println("[MoniGo] Starting the dashboard on the provided router: ", router)
-			// @TODO: Need to work on the gin router
+			log.Println("[MoniGo] Starting the dashboard on the provided Gin router at port:", port)
+			// @TODO: Need to fix the static file serving for Gin
+			router.GET("/", serveStaticFilesGin("static", path))                                             // Serve the HTML site
+			router.GET(fmt.Sprintf("%s/metrics", baseAPIPath), api.GinHandlerFunc(api.GetServiceStatistics)) // Service Statistics API
+			router.GET(fmt.Sprintf("%s/service-info", baseAPIPath), api.GinHandlerFunc(api.GetServiceInfoAPI))
+			router.GET(fmt.Sprintf("%s/service-metrics", baseAPIPath), api.GinHandlerFunc(api.GetServiceMetricsFromStorage))
+			router.GET(fmt.Sprintf("%s/go-routines-stats", baseAPIPath), api.GinHandlerFunc(api.GetGoRoutinesStats))
+			router.GET(fmt.Sprintf("%s/function", baseAPIPath), api.GinHandlerFunc(api.GetFunctionTraceDetails))
+			router.GET(fmt.Sprintf("%s/function-details", baseAPIPath), api.GinHandlerFunc(api.ViewFunctionMaetrtics))
+			router.GET(fmt.Sprintf("%s/reports", baseAPIPath), api.GinHandlerFunc(api.GetReportData))
 		default:
 			log.Panic("[MoniGo] Invalid router type. Supported types are *http.ServeMux and *gin.Engine")
 		}
 	}
+}
+
+// serveStaticFileHelper is a helper function that serves static files.
+func serveStaticFileHelper(baseDir, basePath, requestedPath string, contentTypes map[string]string) (string, []byte, string, error) {
+	trimmedPath := strings.TrimPrefix(requestedPath, basePath)
+	if trimmedPath == "" || trimmedPath == "/" {
+		trimmedPath = "/index.html"
+	} else if trimmedPath == "/favicon.ico" {
+		trimmedPath = "/assets/favicon.ico"
+	}
+
+	filePath := filepath.Join(baseDir, trimmedPath)
+	ext := filepath.Ext(filePath)
+	contentType := contentTypes[ext]
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+
+	log.Println("[MoniGo] Requested path:", requestedPath, ", File path:", filePath)
+
+	file, err := staticFiles.ReadFile(filePath)
+	if err != nil {
+		return "", nil, "", err
+	}
+
+	return filePath, file, contentType, nil
 }
 
 // serveStaticFiles serves HTML, CSS, JS, and other static files from the specified base directory.
@@ -248,28 +282,41 @@ func serveStaticFiles(baseDir, basePath string) http.HandlerFunc {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		trimmedPath := strings.TrimPrefix(r.URL.Path, basePath)
-		if trimmedPath == "" || trimmedPath == "/" {
-			trimmedPath = "/index.html"
-		} else if trimmedPath == "/favicon.ico" {
-			trimmedPath = "/assets/favicon.ico"
-		}
-
-		filePath := filepath.Join(baseDir, trimmedPath)
-		ext := filepath.Ext(filePath)
-		contentType := contentTypes[ext]
-		if contentType == "" {
-			contentType = "application/octet-stream"
-		}
-
-		log.Println("[MoniGo] Requested path:", r.URL.Path, ", File path:", filePath)
-
-		file, err := staticFiles.ReadFile(filePath)
+		filePath, file, contentType, err := serveStaticFileHelper(baseDir, basePath, r.URL.Path, contentTypes)
 		if err != nil {
 			http.Error(w, "Could not load "+filePath, http.StatusInternalServerError)
 			return
 		}
+
 		w.Header().Set("Content-Type", contentType)
 		w.Write(file)
+	}
+}
+
+// serveStaticFilesGin serves HTML, CSS, JS, and other static files from the specified base directory for Gin.
+func serveStaticFilesGin(baseDir, basePath string) gin.HandlerFunc {
+	contentTypes := map[string]string{ // Mapping of file extensions to content types
+		".html":  "text/html",
+		".ico":   "image/x-icon",
+		".css":   "text/css",
+		".js":    "application/javascript",
+		".png":   "image/png",
+		".jpg":   "image/jpeg",
+		".jpeg":  "image/jpeg",
+		".svg":   "image/svg+xml",
+		".woff":  "font/woff",
+		".woff2": "font/woff2",
+	}
+
+	return func(c *gin.Context) {
+		filePath, file, contentType, err := serveStaticFileHelper(baseDir, basePath, c.Request.URL.Path, contentTypes)
+		if err != nil {
+			c.String(http.StatusInternalServerError, "Could not load "+filePath)
+			return
+		}
+
+		c.Header("Content-Type", contentType)
+		c.Status(http.StatusOK)
+		c.Writer.Write(file)
 	}
 }
