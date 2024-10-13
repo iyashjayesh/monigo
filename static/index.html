@@ -1,32 +1,32 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <title>Monigo - Metrics Dashboard</title>
     <!-- Favicon -->
     <link rel="shortcut icon" href="../assets/favicon.ico" />
 
-    <link rel="stylesheet" href="./css/core/backend-plugin.min.css">
-    <link rel="stylesheet" href="./css/core/backend.css?v=1.0.0">
-    <link rel="stylesheet" href="./css/monigo-styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="./css/core/backend-plugin.min.css" />
+    <link rel="stylesheet" href="./css/core/backend.css?v=1.0.0" />
+    <link rel="stylesheet" href="./css/monigo-styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 
 <body class="  ">
     <!-- loader Start -->
     <div id="loading">
-        <div id="loading-center">
-        </div>
+        <div id="loading-center"></div>
     </div>
     <!-- loader END -->
     <!-- Wrapper Start -->
     <div class="wrapper">
-        <div class="iq-sidebar  sidebar-default ">
+        <div class="iq-sidebar sidebar-default">
             <div class="iq-sidebar-logo d-flex align-items-center justify-content-between">
                 <a href="./index.html" class="header-logo">
-                    <img src="./assets/monigo-icon.png" class="img-fluid rounded-normal light-logo" alt="logo">
+                    <img src="./assets/monigo-icon.png" class="img-fluid rounded-normal light-logo" alt="logo" />
                 </a>
                 <div class="iq-menu-bt-sidebar ml-0">
                     <i class="las la-bars wrapper-menu"></i>
@@ -52,8 +52,10 @@
                         </li>
                         <li class=" ">
                             <a href="./function-metrics.html" class="">
-                                <svg class="svg-icon" id="p-dash1" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg class="svg-icon" id="p-dash1" width="20" height="20"
+                                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
                                     <path
                                         d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
                                     </path>
@@ -92,8 +94,7 @@
                                 </svg>
                                 <span class="ml-4">Reports</span>
                             </a>
-                            <ul id="reports" class="iq-submenu collapse" data-parent="#iq-sidebar-toggle">
-                            </ul>
+                            <ul id="reports" class="iq-submenu collapse" data-parent="#iq-sidebar-toggle"></ul>
                         </li>
                     </ul>
                 </nav>
@@ -101,8 +102,12 @@
                     <div class="card border-none border-radius-20 p-2 bg-success-light">
                         <div class="card-body">
                             <div class="sidebarbottom-content">
-                                <h6 class="body-title">Spot a bug or issue? Hit us up on GitHub! 🐞 And if you like what you see, don’t forget to toss
-                                    us a star on Github! 🌟</h6>
+                                <h6 class="body-title">
+                                    Spot a bug or issue? Hit us up on
+                                    GitHub! 🐞 And if you like what you see,
+                                    don’t forget to toss us a star on
+                                    Github! 🌟
+                                </h6>
                                 <button type="button" class="btn sidebar-bottom-btn mt-4">
                                     <a href="https://github.com/iyashjayesh/monigo" target="_blank">
                                         Support the project
@@ -121,7 +126,8 @@
                     <div class="iq-navbar-logo d-flex align-items-center justify-content-between">
                         <i class="ri-menu-line wrapper-menu"></i>
                         <a href="./index.html" class="header-logo">
-                            <img src="./assets/monigo-icon.png" class="img-fluid rounded-normal light-logo" alt="logo">
+                            <img src="./assets/monigo-icon.png" class="img-fluid rounded-normal light-logo"
+                                alt="logo" />
                         </a>
                     </div>
                     <div class="iq-search-bar device-search">
@@ -138,6 +144,10 @@
                             </div>
                         </div>
                     </div>
+                    <button id="download-image-btn" type="button" class="btn btn-primary add-list">
+                        <i class="fa fa-download" aria-hidden="true"></i>
+                        Download Dashboard Image
+                    </button>
                     <div class="d-flex align-items-center">
                         <button class="navbar-toggler" type="button" data-toggle="collapse"
                             data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
@@ -147,9 +157,10 @@
                         <div class="collapse navbar-collapse" id="navbarSupportedContent">
                             <ul class="navbar-nav ml-auto navbar-list align-items-center">
                                 <!-- on hover cursor-pointer -->
-                                <i id="refresh-btn" class="fa fa-refresh fa-1x mr-2 cursor-pointer" aria-hidden="true"></i>
+                                <i id="refresh-btn" class="fa fa-refresh fa-1x mr-2 cursor-pointer"
+                                    aria-hidden="true"></i>
                                 <li class="nav-item nav-icon">
-                                    <a  class="btn border add-btn">
+                                    <a class="btn border add-btn">
                                         <span id="refresh-countdown">Refreshing in 5m 0s</span>
                                     </a>
                                 </li>
@@ -165,24 +176,25 @@
                 </nav>
             </div>
         </div>
-        <div class="content-page">
+        <div class="content-page" id="content-page">
             <div class="container-fluid">
                 <div class="row">
                     <div class="col-lg-4 align-items-center">
                         <div class="card card-block card-stretch card-height">
                             <div class="card-body">
-                                    <div class="service-health">
-                                        <h4 class="mb-0"> Health Info <span class="info-icon ml-1"
-                                                data-tooltip="Health Score Calculation">i</span>
-                                        </h4>
-                                        <div id="service-health-tag"></div>
-                                        <div id="system-health-tag"></div>
-                                    </div>
-                                        <div class="gauge" id="g1">
-                                            <svg viewBox="0 0 60 25">
-                                                <text x="50%" y="50%">...</text>
-                                            </svg>
-                                        </div>
+                                <div class="service-health">
+                                    <h4 class="mb-0">
+                                        Health Info
+                                        <span class="info-icon ml-1" data-tooltip="Health Score Calculation">i</span>
+                                    </h4>
+                                    <div id="service-health-tag"></div>
+                                    <div id="system-health-tag"></div>
+                                </div>
+                                <div class="gauge" id="g1">
+                                    <svg viewBox="0 0 60 25">
+                                        <text x="50%" y="50%">...</text>
+                                    </svg>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -192,7 +204,8 @@
                                 <div class="card card-block card-stretch card-height">
                                     <div class="card-body">
                                         <div class="icon iq-icon-box-2 bg-info-light">
-                                            <img src="./assets/product/service.png" class="img-fluid" alt="GoRoutines Image">
+                                            <img src="./assets/product/service.png" class="img-fluid"
+                                                alt="GoRoutines Image" />
                                         </div>
                                         <div id="service_name"></div>
                                         <div class="iq-progress-bar mt-2">
@@ -206,7 +219,8 @@
                                 <div class="card card-block card-stretch card-height">
                                     <div class="card-body">
                                         <div class="icon iq-icon-box-2 bg-info-light">
-                                            <img src="./assets/product/go-version.png" class="img-fluid" alt="GoRoutines Image">
+                                            <img src="./assets/product/go-version.png" class="img-fluid"
+                                                alt="GoRoutines Image" />
                                         </div>
                                         <div id="go_version"></div>
                                         <div class="iq-progress-bar mt-2">
@@ -221,13 +235,14 @@
                                     <div class="card-body">
                                         <div class="d-flex align-items-center card-total-sale">
                                             <div class="icon iq-icon-box-2 bg-info-light">
-                                                <img src="./assets/product/start-time.png" class="img-fluid" alt="Load Image">
+                                                <img src="./assets/product/start-time.png" class="img-fluid"
+                                                    alt="Load Image" />
                                             </div>
                                             <div id="service_start_time"></div>
                                         </div>
                                         <div class="d-flex align-items-center card-total-sale">
                                             <div class="icon iq-icon-box-2 bg-info-light">
-                                                <img src="./assets/product/id.png" class="img-fluid" alt="Load Image">
+                                                <img src="./assets/product/id.png" class="img-fluid" alt="Load Image" />
                                             </div>
                                             <div id="process_id"></div>
                                         </div>
@@ -249,17 +264,16 @@
                                         <div class="d-flex align-items-center mb-4 card-total-sale">
                                             <div class="icon iq-icon-box-2 bg-info-light">
                                                 <img src="./assets/product/thread.png" class="img-fluid"
-                                                    alt="GoRoutines Image">
+                                                    alt="GoRoutines Image" />
                                             </div>
-                                            <div id="goroutines">
-                                            </div>
+                                            <div id="goroutines"></div>
                                             <!-- <div>
                                        <p class="mb-2">${item.name} <span class="info-icon" data-tooltip="${item.description}">i</span></p>
                                        <h4>${item.value}</h4>
                                        </div> -->
                                         </div>
                                         <div class="iq-progress-bar mt-2">
-                                            <span class="bg-info iq-progress progress-1" style="width: 0%;"
+                                            <span class="bg-info iq-progress progress-1" style="width: 0%"
                                                 data-percent="100">
                                             </span>
                                         </div>
@@ -272,21 +286,27 @@
                                         <div class="d-flex align-items-center mb-4 card-total-sale">
                                             <div class="icon iq-icon-box-2 bg-info-light">
                                                 <img src="./assets/product/cpu-load.png" class="img-fluid"
-                                                    alt="Load Image">
+                                                    alt="Load Image" />
                                             </div>
-                                            <div id="service-load">
-                                            </div>
-                                            <div style="padding-left: 64px;">
-                                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#loadUsageModalView">
+                                            <div id="service-load"></div>
+                                            <div style="padding-left: 64px">
+                                                <button type="button" class="btn btn-primary" data-toggle="modal"
+                                                    data-target="#loadUsageModalView">
                                                     Detailed View
                                                 </button>
-                                                <div class="modal fade" id="loadUsageModalView" tabindex="-1" role="dialog" aria-labelledby="loadUsageModalViewTitle"
+                                                <div class="modal fade" id="loadUsageModalView" tabindex="-1"
+                                                    role="dialog" aria-labelledby="loadUsageModalViewTitle"
                                                     aria-hidden="true">
                                                     <div class="modal-dialog modal-dialog-scrollable" role="document">
                                                         <div class="modal-content">
                                                             <div class="modal-header">
-                                                                <h5 class="modal-title" id="loadUsageModalViewTitle">Load Usage Statistics</h5>
-                                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                <h5 class="modal-title" id="loadUsageModalViewTitle">
+                                                                    Load
+                                                                    Usage
+                                                                    Statistics
+                                                                </h5>
+                                                                <button type="button" class="close" data-dismiss="modal"
+                                                                    aria-label="Close">
                                                                     <span aria-hidden="true">&times;</span>
                                                                 </button>
                                                             </div>
@@ -294,7 +314,10 @@
                                                                 <div id="load-usage-detail-button"></div>
                                                             </div>
                                                             <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                                <button type="button" class="btn btn-secondary"
+                                                                    data-dismiss="modal">
+                                                                    Close
+                                                                </button>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -302,7 +325,7 @@
                                             </div>
                                         </div>
                                         <div class="iq-progress-bar mt-2">
-                                            <span class="bg-info iq-progress progress-1" style="width: 0%;"
+                                            <span class="bg-info iq-progress progress-1" style="width: 0%"
                                                 data-percent="100">
                                             </span>
                                         </div>
@@ -315,21 +338,27 @@
                                         <div class="d-flex align-items-center mb-4 card-total-sale">
                                             <div class="icon iq-icon-box-2 bg-info-light">
                                                 <img src="./assets/product/cpu-core.png" class="img-fluid"
-                                                    alt="Cores Image">
+                                                    alt="Cores Image" />
                                             </div>
-                                            <div id="cores">
-                                            </div>
-                                            <div style="padding-left: 26px;">
-                                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#coreUsageModalView">
+                                            <div id="cores"></div>
+                                            <div style="padding-left: 26px">
+                                                <button type="button" class="btn btn-primary" data-toggle="modal"
+                                                    data-target="#coreUsageModalView">
                                                     Detailed View
                                                 </button>
-                                                <div class="modal fade" id="coreUsageModalView" tabindex="-1" role="dialog" aria-labelledby="coreUsageModalViewTitle"
+                                                <div class="modal fade" id="coreUsageModalView" tabindex="-1"
+                                                    role="dialog" aria-labelledby="coreUsageModalViewTitle"
                                                     aria-hidden="true">
                                                     <div class="modal-dialog modal-dialog-scrollable" role="document">
                                                         <div class="modal-content">
                                                             <div class="modal-header">
-                                                                <h5 class="modal-title" id="coreUsageModalViewTitle">Core Usage Statistics</h5>
-                                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                <h5 class="modal-title" id="coreUsageModalViewTitle">
+                                                                    Core
+                                                                    Usage
+                                                                    Statistics
+                                                                </h5>
+                                                                <button type="button" class="close" data-dismiss="modal"
+                                                                    aria-label="Close">
                                                                     <span aria-hidden="true">&times;</span>
                                                                 </button>
                                                             </div>
@@ -337,7 +366,10 @@
                                                                 <div id="core-usage-detail-button"></div>
                                                             </div>
                                                             <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                                <button type="button" class="btn btn-secondary"
+                                                                    data-dismiss="modal">
+                                                                    Close
+                                                                </button>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -345,7 +377,7 @@
                                             </div>
                                         </div>
                                         <div class="iq-progress-bar mt-2">
-                                            <span class="bg-info iq-progress progress-1" style="width: 0%;"
+                                            <span class="bg-info iq-progress progress-1" style="width: 0%"
                                                 data-percent="100">
                                             </span>
                                         </div>
@@ -358,21 +390,27 @@
                                         <div class="d-flex align-items-center mb-4 card-total-sale">
                                             <div class="icon iq-icon-box-2 bg-info-light">
                                                 <img src="./assets/product/memory.png" class="img-fluid"
-                                                    alt="Memory Image">
+                                                    alt="Memory Image" />
                                             </div>
-                                            <div id="memory">
-                                            </div>
-                                            <div style="padding-left: 40px;">
-                                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalScrollable">
+                                            <div id="memory"></div>
+                                            <div style="padding-left: 40px">
+                                                <button type="button" class="btn btn-primary" data-toggle="modal"
+                                                    data-target="#exampleModalScrollable">
                                                     Detailed View
                                                 </button>
-                                                <div class="modal fade" id="exampleModalScrollable" tabindex="-1" role="dialog"
-                                                    aria-labelledby="exampleModalScrollableTitle" aria-hidden="true">
+                                                <div class="modal fade" id="exampleModalScrollable" tabindex="-1"
+                                                    role="dialog" aria-labelledby="exampleModalScrollableTitle"
+                                                    aria-hidden="true">
                                                     <div class="modal-dialog modal-dialog-scrollable" role="document">
                                                         <div class="modal-content">
                                                             <div class="modal-header">
-                                                                <h5 class="modal-title" id="exampleModalScrollableTitle">Memory Statistics</h5>
-                                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                <h5 class="modal-title"
+                                                                    id="exampleModalScrollableTitle">
+                                                                    Memory
+                                                                    Statistics
+                                                                </h5>
+                                                                <button type="button" class="close" data-dismiss="modal"
+                                                                    aria-label="Close">
                                                                     <span aria-hidden="true">&times;</span>
                                                                 </button>
                                                             </div>
@@ -380,7 +418,10 @@
                                                                 <div id="memory-detail-button"></div>
                                                             </div>
                                                             <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                                <button type="button" class="btn btn-secondary"
+                                                                    data-dismiss="modal">
+                                                                    Close
+                                                                </button>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -388,7 +429,7 @@
                                             </div>
                                         </div>
                                         <div class="iq-progress-bar mt-2">
-                                            <span class="bg-info iq-progress progress-1" style="width: 0%;"
+                                            <span class="bg-info iq-progress progress-1" style="width: 0%"
                                                 data-percent="100">
                                             </span>
                                         </div>
@@ -401,14 +442,12 @@
                                         <div class="d-flex align-items-center mb-4 card-total-sale">
                                             <div class="icon iq-icon-box-2 bg-info-light">
                                                 <img src="./assets/product/cpu-usage.png" class="img-fluid"
-                                                    alt="CPU Usage Image">
+                                                    alt="CPU Usage Image" />
                                             </div>
-                                            <div id="cpu-usage">
-                                            </div>
-                                            
+                                            <div id="cpu-usage"></div>
                                         </div>
                                         <div class="iq-progress-bar mt-2">
-                                            <span class="bg-info iq-progress progress-1" style="width: 0%;"
+                                            <span class="bg-info iq-progress progress-1" style="width: 0%"
                                                 data-percent="100">
                                             </span>
                                         </div>
@@ -421,13 +460,12 @@
                                         <div class="d-flex align-items-center mb-4 card-total-sale">
                                             <div class="icon iq-icon-box-2 bg-info-light">
                                                 <img src="./assets/product/uptime.png" class="img-fluid"
-                                                    alt="Uptime Image">
+                                                    alt="Uptime Image" />
                                             </div>
-                                            <div id="uptime">
-                                            </div>
+                                            <div id="uptime"></div>
                                         </div>
                                         <div class="iq-progress-bar mt-2">
-                                            <span class="bg-info iq-progress progress-1" style="width: 0%;"
+                                            <span class="bg-info iq-progress progress-1" style="width: 0%"
                                                 data-percent="100">
                                             </span>
                                         </div>
@@ -436,7 +474,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-6">
+                    <div class="col-lg-6" id="load-statistics">
                         <div class="card card-block card-stretch card-height">
                             <div class="card-header d-flex justify-content-between">
                                 <div class="header-title">
@@ -446,8 +484,13 @@
                                             data-tooltip="Load Statistics shows the 'Service CPU Load', 'System CPU Load', 'Total CPU Load', 'Service Memory Load', 'System Memory Load'">i</span>
                                     </h4>
                                 </div>
+                                <button id="download-load-statistics-btn" type="button"
+                                    class="btn btn-primary add-list">
+                                    <i class="fa fa-download" aria-hidden="true"></i>
+                                    Image
+                                </button>
                             </div>
-                            <div class="card-body" style="position: relative;">
+                            <div class="card-body" style="position: relative">
                                 <div class="chart-container" id="load-chart"></div>
                             </div>
                         </div>
@@ -457,13 +500,17 @@
                             <div class="card-header d-flex justify-content-between">
                                 <div class="header-title">
                                     <h4 class="card-title">
-                                        CPU Statistics 
+                                        CPU Statistics
                                         <span class="info-icon"
                                             data-tooltip="CPU Statistics shows the 'Cores Used by Service', 'Cores Used by System', 'Total Cores'">i</span>
                                     </h4>
                                 </div>
+                                <button id="download-cpu-statistics-btn" type="button" class="btn btn-primary add-list">
+                                    <i class="fa fa-download" aria-hidden="true"></i>
+                                    Image
+                                </button>
                             </div>
-                            <div class="card-body" style="position: relative;">
+                            <div class="card-body" id="cpu-statistics" style="position: relative">
                                 <div class="chart-container" id="cpu-chart"></div>
                             </div>
                         </div>
@@ -473,12 +520,18 @@
                             <div class="card-header d-flex justify-content-between">
                                 <div class="header-title">
                                     <h4 class="card-title">
-                                        Memory Statistics <span class="info-icon"
+                                        Memory Statistics
+                                        <span class="info-icon"
                                             data-tooltip="Memory Statistics shows the 'Memory Used by Service', 'Memory Used by System', 'Available Memory'">i</span>
                                     </h4>
                                 </div>
+                                <button id="download-memory-statistics-btn" type="button"
+                                    class="btn btn-primary add-list">
+                                    <i class="fa fa-download" aria-hidden="true"></i>
+                                    Image
+                                </button>
                             </div>
-                            <div class="card-body" style="position: relative;">
+                            <div class="card-body" id="memory-statistics" style="position: relative">
                                 <div class="chart-container" id="memory-pie-chart"></div>
                             </div>
                         </div>
@@ -488,13 +541,18 @@
                             <div class="card-header d-flex justify-content-between">
                                 <div class="header-title">
                                     <h4 class="card-title">
-                                        Heap Memory Usage 
+                                        Heap Memory Usage
                                         <span class="info-icon"
                                             data-tooltip="Heap Memory Usage shows the 'HeapAlloc', 'HeapSys', 'HeapIdle', 'HeapInuse', 'HeapReleased'">i</span>
                                     </h4>
                                 </div>
+                                <button id="download-heap-statistics-btn" type="button"
+                                    class="btn btn-primary add-list">
+                                    <i class="fa fa-download" aria-hidden="true"></i>
+                                    Image
+                                </button>
                             </div>
-                            <div class="card-body" style="position: relative;">
+                            <div class="card-body" style="position: relative">
                                 <div class="chart-container" id="heap-memory-chart"></div>
                             </div>
                         </div>
@@ -503,30 +561,62 @@
                         <div class="card card-block card-stretch card-height">
                             <div class="card-header d-flex align-items-center justify-content-between">
                                 <div class="header-title">
-                                    <h4 class="card-title">History Statistics Overview</h4>
+                                    <h4 class="card-title">
+                                        History Statistics Overview
+                                    </h4>
                                 </div>
                                 <div class="card-header-toolbar d-flex align-items-center">
+                                    <button id="download-history-statistics-btn" type="button"
+                                        class="btn btn-primary add-list" style="margin-right: 20px">
+                                        <i class="fa fa-download" aria-hidden="true"></i>
+                                        Image
+                                    </button>
                                     <div class="controls d-flex">
                                         <div class="dropdown">
                                             <label for="metric-select" class="dropdown-label">Select Metric:</label>
                                             <select id="metric-select" class="dropdown-select">
-                                                <option value="heap">Heap Memory Usage</option>
-                                                <option value="stack">Stack Memory Usage</option>
-                                                <option value="gc">Garbage Collection</option>
-                                                <option value="misc">Miscellaneous System Memory</option>
+                                                <option value="heap">
+                                                    Heap Memory Usage
+                                                </option>
+                                                <option value="stack">
+                                                    Stack Memory Usage
+                                                </option>
+                                                <option value="gc">
+                                                    Garbage Collection
+                                                </option>
+                                                <option value="misc">
+                                                    Miscellaneous System
+                                                    Memory
+                                                </option>
                                             </select>
                                         </div>
                                         <div class="dropdown ml-3">
                                             <label for="time-select" class="dropdown-label">Select Time Range:</label>
                                             <select id="time-select" class="dropdown-select">
-                                                <option value="5m">5 Minutes</option>
-                                                <option value="15m">15 Minutes</option>
-                                                <option value="30m">30 Minutes</option>
-                                                <option value="1h">1 Hour</option>
-                                                <option value="6h">6 Hours</option>
-                                                <option value="1d">1 Day</option>
-                                                <option value="3d">3 Days</option>
-                                                <option value="7d">7 Days</option>
+                                                <option value="5m">
+                                                    5 Minutes
+                                                </option>
+                                                <option value="15m">
+                                                    15 Minutes
+                                                </option>
+                                                <option value="30m">
+                                                    30 Minutes
+                                                </option>
+                                                <option value="1h">
+                                                    1 Hour
+                                                </option>
+                                                <option value="6h">
+                                                    6 Hours
+                                                </option>
+                                                <option value="1d">
+                                                    1 Day
+                                                </option>
+                                                <option value="3d">
+                                                    3 Days
+                                                </option>
+                                                <option value="7d">
+                                                    7 Days
+                                                </option>
                                             </select>
                                         </div>
                                     </div>
@@ -549,24 +639,44 @@
                                             data-tooltip="CPU Usage shows the 'Total Cores', 'Cores Used by Service', 'Cores Used by System'">i</span>
                                     </h4>
                                 </div>
+                                <button id="download-cpu-usage-btn" type="button" class="btn btn-primary add-list">
+                                    <i class="fa fa-download" aria-hidden="true"></i>
+                                    Image
+                                </button>
                                 <div class="d-flex align-items-center">
                                     <div class="controls d-flex">
                                         <div class="dropdown ml-3">
                                             <select id="cpu-usage-time-select" class="dropdown-select">
-                                                <option value="5m">5 Minutes</option>
-                                                <option value="15m">15 Minutes</option>
-                                                <option value="30m">30 Minutes</option>
-                                                <option value="1h">1 Hour</option>
-                                                <option value="6h">6 Hours</option>
-                                                <option value="1d">1 Day</option>
-                                                <option value="3d">3 Days</option>
-                                                <option value="7d">7 Days</option>
+                                                <option value="5m">
+                                                    5 Minutes
+                                                </option>
+                                                <option value="15m">
+                                                    15 Minutes
+                                                </option>
+                                                <option value="30m">
+                                                    30 Minutes
+                                                </option>
+                                                <option value="1h">
+                                                    1 Hour
+                                                </option>
+                                                <option value="6h">
+                                                    6 Hours
+                                                </option>
+                                                <option value="1d">
+                                                    1 Day
+                                                </option>
+                                                <option value="3d">
+                                                    3 Days
+                                                </option>
+                                                <option value="7d">
+                                                    7 Days
+                                                </option>
                                             </select>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="card-body" style="position: relative;">
+                            <div class="card-body" style="position: relative">
                                 <div class="chart-container" id="cpu-usage-chart"></div>
                             </div>
                         </div>
@@ -581,24 +691,45 @@
                                             data-tooltip="Goroutines Statistics shows the 'Total Goroutines'">i</span>
                                     </h4>
                                 </div>
+                                <button id="download-go-routines-statistics-btn" type="button"
+                                    class="btn btn-primary add-list">
+                                    <i class="fa fa-download" aria-hidden="true"></i>
+                                    Image
+                                </button>
                                 <div class="d-flex align-items-center">
                                     <div class="controls d-flex">
                                         <div class="dropdown ml-3">
                                             <select id="goroutines-time-select" class="dropdown-select">
-                                                <option value="5m">5 Minutes</option>
-                                                <option value="15m">15 Minutes</option>
-                                                <option value="30m">30 Minutes</option>
-                                                <option value="1h">1 Hour</option>
-                                                <option value="6h">6 Hours</option>
-                                                <option value="1d">1 Day</option>
-                                                <option value="3d">3 Days</option>
-                                                <option value="7d">7 Days</option>
+                                                <option value="5m">
+                                                    5 Minutes
+                                                </option>
+                                                <option value="15m">
+                                                    15 Minutes
+                                                </option>
+                                                <option value="30m">
+                                                    30 Minutes
+                                                </option>
+                                                <option value="1h">
+                                                    1 Hour
+                                                </option>
+                                                <option value="6h">
+                                                    6 Hours
+                                                </option>
+                                                <option value="1d">
+                                                    1 Day
+                                                </option>
+                                                <option value="3d">
+                                                    3 Days
+                                                </option>
+                                                <option value="7d">
+                                                    7 Days
+                                                </option>
                                             </select>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="card-body" style="position: relative;">
+                            <div class="card-body" style="position: relative">
                                 <div class="chart-container" id="goroutines-chart"></div>
                             </div>
                         </div>
@@ -613,24 +744,45 @@
                                             data-tooltip="Load & Memory Statistics shows the 'Service CPU Load', 'System CPU Load', 'Total CPU Load', 'Service Memory Load', 'System Memory Load'">i</span>
                                     </h4>
                                 </div>
+                                <button id="download-load-memory-statistics-btn" type="button"
+                                    class="btn btn-primary add-list">
+                                    <i class="fa fa-download" aria-hidden="true"></i>
+                                    Image
+                                </button>
                                 <div class="d-flex align-items-center">
                                     <div class="controls d-flex">
                                         <div class="dropdown ml-3">
                                             <select id="load-memory-time-select" class="dropdown-select">
-                                                <option value="5m">5 Minutes</option>
-                                                <option value="15m">15 Minutes</option>
-                                                <option value="30m">30 Minutes</option>
-                                                <option value="1h">1 Hour</option>
-                                                <option value="6h">6 Hours</option>
-                                                <option value="1d">1 Day</option>
-                                                <option value="3d">3 Days</option>
-                                                <option value="7d">7 Days</option>  
+                                                <option value="5m">
+                                                    5 Minutes
+                                                </option>
+                                                <option value="15m">
+                                                    15 Minutes
+                                                </option>
+                                                <option value="30m">
+                                                    30 Minutes
+                                                </option>
+                                                <option value="1h">
+                                                    1 Hour
+                                                </option>
+                                                <option value="6h">
+                                                    6 Hours
+                                                </option>
+                                                <option value="1d">
+                                                    1 Day
+                                                </option>
+                                                <option value="3d">
+                                                    3 Days
+                                                </option>
+                                                <option value="7d">
+                                                    7 Days
+                                                </option>
                                             </select>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="card-body" style="position: relative;">
+                            <div class="card-body" style="position: relative">
                                 <div class="chart-container" id="load-memory-chart"></div>
                             </div>
                         </div>
@@ -640,29 +792,50 @@
                             <div class="card-header d-flex justify-content-between">
                                 <div class="header-title">
                                     <h4 class="card-title">
-                                       Health Statistics
+                                        Health Statistics
                                         <span class="info-icon"
                                             data-tooltip="Health Statistics shows the 'Service Health', 'System Health', 'Overall Health'">i</span>
                                     </h4>
                                 </div>
+                                <button id="download-health-statistics-btn" type="button"
+                                    class="btn btn-primary add-list">
+                                    <i class="fa fa-download" aria-hidden="true"></i>
+                                    Image
+                                </button>
                                 <div class="d-flex align-items-center">
                                     <div class="controls d-flex">
                                         <div class="dropdown ml-3">
                                             <select id="health-time-select" class="dropdown-select">
-                                                <option value="5m">5 Minutes</option>
-                                                <option value="15m">15 Minutes</option>
-                                                <option value="30m">30 Minutes</option>
-                                                <option value="1h">1 Hour</option>
-                                                <option value="6h">6 Hours</option>
-                                                <option value="1d">1 Day</option>
-                                                <option value="3d">3 Days</option>
-                                                <option value="7d">7 Days</option>
+                                                <option value="5m">
+                                                    5 Minutes
+                                                </option>
+                                                <option value="15m">
+                                                    15 Minutes
+                                                </option>
+                                                <option value="30m">
+                                                    30 Minutes
+                                                </option>
+                                                <option value="1h">
+                                                    1 Hour
+                                                </option>
+                                                <option value="6h">
+                                                    6 Hours
+                                                </option>
+                                                <option value="1d">
+                                                    1 Day
+                                                </option>
+                                                <option value="3d">
+                                                    3 Days
+                                                </option>
+                                                <option value="7d">
+                                                    7 Days
+                                                </option>
                                             </select>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="card-body" style="position: relative;">
+                            <div class="card-body" style="position: relative">
                                 <div class="chart-container" id="health-chart"></div>
                             </div>
                         </div>
@@ -679,11 +852,15 @@
                 <div class="card-body">
                     <div class="text-center">
                         <span class="mr-1">
-                            <script>document.write(new Date().getFullYear())</script>©
+                            <script>
+                                document.write(new Date().getFullYear());
+                            </script>
+                            ©
                         </span>
-                        <a href="https://github.com/iyashjayesh/monigo/releases/tag/v1.0.0" target="_blank" class="">Moni<strong><em>GO</em></strong> v1.0.0</a>
+                        <a href="https://github.com/iyashjayesh/monigo/releases/tag/v1.0.0" target="_blank"
+                            class="">Moni<strong><em>GO</em></strong> v1.0.0</a>
                     </div>
-                    
+
                     <!-- <div class="row">
                         <div class="col-lg-6">
                             <ul class="list-inline mb-0">
@@ -716,7 +893,6 @@
     <!-- Backend Bundle JavaScript -->
     <script src="./js/core/backend-bundle.min.js"></script>
     <script src="./js/core/app.js"></script>
-
 </body>
 
 </html>
