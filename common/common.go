@@ -35,7 +35,15 @@ func GetBasePath() string {
 	}
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		os.Mkdir(path, os.ModePerm)
+		if err := os.MkdirAll(path, os.ModePerm); err != nil {
+			log.Printf("[MoniGo] Warning: failed to create cache directory %s: %v", path, err)
+			// Fallback to a temporary directory if we can't create in current directory
+			tempDir := os.TempDir()
+			path = fmt.Sprintf("%s/%s", tempDir, monigoFolder)
+			if err := os.MkdirAll(path, os.ModePerm); err != nil {
+				log.Printf("[MoniGo] Warning: failed to create fallback cache directory %s: %v", path, err)
+			}
+		}
 	}
 
 	return path

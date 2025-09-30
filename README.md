@@ -114,6 +114,193 @@ func highMemoryUsage() {
 }
 ```
 
+## Router Integration
+
+MoniGo now supports integration with your existing HTTP server, allowing you to use your own router and authorization system. This is perfect for applications that need to integrate MoniGo as part of their existing infrastructure.
+
+### Integration Options
+
+#### 1. Full Integration (Recommended)
+Register all MoniGo handlers (both API and static files) to your existing HTTP mux:
+
+```go
+package main
+
+import (
+    "log"
+    "net/http"
+    "github.com/iyashjayesh/monigo"
+)
+
+func main() {
+    // Initialize MoniGo without starting the dashboard
+    monigoInstance := &monigo.Monigo{
+        ServiceName:             "my-service",
+        DataPointsSyncFrequency: "5m",
+        DataRetentionPeriod:     "7d",
+        TimeZone:                "Local",
+        CustomBaseAPIPath:       "/monitoring/api/v1", // Custom API path
+    }
+
+    // Initialize MoniGo (sets up metrics collection)
+    monigoInstance.Initialize()
+
+    // Create your own HTTP mux
+    mux := http.NewServeMux()
+
+    // Register all MoniGo handlers to your mux
+    monigo.RegisterDashboardHandlers(mux, "/monitoring/api/v1")
+
+    // Add your own routes
+    mux.HandleFunc("/api/users", usersHandler)
+    mux.HandleFunc("/health", healthHandler)
+
+    log.Println("Server starting on :8080")
+    log.Println("MoniGo dashboard: http://localhost:8080/")
+    log.Println("MoniGo API: http://localhost:8080/monitoring/api/v1/")
+
+    http.ListenAndServe(":8080", mux)
+}
+
+func usersHandler(w http.ResponseWriter, r *http.Request) {
+    // Trace functions for monitoring
+    monigo.TraceFunction(func() {
+        // Your function logic here
+    })
+    
+    w.Write([]byte("Users endpoint"))
+}
+```
+
+#### 2. API-Only Integration
+Register only MoniGo API endpoints (useful when you want to handle static files yourself):
+
+```go
+// Register only API handlers
+monigo.RegisterAPIHandlers(mux, "/monitoring/api/v1")
+
+// Handle static files yourself
+mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
+```
+
+#### 3. Static-Only Integration
+Register only MoniGo static file handlers (useful when you want to handle API routing yourself):
+
+```go
+// Register only static handlers
+monigo.RegisterStaticHandlers(mux)
+
+// Handle API routing yourself
+mux.HandleFunc("/api/metrics", customMetricsHandler)
+```
+
+#### 4. Maximum Flexibility
+Get handlers as a map for integration with any HTTP router (Gin, Echo, etc.):
+
+```go
+// Get API handlers as a map
+apiHandlers := monigo.GetAPIHandlers("/monitoring/api/v1")
+
+// Get static handler
+staticHandler := monigo.GetStaticHandler()
+
+// Use with any router
+for path, handler := range apiHandlers {
+    router.Any(path, gin.WrapF(handler)) // Example with Gin
+}
+```
+
+### Integration with Popular Frameworks
+
+#### Gin Framework
+```go
+package main
+
+import (
+    "github.com/gin-gonic/gin"
+    "github.com/iyashjayesh/monigo"
+)
+
+func main() {
+    monigoInstance := &monigo.Monigo{
+        ServiceName: "gin-service",
+        // ... other config
+    }
+    monigoInstance.Initialize()
+
+    r := gin.Default()
+    
+    // Get and register MoniGo handlers
+    apiHandlers := monigo.GetAPIHandlers("/monigo/api/v1")
+    for path, handler := range apiHandlers {
+        r.Any(path, gin.WrapF(handler))
+    }
+    
+    staticHandler := monigo.GetStaticHandler()
+    r.Any("/", gin.WrapF(staticHandler))
+
+    r.Run(":8080")
+}
+```
+
+#### Echo Framework
+```go
+package main
+
+import (
+    "github.com/labstack/echo/v4"
+    "github.com/iyashjayesh/monigo"
+)
+
+func main() {
+    monigoInstance := &monigo.Monigo{
+        ServiceName: "echo-service",
+        // ... other config
+    }
+    monigoInstance.Initialize()
+
+    e := echo.New()
+    
+    // Get and register MoniGo handlers
+    apiHandlers := monigo.GetAPIHandlers("/monigo/api/v1")
+    for path, handler := range apiHandlers {
+        e.Any(path, echo.WrapHandler(http.HandlerFunc(handler)))
+    }
+    
+    staticHandler := monigo.GetStaticHandler()
+    e.Any("/", echo.WrapHandler(http.HandlerFunc(staticHandler)))
+
+    e.Start(":8080")
+}
+```
+
+### Available Integration Functions
+
+| Function | Description |
+|----------|-------------|
+| `RegisterDashboardHandlers(mux, customPath)` | Register all handlers (API + static) |
+| `RegisterAPIHandlers(mux, customPath)` | Register only API handlers |
+| `RegisterStaticHandlers(mux)` | Register only static handlers |
+| `GetAPIHandlers(customPath)` | Get API handlers as a map |
+| `GetStaticHandler()` | Get static handler function |
+| `Initialize()` | Initialize MoniGo without starting dashboard |
+
+### Benefits of Router Integration
+
+- **Unified Server**: Run MoniGo on the same port as your application
+- **Custom Authorization**: Use your existing auth system to protect MoniGo endpoints
+- **Custom Routing**: Integrate with your existing routing patterns
+- **Framework Compatibility**: Works with any HTTP router (Gin, Echo, Chi, etc.)
+- **Flexible Configuration**: Choose which parts of MoniGo to integrate
+
+### Examples
+
+Check out the complete examples in the `example/` directory:
+- `example/router-integration/` - Standard HTTP mux integration
+- `example/api-only-integration/` - API-only integration
+- `example/gin-integration/` - Gin framework integration
+- `example/echo-integration/` - Echo framework integration
+
 ## Bellow Reports are available
 
 #### Note: You can download the reports in excel format.
@@ -173,6 +360,7 @@ func highMemoryUsage() {
 ## API Reference
 
 - You can access the MoniGo API by visiting the following URL: http://localhost:8080/monigo/api/v1/<endpoint> (replace `<endpoint>` with the desired endpoint).
+- **Note**: When using router integration, the API path can be customized using the `CustomBaseAPIPath` field or by passing a custom path to the registration functions.
 - API endpoints are available for the following:
 
 | Endpoint                           | Description           | Method | Request                                               | Response | Example                                            |
