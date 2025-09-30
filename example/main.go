@@ -21,14 +21,14 @@ func main() {
 		// MaxGoRoutines:           100,        // Default is 100
 	}
 
+	// Traditional way: Start MoniGo dashboard on a separate port
 	go monigoInstance.Start() // Starting monigo dashboard
 	log.Println("Monigo dashboard started at port 8080")
 
-	// routinesStats := monigoInstance.GetGoRoutinesStats() // Get go routines stats
-	// log.Println(routinesStats)
-
+	// Your application runs on a different port
 	http.HandleFunc("/api", apiHandler)
 	http.HandleFunc("/api2", apiHandler2)
+	log.Println("Your application started at port 8000")
 	http.ListenAndServe(":8000", nil)
 }
 

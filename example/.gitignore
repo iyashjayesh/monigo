@@ -1,6 +1,9 @@
 # Ignore all files in the vendor directory
 vendor/*
 
-# MoniGO specific files
-monigo/*
 
+router-integration/echo-integration/monigo/*
+router-integration/fiber-integration/monigo/*
+router-integration/gin-integration/monigo/*
+router-integration/gorilla-mux-integration/monigo/*
+router-integration/standard-mux-integration/monigo/*
