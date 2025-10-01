@@ -257,8 +257,41 @@ func (m *Monigo) GetGoRoutinesStats() models.GoRoutinesStatistic {
 }
 
 // TraceFunction traces the function
+// This is the original function maintained for backward compatibility
 func TraceFunction(f func()) {
 	core.TraceFunction(f)
+}
+
+// TraceFunctionWithArgs traces a function with parameters and captures the metrics
+// This function uses reflection to call functions with arbitrary signatures
+// Example usage:
+//
+//	func processUser(userID string) { ... }
+//	monigo.TraceFunctionWithArgs(processUser, "123")
+func TraceFunctionWithArgs(f interface{}, args ...interface{}) {
+	core.TraceFunctionWithArgs(f, args...)
+}
+
+// TraceFunctionWithReturn traces a function with parameters and return values
+// Returns the first result of the function call (for backward compatibility)
+// Example usage:
+//
+//	func calculateTotal(items []Item) int { ... }
+//	result := monigo.TraceFunctionWithReturn(calculateTotal, items)
+func TraceFunctionWithReturn(f interface{}, args ...interface{}) interface{} {
+	return core.TraceFunctionWithReturn(f, args...)
+}
+
+// TraceFunctionWithReturns traces a function with parameters and return values
+// Returns all results of the function call as a slice of interface{}
+// Example usage:
+//
+//	func processData(data []byte) (Result, error) { ... }
+//	results := monigo.TraceFunctionWithReturns(processData, data)
+//	result := results[0].(Result)
+//	err := results[1].(error)
+func TraceFunctionWithReturns(f interface{}, args ...interface{}) []interface{} {
+	return core.TraceFunctionWithReturns(f, args...)
 }
 
 // StartDashboard starts the dashboard on the specified port

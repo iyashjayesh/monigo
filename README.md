@@ -92,11 +92,14 @@ func highCPUUsage() {
 For more detailed usage instructions, refer to the documentation.
 By default, the dashboard will be available at `http://localhost:8080/` else at the port you have provided.
 
-### Note:
+## Function Tracing
 
-The `monigo.TraceFunction(func())` method accept `func(){}` as a type.
+MoniGo provides powerful function tracing capabilities to monitor the performance of your application functions. You can trace functions with any signature, including those with parameters and return values.
 
-### Example Usage:
+### Available Tracing Methods
+
+#### 1. Legacy Method (Backward Compatible)
+The original `TraceFunction` method for functions without parameters:
 
 ```go
 func apiHandler(w http.ResponseWriter, r *http.Request) {
@@ -111,6 +114,211 @@ func highMemoryUsage() {
     for i := 0; i < len(largeSlice); i++ {
         largeSlice[i] = float64(i)
     }
+}
+```
+
+#### 2. Enhanced Method - Functions with Parameters
+Use `TraceFunctionWithArgs` to trace functions that take parameters:
+
+```go
+// Business logic function with parameters
+func processUser(userID string, userName string) {
+    // Your business logic here
+    time.Sleep(100 * time.Millisecond)
+    _ = make([]byte, 1024*1024) // 1MB allocation
+}
+
+func userHandler(w http.ResponseWriter, r *http.Request) {
+    userID := r.URL.Query().Get("id")
+    userName := r.URL.Query().Get("name")
+    
+    // NEW WAY: Direct function tracing with parameters
+    monigo.TraceFunctionWithArgs(processUser, userID, userName)
+    
+    w.Write([]byte("User processed"))
+}
+```
+
+#### 3. Enhanced Method - Functions with Return Values
+Use `TraceFunctionWithReturn` to trace functions that return values:
+
+```go
+// Business logic function with return value
+func calculateTotal(items []Item) float64 {
+    var total float64
+    for _, item := range items {
+        total += item.Price
+    }
+    return total
+}
+
+func calculateHandler(w http.ResponseWriter, r *http.Request) {
+    items := []Item{
+        {Name: "Laptop", Price: 999.99},
+        {Name: "Mouse", Price: 29.99},
+    }
+    
+    // NEW WAY: Trace function with return value
+    total := monigo.TraceFunctionWithReturn(calculateTotal, items).(float64)
+    
+    w.Write([]byte(fmt.Sprintf("Total: $%.2f", total)))
+}
+```
+
+#### 4. Enhanced Method - Functions with Multiple Return Values
+Use `TraceFunctionWithReturns` to trace functions that return multiple values:
+
+```go
+// Business logic function with multiple return values
+func processData(data string) (Result, error) {
+    // Processing logic
+    if data == "error" {
+        return Result{}, fmt.Errorf("processing error")
+    }
+    return Result{Success: true, Message: "OK"}, nil
+}
+
+func processHandler(w http.ResponseWriter, r *http.Request) {
+    data := "test-data"
+    
+    // NEW WAY: Trace function with multiple returns
+    results := monigo.TraceFunctionWithReturns(processData, data)
+    
+    if len(results) >= 2 {
+        result := results[0].(Result)
+        err := results[1].(error)
+        
+        if err != nil {
+            w.WriteHeader(http.StatusInternalServerError)
+            w.Write([]byte(fmt.Sprintf("Error: %v", err)))
+            return
+        }
+        
+        w.Write([]byte(fmt.Sprintf("Result: %+v", result)))
+    }
+}
+```
+
+**Alternative: Using the first return value only**
+```go
+// For functions with multiple returns, you can still use TraceFunctionWithReturn
+// to get just the first return value
+result := monigo.TraceFunctionWithReturn(processData, data).(Result)
+// Note: This ignores the error return value
+```
+
+### Benefits of Enhanced Tracing
+
+- **Cleaner Code**: No need to wrap functions in anonymous functions
+- **Better Function Identification**: Actual function names appear in metrics instead of anonymous functions
+- **Type Safety**: Compile-time checking of function signatures
+- **Flexibility**: Support for any function signature (parameters, return values, etc.)
+- **Backward Compatibility**: Existing code continues to work without changes
+
+### Function Name Generation
+
+The enhanced tracing methods automatically generate descriptive function names that include:
+- Function name
+- Parameter types: `functionName(string,int)`
+- Return types: `functionName(string,int)->(float64,error)`
+
+This makes it easier to identify and analyze specific function calls in the dashboard.
+
+### Handling Multiple Return Values
+
+When dealing with functions that return multiple values, you have several options:
+
+#### Option 1: Get All Return Values (Recommended)
+```go
+func processData(data string) (Result, error) {
+    // Your logic here
+    return result, nil
+}
+
+// Get all return values
+results := monigo.TraceFunctionWithReturns(processData, data)
+result := results[0].(Result)
+err := results[1].(error)
+```
+
+#### Option 2: Get Only the First Return Value
+```go
+// Get only the first return value (ignores error)
+result := monigo.TraceFunctionWithReturn(processData, data).(Result)
+```
+
+#### Option 3: Handle Different Return Counts
+```go
+results := monigo.TraceFunctionWithReturns(myFunction, args...)
+
+switch len(results) {
+case 0:
+    // Function returns nothing
+case 1:
+    // Function returns one value
+    value := results[0]
+case 2:
+    // Function returns two values (common pattern: result, error)
+    value := results[0]
+    err := results[1].(error)
+case 3:
+    // Function returns three values
+    value1 := results[0]
+    value2 := results[1]
+    err := results[2].(error)
+default:
+    // Function returns many values
+    // Handle accordingly
+}
+```
+
+### Example: Complete Usage
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "net/http"
+    "github.com/iyashjayesh/monigo"
+)
+
+func main() {
+    monigoInstance := &monigo.Monigo{
+        ServiceName: "my-service",
+        DashboardPort: 8080,
+    }
+    
+    go monigoInstance.Start()
+    
+    http.HandleFunc("/api/user", userHandler)
+    http.HandleFunc("/api/calculate", calculateHandler)
+    http.ListenAndServe(":8000", nil)
+}
+
+// Functions with different signatures
+func processUser(userID string, userName string) {
+    // Business logic
+}
+
+func calculateTotal(items []Item) float64 {
+    // Calculation logic
+    return 0.0
+}
+
+func userHandler(w http.ResponseWriter, r *http.Request) {
+    // Enhanced tracing - direct function calls
+    monigo.TraceFunctionWithArgs(processUser, "123", "John")
+    w.Write([]byte("User processed"))
+}
+
+func calculateHandler(w http.ResponseWriter, r *http.Request) {
+    items := []Item{{Name: "Item1", Price: 10.0}}
+    
+    // Enhanced tracing - with return value
+    total := monigo.TraceFunctionWithReturn(calculateTotal, items).(float64)
+    w.Write([]byte(fmt.Sprintf("Total: %.2f", total)))
 }
 ```
 
