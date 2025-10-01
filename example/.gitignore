@@ -7,3 +7,4 @@ router-integration/fiber-integration/monigo/*
 router-integration/gin-integration/monigo/*
 router-integration/gorilla-mux-integration/monigo/*
 router-integration/standard-mux-integration/monigo/*
+function-trace-example/monigo/*
