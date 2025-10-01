@@ -8,3 +8,10 @@ router-integration/gin-integration/monigo/*
 router-integration/gorilla-mux-integration/monigo/*
 router-integration/standard-mux-integration/monigo/*
 function-trace-example/monigo/*
+
+security-examples/api-key/monigo/*
+security-examples/basic-auth/monigo/*
+security-examples/chi/monigo/*
+security-examples/echo/monigo/*
+security-examples/custom-auth/monigo/*
+security-examples/ip-whitelist-example/monigo/*
