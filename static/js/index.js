@@ -1,4 +1,54 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Function to get API key from URL parameters
+    function getApiKey() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('api_key');
+    }
+
+    // Function to add API key to fetch URL (only for API key auth)
+    function addApiKeyToUrl(url) {
+        const apiKey = getApiKey();
+        if (apiKey) {
+            const separator = url.includes('?') ? '&' : '?';
+            return `${url}${separator}api_key=${encodeURIComponent(apiKey)}`;
+        }
+        return url;
+    }
+
+    // Function to make authenticated fetch request
+    function authenticatedFetch(url, options = {}) {
+        const apiKey = getApiKey();
+        if (apiKey) {
+            // API key authentication - add to URL
+            const separator = url.includes('?') ? '&' : '?';
+            url = `${url}${separator}api_key=${encodeURIComponent(apiKey)}`;
+        } else {
+            // Check for custom authentication methods
+            const urlParams = new URLSearchParams(window.location.search);
+            const secret = urlParams.get('secret');
+
+            if (secret === 'monigo-admin-secret') {
+                // Custom query parameter authentication
+                const separator = url.includes('?') ? '&' : '?';
+                url = `${url}${separator}secret=${encodeURIComponent(secret)}`;
+            } else {
+                // Check for custom header authentication
+                // For custom auth, we need to add headers
+                if (!options.headers) {
+                    options.headers = {};
+                }
+
+                // Add custom header for admin access
+                options.headers['X-User-Role'] = 'admin';
+
+                // Set custom user agent for automated access
+                options.headers['User-Agent'] = 'MoniGo-Admin/1.0';
+            }
+        }
+        // For basic auth, the browser handles credentials automatically
+        return fetch(url, options);
+    }
+
     const DASHBOARD = document.getElementById('dashboard');
     const GOROUTINES_PAGE = document.getElementById('goroutines-page');
 
@@ -68,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function fetchServiceInfo() {
-        fetch(`/monigo/api/v1/service-info`)
+        authenticatedFetch(`/monigo/api/v1/service-info`)
             .then((response) => response.json())
             .then((data) => {
                 service_name.innerHTML = '';
@@ -208,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function fetchMetrics() {
-        fetch(`/monigo/api/v1/metrics`)
+        authenticatedFetch(`/monigo/api/v1/metrics`)
             .then((response) => response.json())
             .then((data) => {
                 const {
@@ -237,8 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateElement(
                     elements.cores,
                     'Cores:',
-                    `${cpu_statistics?.cores_used_by_service ?? 'N/A'} / ${
-                        cpu_statistics?.total_cores ?? 'N/A'
+                    `${cpu_statistics?.cores_used_by_service ?? 'N/A'} / ${cpu_statistics?.total_cores ?? 'N/A'
                     }`,
                     'Number of CPU cores',
                     cpu_statistics
@@ -253,9 +302,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateElement(
                     elements.cpuUsage,
                     'CPU Usage:',
-                    `${
-                        cpu_statistics?.cores_used_by_service_in_percent ??
-                        'N/A'
+                    `${cpu_statistics?.cores_used_by_service_in_percent ??
+                    'N/A'
                     }`,
                     'CPU usage of the service',
                     cpu_statistics
@@ -722,7 +770,7 @@ document.addEventListener('DOMContentLoaded', () => {
             end_time: toLocalISOString(EndTime)
         };
 
-        fetch(`/monigo/api/v1/service-metrics`, {
+        authenticatedFetch(`/monigo/api/v1/service-metrics`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

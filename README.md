@@ -509,6 +509,304 @@ Check out the complete examples in the `example/` directory:
 - `example/gin-integration/` - Gin framework integration
 - `example/echo-integration/` - Echo framework integration
 
+## Dashboard Security
+
+MoniGo now includes comprehensive security features to protect your dashboard and API endpoints in production environments. You can use built-in middleware or implement custom authentication to secure access to your monitoring data.
+
+### Security Features
+
+- **Built-in Middleware**: Pre-built security middleware for common use cases
+- **Custom Authentication**: Support for custom authentication functions
+- **Middleware Chains**: Chain multiple middleware for layered security
+- **Rate Limiting**: Built-in rate limiting to prevent abuse
+- **IP Restrictions**: IP whitelisting and blacklisting support
+- **Request Logging**: Comprehensive request logging for audit trails
+
+### Built-in Security Middleware
+
+MoniGo provides several built-in security middleware functions:
+
+#### Basic Authentication
+```go
+monigo.BasicAuthMiddleware("username", "password")
+```
+
+#### API Key Authentication
+```go
+monigo.APIKeyMiddleware("your-secret-api-key")
+```
+
+#### IP Whitelist
+```go
+monigo.IPWhitelistMiddleware([]string{"127.0.0.1", "192.168.1.0/24"})
+```
+
+#### Rate Limiting
+```go
+monigo.RateLimitMiddleware(100, time.Minute) // 100 requests per minute
+```
+
+#### Request Logging
+```go
+monigo.LoggingMiddleware()
+```
+
+### Advanced Security Features
+
+#### Static File Handling
+MoniGo automatically bypasses authentication for static files (CSS, JS, images, etc.) to ensure the dashboard UI loads correctly:
+
+```go
+// Static files are automatically excluded from authentication
+// This includes: .css, .js, .png, .jpg, .gif, .svg, .ico, .woff, .woff2, etc.
+// And paths: /css/, /js/, /assets/, /images/, /fonts/, /static/
+```
+
+#### IP Whitelist with Debug Logging
+The IP whitelist middleware includes comprehensive debug logging to help troubleshoot access issues:
+
+```go
+// IP whitelist with debug logging
+monigo.IPWhitelistMiddleware([]string{
+    "127.0.0.1",      // IPv4 localhost
+    "::1",            // IPv6 localhost
+    "192.168.1.0/24", // Local network
+    "10.0.0.0/8",     // Private network
+})
+```
+
+#### Router-Specific Handlers
+MoniGo provides framework-specific handlers for seamless integration:
+
+```go
+// Gin Framework
+ginHandler := monigo.GetGinHandler("/monigo/api/v1")
+
+// Echo Framework  
+echoHandler := monigo.GetEchoHandler("/monigo/api/v1")
+
+// Fiber Framework
+fiberHandler := monigo.GetFiberHandler("/monigo/api/v1")
+```
+
+### Security Configuration
+
+#### Using Built-in Middleware
+
+```go
+monigoInstance := &monigo.Monigo{
+    ServiceName: "my-service",
+    
+    // Dashboard security (for static files)
+    DashboardMiddleware: []func(http.Handler) http.Handler{
+        monigo.BasicAuthMiddleware("admin", "password"),
+        monigo.LoggingMiddleware(),
+    },
+    
+    // API security (for API endpoints)
+    APIMiddleware: []func(http.Handler) http.Handler{
+        monigo.APIKeyMiddleware("api-key"),
+        monigo.RateLimitMiddleware(100, time.Minute),
+    },
+}
+```
+
+#### Using Custom Authentication
+
+```go
+monigoInstance := &monigo.Monigo{
+    ServiceName: "my-service",
+    
+    // Custom authentication function
+    AuthFunction: func(r *http.Request) bool {
+        return r.Header.Get("X-API-Key") == "secret-key"
+    },
+}
+```
+
+### Secured Handler Functions
+
+MoniGo provides secured versions of all handler functions:
+
+| Function | Description |
+|----------|-------------|
+| `GetSecuredUnifiedHandler(m, customPath)` | Get unified handler with middleware |
+| `GetSecuredAPIHandlers(m, customPath)` | Get API handlers with middleware |
+| `GetSecuredStaticHandler(m)` | Get static handler with middleware |
+| `StartSecuredDashboard(m)` | Start dashboard with middleware |
+| `RegisterSecuredDashboardHandlers(mux, m, customPath)` | Register secured dashboard handlers |
+| `RegisterSecuredAPIHandlers(mux, m, customPath)` | Register secured API handlers |
+| `RegisterSecuredStaticHandlers(mux, m)` | Register secured static handlers |
+
+### Security Examples
+
+Check out the comprehensive security examples in the `example/security-examples/` directory:
+
+#### Core Security Examples
+- **Basic Authentication** (`basic-auth/`) - HTTP Basic Auth with rate limiting
+- **API Key Authentication** (`api-key/`) - API key via header/query parameter  
+- **IP Whitelist** (`ip-whitelist-example/`) - IP-based access control with debug logging
+- **Custom Authentication** (`custom-auth/`) - Custom auth function with headers/query params
+
+#### Router Integration Examples
+- **Gin Integration** (`gin/`) - Gin framework with security middleware
+- **Echo Integration** (`echo/`) - Echo framework with security middleware
+- **Fiber Integration** (`fiber/`) - Fiber framework with security middleware
+- **Chi Integration** (`chi/`) - Chi router with security middleware
+
+#### Running Security Examples
+
+Each example has its own `go.mod` file and can be run independently:
+
+```bash
+# Basic Authentication Example
+cd example/security-examples/basic-auth
+go run .
+
+# API Key Example  
+cd example/security-examples/api-key
+go run .
+
+# IP Whitelist Example
+cd example/security-examples/ip-whitelist-example
+go run .
+
+# Custom Authentication Example
+cd example/security-examples/custom-auth
+go run .
+
+# Router Integration Examples
+cd example/security-examples/gin
+go run .
+
+cd example/security-examples/echo
+go run .
+
+cd example/security-examples/fiber
+go run .
+
+cd example/security-examples/chi
+go run .
+```
+
+#### Example Access URLs
+
+- **Basic Auth**: `http://localhost:8080/` (username: `admin`, password: `monigo-secure-2024`)
+- **API Key**: `http://localhost:8080/?api_key=monigo-secret-key-2024`
+- **IP Whitelist**: `http://localhost:8080/` (localhost only)
+- **Custom Auth**: `http://localhost:8080/?secret=monigo-admin-secret` or with headers
+- **Router Examples**: Same URLs as above with framework-specific implementations
+
+### JavaScript Authentication Integration
+
+MoniGo's dashboard JavaScript automatically handles authentication for different security methods:
+
+#### API Key Authentication
+The dashboard automatically detects API keys from URL parameters and includes them in all API requests:
+
+```javascript
+// Automatically extracts api_key from URL and includes in requests
+// URL: http://localhost:8080/?api_key=your-secret-key
+// All API calls will include: ?api_key=your-secret-key
+```
+
+#### Basic Authentication
+For basic auth, the browser handles credentials automatically when prompted:
+
+```javascript
+// Browser automatically includes Authorization header
+// No additional JavaScript configuration needed
+```
+
+#### Custom Authentication
+Supports custom headers and query parameters:
+
+```javascript
+// Automatically adds custom headers and query parameters
+// Based on URL parameters or predefined authentication logic
+```
+
+### Production Security Best Practices
+
+1. **Use Strong Credentials**: Always use strong, unique passwords and API keys
+2. **Enable HTTPS**: Always use HTTPS in production environments
+3. **Implement Rate Limiting**: Use rate limiting to prevent abuse
+4. **IP Restrictions**: Use IP whitelisting for internal networks
+5. **Request Logging**: Enable logging to monitor access patterns
+6. **Regular Rotation**: Regularly rotate API keys and passwords
+7. **Environment Variables**: Store credentials in environment variables
+8. **Monitor Access**: Set up monitoring and alerting for security events
+9. **Static File Security**: Static files (CSS, JS, images) bypass authentication automatically
+10. **Debug Logging**: Use debug logging to monitor authentication attempts
+11. **Router Compatibility**: Test security middleware with your chosen HTTP framework
+12. **JavaScript Integration**: Ensure dashboard JavaScript handles your authentication method
+
+### Security Troubleshooting
+
+#### Common Issues and Solutions
+
+**Issue: Dashboard loads but CSS/JS files show 401 Unauthorized**
+- **Solution**: Static files should bypass authentication automatically. Check that `isStaticFile()` function is working correctly.
+
+**Issue: IP Whitelist blocking localhost access**
+- **Solution**: Add both IPv4 (`127.0.0.1`) and IPv6 (`::1`) localhost addresses to your whitelist.
+
+**Issue: API calls failing with authentication errors**
+- **Solution**: Ensure JavaScript is including authentication credentials. Check browser network tab for request headers/parameters.
+
+**Issue: Router integration not working**
+- **Solution**: Use the appropriate framework-specific handler (`GetGinHandler`, `GetEchoHandler`, `GetFiberHandler`).
+
+**Issue: Rate limiting too restrictive**
+- **Solution**: Adjust rate limit parameters: `RateLimitMiddleware(requests, timeWindow)`.
+
+#### Debug Mode
+Enable debug logging to troubleshoot authentication issues:
+
+```go
+// Add debug middleware to see what's happening
+DashboardMiddleware: []func(http.Handler) http.Handler{
+    debugMiddleware(), // Your custom debug middleware
+    monigo.LoggingMiddleware(),
+    // ... other middleware
+}
+```
+
+### Quick Start with Security
+
+```go
+package main
+
+import (
+    "log"
+    "net/http"
+    "time"
+    
+    "github.com/iyashjayesh/monigo"
+)
+
+func main() {
+    // Initialize MoniGo with security
+    monigoInstance := &monigo.Monigo{
+        ServiceName: "secure-service",
+        DashboardMiddleware: []func(http.Handler) http.Handler{
+            monigo.BasicAuthMiddleware("admin", "secure-password"),
+            monigo.LoggingMiddleware(),
+        },
+        APIMiddleware: []func(http.Handler) http.Handler{
+            monigo.RateLimitMiddleware(100, time.Minute),
+        },
+    }
+    
+    // Initialize and start secured dashboard
+    monigoInstance.Initialize()
+    
+    if err := monigo.StartSecuredDashboard(monigoInstance); err != nil {
+        log.Fatal("Failed to start secured dashboard:", err)
+    }
+}
+```
+
 ## Bellow Reports are available
 
 #### Note: You can download the reports in excel format.

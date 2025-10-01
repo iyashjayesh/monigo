@@ -1,4 +1,53 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Function to get API key from URL parameters
+    function getApiKey() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('api_key');
+    }
+
+    // Function to add API key to fetch URL (only for API key auth)
+    function addApiKeyToUrl(url) {
+        const apiKey = getApiKey();
+        if (apiKey) {
+            const separator = url.includes('?') ? '&' : '?';
+            return `${url}${separator}api_key=${encodeURIComponent(apiKey)}`;
+        }
+        return url;
+    }
+
+    // Function to make authenticated fetch request
+    function authenticatedFetch(url, options = {}) {
+        const apiKey = getApiKey();
+        if (apiKey) {
+            // API key authentication - add to URL
+            const separator = url.includes('?') ? '&' : '?';
+            url = `${url}${separator}api_key=${encodeURIComponent(apiKey)}`;
+        } else {
+            // Check for custom authentication methods
+            const urlParams = new URLSearchParams(window.location.search);
+            const secret = urlParams.get('secret');
+
+            if (secret === 'monigo-admin-secret') {
+                // Custom query parameter authentication
+                const separator = url.includes('?') ? '&' : '?';
+                url = `${url}${separator}secret=${encodeURIComponent(secret)}`;
+            } else {
+                // Check for custom header authentication
+                // For custom auth, we need to add headers
+                if (!options.headers) {
+                    options.headers = {};
+                }
+
+                // Add custom header for admin access
+                options.headers['X-User-Role'] = 'admin';
+
+                // Set custom user agent for automated access
+                options.headers['User-Agent'] = 'MoniGo-Admin/1.0';
+            }
+        }
+        // For basic auth, the browser handles credentials automatically
+        return fetch(url, options);
+    }
 
     const refreshHtml = `
         <div class="loader-container">
@@ -50,8 +99,8 @@ document.addEventListener('DOMContentLoaded', () => {
             StartTime = new Date(new Date().getTime() - 4320 * 60000); // Subtract 3 days
         } else if (timeRange == "7d") {
             StartTime = new Date(new Date().getTime() - 10080 * 60000); // Subtract 7 days
-        } 
-        
+        }
+
         // else if (timeRange == "7d") {
         //     StartTime = new Date(new Date().getTime() - 10080 * 60000); // Subtract 7 days
         // } else if (timeRange == "1month") {
@@ -65,35 +114,35 @@ document.addEventListener('DOMContentLoaded', () => {
             time_frame: timeframe
         };
 
-        fetch('/monigo/api/v1/reports', {
+        authenticatedFetch('/monigo/api/v1/reports', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(reqObj)
         })
-        .then(response => response.json())
-        .then(data => {
-            const tablesContainer = document.getElementById('tablesContainer');
+            .then(response => response.json())
+            .then(data => {
+                const tablesContainer = document.getElementById('tablesContainer');
 
-            if (data.length > 0) {
-                const table = createTable(topic, data);
-                tablesContainer.appendChild(table);
-                const downloadBtn = document.getElementById('downloadBtn');
-                if (downloadBtn) {
-                    downloadBtn.style.display = 'block';
-                    downloadBtn.addEventListener('click', () => downloadCSV(data, metric));
+                if (data.length > 0) {
+                    const table = createTable(topic, data);
+                    tablesContainer.appendChild(table);
+                    const downloadBtn = document.getElementById('downloadBtn');
+                    if (downloadBtn) {
+                        downloadBtn.style.display = 'block';
+                        downloadBtn.addEventListener('click', () => downloadCSV(data, metric));
+                    }
+                } else {
+                    tablesContainer.innerHTML = '';
+                    const downloadBtn = document.getElementById('downloadBtn');
+                    if (downloadBtn) {
+                        downloadBtn.style.display = 'none';
+                    }
                 }
-            } else {
-                tablesContainer.innerHTML = '';
-                const downloadBtn = document.getElementById('downloadBtn');
-                if (downloadBtn) {
-                    downloadBtn.style.display = 'none';
-                }
-            }
-        }).catch((error) => {
-            console.error('Error:', error);
-        });
+            }).catch((error) => {
+                console.error('Error:', error);
+            });
     }
 
     function downloadCSV(data, metric) {
@@ -123,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    function createTable(topic, data) {    
+    function createTable(topic, data) {
         const table = document.createElement('div');
         table.classList.add('table-responsive', 'rounded', 'mb-3');
         const tableElement = document.createElement('table');
@@ -168,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return table;
     }
 
-     // Function to update chart based on selections
+    // Function to update chart based on selections
     function updateTableCompo() {
 
         // const sectionTitle = document.getElementById('sectionTitle');

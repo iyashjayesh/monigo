@@ -46,6 +46,11 @@ type Monigo struct {
 	MaxMemoryUsage          float64   `json:"max_memory_usage"`     // Default is 95%, You can set it to 100% if you want to monitor 100% Memory usage
 	MaxGoRoutines           int       `json:"max_go_routines"`      // Default is 100, You can set it to any number based on your service
 	CustomBaseAPIPath       string    `json:"custom_base_api_path"` // Custom base API path for integration with existing routers
+
+	// Security and Middleware Configuration
+	DashboardMiddleware []func(http.Handler) http.Handler `json:"-"` // Middleware chain for dashboard access (static files)
+	APIMiddleware       []func(http.Handler) http.Handler `json:"-"` // Middleware chain for API endpoints
+	AuthFunction        func(*http.Request) bool          `json:"-"` // Simple authentication function for dashboard access
 }
 
 // MonigoInt is the interface to start the monigo service
@@ -332,11 +337,38 @@ func StartDashboardWithCustomPath(port int, customBaseAPIPath string) error {
 	return nil
 }
 
+// StartSecuredDashboard starts the dashboard with middleware support
+func StartSecuredDashboard(m *Monigo) error {
+	if m.DashboardPort == 0 {
+		m.DashboardPort = 8080 // Default port for the dashboard
+	}
+
+	// Get secured handlers
+	unifiedHandler := GetSecuredUnifiedHandler(m, m.CustomBaseAPIPath)
+
+	// Register the secured handler
+	http.HandleFunc("/", unifiedHandler)
+
+	if err := http.ListenAndServe(fmt.Sprintf(":%d", m.DashboardPort), nil); err != nil {
+		return fmt.Errorf("error starting the secured dashboard: %v", err)
+	}
+
+	return nil
+}
+
 // RegisterDashboardHandlers registers all dashboard handlers (both API and static files) to the provided HTTP mux
 // This allows developers to integrate MoniGo dashboard into their existing HTTP server
 func RegisterDashboardHandlers(mux *http.ServeMux, customBaseAPIPath ...string) {
 	// Use the unified handler internally
 	unifiedHandler := GetUnifiedHandler(customBaseAPIPath...)
+	mux.Handle("/", http.HandlerFunc(unifiedHandler))
+}
+
+// RegisterSecuredDashboardHandlers registers all dashboard handlers with middleware support to the provided HTTP mux
+// This allows developers to integrate MoniGo dashboard with security middleware into their existing HTTP server
+func RegisterSecuredDashboardHandlers(mux *http.ServeMux, m *Monigo, customBaseAPIPath ...string) {
+	// Use the secured unified handler internally
+	unifiedHandler := GetSecuredUnifiedHandler(m, customBaseAPIPath...)
 	mux.Handle("/", http.HandlerFunc(unifiedHandler))
 }
 
@@ -358,10 +390,29 @@ func RegisterAPIHandlers(mux *http.ServeMux, customBaseAPIPath ...string) {
 	mux.HandleFunc(fmt.Sprintf("%s/reports", apiPath), api.GetReportData)
 }
 
+// RegisterSecuredAPIHandlers registers only the API handlers with middleware support to the provided HTTP mux
+// This is useful when developers want to handle static file serving themselves but need API security
+func RegisterSecuredAPIHandlers(mux *http.ServeMux, m *Monigo, customBaseAPIPath ...string) {
+	// Get secured API handlers
+	securedHandlers := GetSecuredAPIHandlers(m, customBaseAPIPath...)
+
+	// Register secured API handlers
+	for path, handler := range securedHandlers {
+		mux.HandleFunc(path, handler)
+	}
+}
+
 // RegisterStaticHandlers registers only the static file handlers to the provided HTTP mux
 // This is useful when developers want to handle API routing themselves
 func RegisterStaticHandlers(mux *http.ServeMux) {
 	mux.HandleFunc("/", serveHtmlSite)
+}
+
+// RegisterSecuredStaticHandlers registers only the static file handlers with middleware support to the provided HTTP mux
+// This is useful when developers want to handle API routing themselves but need static file security
+func RegisterSecuredStaticHandlers(mux *http.ServeMux, m *Monigo) {
+	securedHandler := GetSecuredStaticHandler(m)
+	mux.HandleFunc("/", securedHandler)
 }
 
 // GetAPIHandlers returns a map of API handlers that can be registered to any HTTP router
@@ -422,6 +473,90 @@ func GetFiberHandler(customBaseAPIPath ...string) func(*fiber.Ctx) error {
 		}
 		return serveFiberStaticFiles(c, path)
 	}
+}
+
+// GetSecuredUnifiedHandler returns a unified handler with middleware support for both API and static files
+// This is the recommended way to integrate MoniGo with security middleware
+func GetSecuredUnifiedHandler(m *Monigo, customBaseAPIPath ...string) http.HandlerFunc {
+	apiPath := baseAPIPath
+	if len(customBaseAPIPath) > 0 && customBaseAPIPath[0] != "" {
+		apiPath = customBaseAPIPath[0]
+	}
+
+	// Create the base handler
+	baseHandler := func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, apiPath) {
+			routeToAPIHandler(w, r, apiPath)
+			return
+		}
+		serveHtmlSite(w, r)
+	}
+
+	// Apply middleware if provided
+	return applyMiddlewareChain(baseHandler, m.DashboardMiddleware, m.AuthFunction)
+}
+
+// GetSecuredAPIHandlers returns a map of API handlers with middleware support
+func GetSecuredAPIHandlers(m *Monigo, customBaseAPIPath ...string) map[string]http.HandlerFunc {
+	apiPath := baseAPIPath
+	if len(customBaseAPIPath) > 0 && customBaseAPIPath[0] != "" {
+		apiPath = customBaseAPIPath[0]
+	}
+
+	baseHandlers := map[string]http.HandlerFunc{
+		fmt.Sprintf("%s/metrics", apiPath):           api.GetServiceStatistics,
+		fmt.Sprintf("%s/service-info", apiPath):      api.GetServiceInfoAPI,
+		fmt.Sprintf("%s/service-metrics", apiPath):   api.GetServiceMetricsFromStorage,
+		fmt.Sprintf("%s/go-routines-stats", apiPath): api.GetGoRoutinesStats,
+		fmt.Sprintf("%s/function", apiPath):          api.GetFunctionTraceDetails,
+		fmt.Sprintf("%s/function-details", apiPath):  api.ViewFunctionMaetrtics,
+		fmt.Sprintf("%s/reports", apiPath):           api.GetReportData,
+	}
+
+	// Apply middleware to each handler
+	securedHandlers := make(map[string]http.HandlerFunc)
+	for path, handler := range baseHandlers {
+		securedHandlers[path] = applyMiddlewareChain(handler, m.APIMiddleware, nil)
+	}
+
+	return securedHandlers
+}
+
+// GetSecuredStaticHandler returns the static file handler with middleware support
+func GetSecuredStaticHandler(m *Monigo) http.HandlerFunc {
+	return applyMiddlewareChain(serveHtmlSite, m.DashboardMiddleware, m.AuthFunction)
+}
+
+// applyMiddlewareChain applies a chain of middleware to a handler
+func applyMiddlewareChain(handler http.HandlerFunc, middleware []func(http.Handler) http.Handler, authFunc func(*http.Request) bool) http.HandlerFunc {
+	// Start with the base handler
+	var finalHandler http.Handler = http.HandlerFunc(handler)
+
+	// Apply authentication function if provided
+	if authFunc != nil {
+		finalHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Skip authentication for static files
+			if isStaticFile(r.URL.Path) {
+				handler(w, r)
+				return
+			}
+
+			if !authFunc(r) {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+			handler(w, r)
+		})
+	}
+
+	// Apply middleware chain in reverse order (last middleware wraps the handler first)
+	for i := len(middleware) - 1; i >= 0; i-- {
+		finalHandler = middleware[i](finalHandler)
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		finalHandler.ServeHTTP(w, r)
+	})
 }
 
 // routeToAPIHandler routes API requests to the appropriate handler
@@ -614,4 +749,231 @@ func (w *fiberResponseWriter) Write(data []byte) (int, error) {
 
 func (w *fiberResponseWriter) WriteHeader(statusCode int) {
 	w.c.Status(statusCode)
+}
+
+// Built-in Security Middleware Functions
+
+// BasicAuthMiddleware creates a basic authentication middleware
+// Usage: monigo.BasicAuthMiddleware("admin", "password")
+func BasicAuthMiddleware(username, password string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Skip authentication for static files
+			if isStaticFile(r.URL.Path) {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			user, pass, ok := r.BasicAuth()
+			if !ok || user != username || pass != password {
+				w.Header().Set("WWW-Authenticate", `Basic realm="MoniGo Dashboard"`)
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// APIKeyMiddleware creates an API key authentication middleware
+// Usage: monigo.APIKeyMiddleware("your-secret-api-key")
+func APIKeyMiddleware(apiKey string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Skip authentication for static files
+			if isStaticFile(r.URL.Path) {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			providedKey := r.Header.Get("X-API-Key")
+			if providedKey == "" {
+				providedKey = r.URL.Query().Get("api_key")
+			}
+
+			if providedKey != apiKey {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// IPWhitelistMiddleware creates an IP whitelist middleware
+// Usage: monigo.IPWhitelistMiddleware([]string{"127.0.0.1", "192.168.1.0/24"})
+func IPWhitelistMiddleware(allowedIPs []string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Skip IP check for static files
+			if isStaticFile(r.URL.Path) {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			clientIP := getClientIP(r)
+
+			// Check if client IP is in whitelist
+			for _, allowedIP := range allowedIPs {
+				if isIPAllowed(clientIP, allowedIP) {
+					next.ServeHTTP(w, r)
+					return
+				}
+			}
+
+			http.Error(w, "Forbidden", http.StatusForbidden)
+		})
+	}
+}
+
+// RateLimitMiddleware creates a simple rate limiting middleware
+// Usage: monigo.RateLimitMiddleware(100, time.Minute) // 100 requests per minute
+func RateLimitMiddleware(requests int, window time.Duration) func(http.Handler) http.Handler {
+	type clientInfo struct {
+		count     int
+		lastReset time.Time
+	}
+
+	clients := make(map[string]*clientInfo)
+	var mu sync.RWMutex
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			clientIP := getClientIP(r)
+			now := time.Now()
+
+			mu.Lock()
+			client, exists := clients[clientIP]
+			if !exists {
+				client = &clientInfo{count: 0, lastReset: now}
+				clients[clientIP] = client
+			}
+
+			// Reset counter if window has passed
+			if now.Sub(client.lastReset) > window {
+				client.count = 0
+				client.lastReset = now
+			}
+
+			// Check if limit exceeded
+			if client.count >= requests {
+				mu.Unlock()
+				http.Error(w, "Too Many Requests", http.StatusTooManyRequests)
+				return
+			}
+
+			client.count++
+			mu.Unlock()
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// LoggingMiddleware creates a request logging middleware
+func LoggingMiddleware() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+
+			// Create a response writer wrapper to capture status code
+			wrapped := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+
+			next.ServeHTTP(wrapped, r)
+
+			duration := time.Since(start)
+			log.Printf("[MoniGo] %s %s %d %v %s", r.Method, r.URL.Path, wrapped.statusCode, duration, r.RemoteAddr)
+		})
+	}
+}
+
+// Helper functions for middleware
+
+// getClientIP extracts the real client IP from the request
+func getClientIP(r *http.Request) string {
+	// Check X-Forwarded-For header first
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		// X-Forwarded-For can contain multiple IPs, take the first one
+		if idx := strings.Index(xff, ","); idx != -1 {
+			return strings.TrimSpace(xff[:idx])
+		}
+		return strings.TrimSpace(xff)
+	}
+
+	// Check X-Real-IP header
+	if xri := r.Header.Get("X-Real-IP"); xri != "" {
+		return strings.TrimSpace(xri)
+	}
+
+	// Fall back to RemoteAddr
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return ip
+}
+
+// isIPAllowed checks if an IP is allowed based on CIDR notation or exact match
+func isIPAllowed(clientIP, allowedIP string) bool {
+	// Handle CIDR notation
+	if strings.Contains(allowedIP, "/") {
+		_, network, err := net.ParseCIDR(allowedIP)
+		if err != nil {
+			return false
+		}
+		ip := net.ParseIP(clientIP)
+		if ip == nil {
+			return false
+		}
+		return network.Contains(ip)
+	}
+
+	// Exact match
+	return clientIP == allowedIP
+}
+
+// responseWriter wraps http.ResponseWriter to capture status code
+type responseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
+}
+
+// isStaticFile checks if the request path is for a static file
+func isStaticFile(path string) bool {
+	// List of static file extensions
+	staticExtensions := []string{
+		".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico",
+		".woff", ".woff2", ".ttf", ".eot", ".map", ".json", ".xml",
+		".pdf", ".zip", ".txt", ".html", ".htm",
+	}
+
+	// Check if path has a static file extension
+	for _, ext := range staticExtensions {
+		if strings.HasSuffix(strings.ToLower(path), ext) {
+			return true
+		}
+	}
+
+	// Check for common static file paths
+	staticPaths := []string{
+		"/css/", "/js/", "/assets/", "/images/", "/fonts/", "/static/",
+	}
+
+	for _, staticPath := range staticPaths {
+		if strings.HasPrefix(path, staticPath) {
+			return true
+		}
+	}
+
+	// Special case for favicon
+	if path == "/favicon.ico" {
+		return true
+	}
+
+	return false
 }

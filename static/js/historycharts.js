@@ -1,6 +1,55 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Function to get API key from URL parameters
+    function getApiKey() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('api_key');
+    }
 
-     const refreshHtml = `
+    // Function to add API key to fetch URL (only for API key auth)
+    function addApiKeyToUrl(url) {
+        const apiKey = getApiKey();
+        if (apiKey) {
+            const separator = url.includes('?') ? '&' : '?';
+            return `${url}${separator}api_key=${encodeURIComponent(apiKey)}`;
+        }
+        return url;
+    }
+
+    // Function to make authenticated fetch request
+    function authenticatedFetch(url, options = {}) {
+        const apiKey = getApiKey();
+        if (apiKey) {
+            // API key authentication - add to URL
+            const separator = url.includes('?') ? '&' : '?';
+            url = `${url}${separator}api_key=${encodeURIComponent(apiKey)}`;
+        } else {
+            // Check for custom authentication methods
+            const urlParams = new URLSearchParams(window.location.search);
+            const secret = urlParams.get('secret');
+
+            if (secret === 'monigo-admin-secret') {
+                // Custom query parameter authentication
+                const separator = url.includes('?') ? '&' : '?';
+                url = `${url}${separator}secret=${encodeURIComponent(secret)}`;
+            } else {
+                // Check for custom header authentication
+                // For custom auth, we need to add headers
+                if (!options.headers) {
+                    options.headers = {};
+                }
+
+                // Add custom header for admin access
+                options.headers['X-User-Role'] = 'admin';
+
+                // Set custom user agent for automated access
+                options.headers['User-Agent'] = 'MoniGo-Admin/1.0';
+            }
+        }
+        // For basic auth, the browser handles credentials automatically
+        return fetch(url, options);
+    }
+
+    const refreshHtml = `
         <div class="loader-container mt-3">
             <div class="bouncing-dots">
                 <div class="dot"></div>
@@ -9,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         </div>`;
 
-     const elements = {
+    const elements = {
         cpuUsageChart: document.getElementById('cpu-usage-chart'),
         goroutinesChart: document.getElementById('goroutines-chart'),
         loadMemoryChart: document.getElementById('load-memory-chart'),
@@ -18,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     Object.values(elements).forEach(el => el && (el.innerHTML = refreshHtml));
 
-     // Function to get the local ISO string with timezone offset
+    // Function to get the local ISO string with timezone offset
     function toLocalISOString(date) {
         const tzOffset = -date.getTimezoneOffset(); // in minutes
         const diff = tzOffset >= 0 ? '+' : '-';
@@ -38,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function fetchDataPointsFromServer(metricName, timeRange) {
-       let StartTime = new Date();
+        let StartTime = new Date();
         let EndTime = new Date();
 
         if (timeRange == "5m") {
@@ -57,8 +106,8 @@ document.addEventListener('DOMContentLoaded', () => {
             StartTime = new Date(new Date().getTime() - 4320 * 60000); // Subtract 3 days
         } else if (timeRange == "7d") {
             StartTime = new Date(new Date().getTime() - 10080 * 60000); // Subtract 7 days
-        } 
-        
+        }
+
         // else if (timeRange == "7d") {
         //     StartTime = new Date(new Date().getTime() - 10080 * 60000); // Subtract 7 days
         // } else if (timeRange == "1month") {
@@ -82,15 +131,15 @@ document.addEventListener('DOMContentLoaded', () => {
             start_time: toLocalISOString(StartTime),
             end_time: toLocalISOString(EndTime)
         };
-        
 
-        fetch(`/monigo/api/v1/service-metrics`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            }).then(response => response.json())
+
+        authenticatedFetch(`/monigo/api/v1/service-metrics`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        }).then(response => response.json())
             .then(data => {
                 let rawData = [];
                 for (let i = 0; i < data.length; i++) {
@@ -103,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (metricName == "health") {
                     renderHealthChart(rawData);
-                } 
+                }
 
                 if (metricName == "cpu-usage") {
                     renderCpuUsageChart(rawData);
@@ -335,7 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         loadMemoryChart.setOption(option);
-    } 
+    }
 
     function updateHistoryChart(metricName) {
         const metricSelect = metricName;
