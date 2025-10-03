@@ -62,7 +62,7 @@ func GetDirSize(folderPath string) string {
 	return fmt.Sprintf("%.2f MB", float64(size)/1024/1024)
 }
 
-// sets the service info.
+// SetServiceInfo sets the service information.
 func SetServiceInfo(serviceName string, serviceStartTime time.Time, goVersion string, processId int32, rentainPeriod string) {
 	serviceInfo.ServiceName = serviceName
 	serviceInfo.ServiceStartTime = serviceStartTime

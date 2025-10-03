@@ -181,7 +181,7 @@ func executeFunctionWithProfiling(name string, fn func()) {
 
 	cpuProfileFile, err := StartCPUProfile(cpuProfFilePath)
 	if err != nil {
-		log.Printf("[MoniGo] could not start CPU profile for function: " + name + " : Error: " + err.Error() + " will be retrying in the next iteration")
+		log.Printf("[MoniGo] Warning: failed to start CPU profile for function %s: %v. Will retry in next iteration.", name, err)
 	}
 	defer StopCPUProfile(cpuProfileFile)
 
@@ -190,7 +190,7 @@ func executeFunctionWithProfiling(name string, fn func()) {
 	elapsed := time.Since(start)
 
 	if err := WriteHeapProfile(memProfFilePath); err != nil {
-		log.Printf("[MoniGo] could not write memory profile for function: " + name + " : Error: " + err.Error() + " will be retrying in the next iteration")
+		log.Printf("[MoniGo] Warning: failed to write memory profile for function %s: %v. Will retry in next iteration.", name, err)
 	}
 
 	runtime.ReadMemStats(&memStatsAfter)

@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .then(functionData => {
                     const { functionDetailsContainer, totalFunctionCount } = uiElements;
                     if (Object.keys(functionData).length === 0) {
-                        functionDetailsContainer.innerHTML = `<p class='ml-4'>Oops! Looks like there are no metrics to display. Maybe the functions are taking a coffee break?</p>`;
+                        functionDetailsContainer.innerHTML = `<p class='ml-4'>No function metrics are currently available. This may indicate that no functions have been instrumented for monitoring.</p>`;
                         totalFunctionCount.innerHTML = `<h3><strong>0</strong></h3>`;
                         return;
                     }

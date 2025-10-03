@@ -1,6 +1,8 @@
 # Ignore all files in the vendor directory
 vendor/*
 
+monigo/*
+
 
 router-integration/echo-integration/monigo/*
 router-integration/fiber-integration/monigo/*

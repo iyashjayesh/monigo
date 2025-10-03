@@ -902,19 +902,19 @@ document.addEventListener('DOMContentLoaded', () => {
         let tag;
         if (percentage >= 80) {
             fillColor = 'var(--green)';
-            tag = 'Smooth Sailing 🛳️';
+            tag = 'Excellent Performance';
         } else if (percentage >= 60) {
             fillColor = 'var(--lightgreen)';
-            tag = 'System Looking Good 👍';
+            tag = 'Good Performance';
         } else if (percentage >= 50) {
             fillColor = 'var(--yellow)';
-            tag = 'Fairly Balanced 🌟';
+            tag = 'Moderate Performance';
         } else if (percentage >= 40) {
             fillColor = 'var(--orange)';
-            tag = 'System Under Stress 😟';
+            tag = 'Performance Degraded';
         } else {
             fillColor = 'var(--red)';
-            tag = 'Critical Condition 🚨';
+            tag = 'Critical Performance';
         }
         return [fillColor, tag]; // Return an array
     }
@@ -940,7 +940,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (srevPercentage == 0) {
             elements.serviceHealthTag.innerHTML = `
-            <h6 class="mb-0 mt-1">Service: ${tagServ} <br> Not in a Good State, Kindly check! <span class="info-icon" data-tooltip="${iconServMsg}">i</span></h6>
+            <h6 class="mb-0 mt-1">Service: ${tagServ} <br> Service requires attention. Please review system status. <span class="info-icon" data-tooltip="${iconServMsg}">i</span></h6>
         `;
         } else {
             elements.serviceHealthTag.innerHTML = `
@@ -950,7 +950,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (sysPercentage == 0) {
             elements.systemHealthTag.innerHTML = `
-            <h6 class="mb-0">System: ${tagSys} <br> Not in a Good State, Kindly check! <span class="info-icon" data-tooltip="${iconSysMsg}">i</span></h6>
+            <h6 class="mb-0">System: ${tagSys} <br> System requires attention. Please review system status. <span class="info-icon" data-tooltip="${iconSysMsg}">i</span></h6>
         `;
         } else {
             elements.systemHealthTag.innerHTML = `

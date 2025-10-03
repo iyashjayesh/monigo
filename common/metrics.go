@@ -19,17 +19,17 @@ func GetCPULoad() (serviceCPU, systemCPU, totalCPU string) {
 	if err != nil {
 		log.Panicf("[MoniGo] Error fetching CPU load for the service: %v\n", err)
 	}
-	serviceCPU = ParseFloat64ToString(serviceCPUF) + "%" // This is the service CPU usage percentage.
+	serviceCPU = ParseFloat64ToString(serviceCPUF) + "%" // Service CPU usage percentage
 
 	cpuPercents, err := cpu.Percent(time.Second, false) // Get total system CPU percentage
 	if err != nil {
 		log.Panicf("[MoniGo] Error fetching CPU load for the system: %v\n", err)
 	}
 	if len(cpuPercents) > 0 {
-		systemCPU = ParseFloat64ToString(cpuPercents[0]-serviceCPUF) + "%" // This is the system CPU usage percentage.
+		systemCPU = ParseFloat64ToString(cpuPercents[0]-serviceCPUF) + "%" // System CPU usage percentage
 	}
 
-	totalCPU = ParseFloat64ToString(serviceCPUF+cpuPercents[0]) + "%" // This is the total CPU usage percentage.
+	totalCPU = ParseFloat64ToString(serviceCPUF+cpuPercents[0]) + "%" // Total CPU usage percentage
 	return serviceCPU, systemCPU, totalCPU
 }
 

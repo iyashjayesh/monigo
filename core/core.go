@@ -257,17 +257,17 @@ func getStatusMessage(healthScore float64) string {
 	var message string
 	switch {
 	case healthScore >= 90:
-		message = "[Outstanding] The Service Health is rocking it! 🤘🏻 Everything’s running smoothly and life is good."
+		message = "[Excellent] Service health is optimal. All systems are operating within normal parameters."
 	case healthScore >= 85:
-		message = "[Impressive] The Service Health is doing great—just a few hiccups that need a tweak here and there. 💡"
+		message = "[Good] Service health is performing well with minor optimizations recommended."
 	case healthScore >= 70:
-		message = "[Solid] The Service Health is holding up well. ⚡️ A bit of fine-tuning could make it shine even brighter."
+		message = "[Satisfactory] Service health is stable with room for performance improvements."
 	case healthScore >= 50:
-		message = "[Fair] The Service Health is functional but could use a bit of TLC. Time to check those resources! 🛠️"
+		message = "[Fair] Service health is functional but requires attention to resource utilization."
 	case healthScore >= 30:
-		message = "[Wobbly] The Service Health is feeling the heat.🔥 Roll up your sleeves and dig into those logs!"
+		message = "[Poor] Service health is degraded. Immediate investigation and remediation required."
 	default:
-		message = "[Oops] The Service Health is in rough shape. ‼️ Time to call in the cavalry and get things back on track! 🚑"
+		message = "[Critical] Service health is severely compromised. Urgent intervention necessary."
 	}
 
 	return message
@@ -278,8 +278,8 @@ func GetServiceHealth(serviceStats *models.ServiceStats) models.ServiceHealth {
 	healthInPercent, err := CalculateHealthScore(serviceStats)
 	if err != nil {
 		return models.ServiceHealth{
-			SystemHealth:  models.Health{Percent: 0, Healthy: false, Message: "Oops! We hit a snag while calculating the health score."},
-			ServiceHealth: models.Health{Percent: 0, Healthy: false, Message: "Oops! We hit a snag while calculating the health score."},
+			SystemHealth:  models.Health{Percent: 0, Healthy: false, Message: "Error: Unable to calculate health score. Please check system configuration."},
+			ServiceHealth: models.Health{Percent: 0, Healthy: false, Message: "Error: Unable to calculate health score. Please check system configuration."},
 		}
 	}
 
