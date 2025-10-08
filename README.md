@@ -27,11 +27,10 @@
   <img src="./static/assets/ss/d5.png" alt="Dashboard" width="300">
   <img src="./static/assets/ss/d6.png" alt="Dashboard" width="300">
   <img src="./static/assets/ss/d9.png" alt="Dashboard" width="300">
-
 </div> -->
 
 <div align="center">
-<iframe width="560" height="315" src="https://www.youtube.com/embed/rbc3-A4VCpY" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  <img src="monigo.gif" width="100%" alt="monigo-gif">
 </div>
 
 ## Features
