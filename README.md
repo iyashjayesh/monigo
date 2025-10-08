@@ -30,8 +30,9 @@
 
 </div> -->
 
-
-<iframe width="100%" height="100%" src="https://www.youtube.com/embed/rbc3-A4VCpY?si=2QRwMdT9uXN0bwiT&amp;controls=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+<div align="center">
+<iframe width="100%" height="100%" src="https://www.youtube.com/embed/rbc3-A4VCpY" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 
 ## Features
 
