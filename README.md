@@ -16,7 +16,7 @@
 
 **MoniGo** is a performance monitoring library for Go applications. It provides real-time insights into application performance with an intuitive user interface, enabling developers to track and optimize both service-level and function-level metrics.
 
-<div align="center" style="display: flex; flex-wrap: wrap; gap: 10px; border: 2px solid #ccc; padding: 10px;">
+<!-- <div align="center" style="display: flex; flex-wrap: wrap; gap: 10px; border: 2px solid #ccc; padding: 10px;">
   <img src="./static/assets/ss/d1.png" alt="Dashboard" width="300">
   <img src="./static/assets/ss/d10.png" alt="Dashboard" width="300">
   <img src="./static/assets/ss/d2.png" alt="Dashboard" width="300">
@@ -27,7 +27,11 @@
   <img src="./static/assets/ss/d5.png" alt="Dashboard" width="300">
   <img src="./static/assets/ss/d6.png" alt="Dashboard" width="300">
   <img src="./static/assets/ss/d9.png" alt="Dashboard" width="300">
-</div>
+
+</div> -->
+
+
+<iframe width="100%" height="100%" src="https://www.youtube.com/embed/rbc3-A4VCpY?si=2QRwMdT9uXN0bwiT&amp;controls=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 ## Features
 
