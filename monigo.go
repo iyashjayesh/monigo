@@ -55,8 +55,8 @@ type Monigo struct {
 
 // MonigoInt is the interface to start the monigo service
 type MonigoInt interface {
-	Start()                                         // Start the monigo service with dashboard
-	Initialize()                                    // Initialize monigo without starting dashboard
+	Start() error                                   // Start the monigo service with dashboard
+	Initialize() error                              // Initialize monigo without starting dashboard
 	GetGoRoutinesStats() models.GoRoutinesStatistic // Print the Go routines stats
 }
 
@@ -66,7 +66,7 @@ type Cache struct {
 }
 
 // setDashboardPort sets the dashboard port
-func setDashboardPort(m *Monigo) {
+func setDashboardPort(m *Monigo) error {
 	defaultPort := 8080
 
 	if m.DashboardPort < 1 || m.DashboardPort > 65535 { // Validating the port range and check if no port is provided
@@ -84,14 +84,15 @@ func setDashboardPort(m *Monigo) {
 		m.DashboardPort = defaultPort
 		listener, err = net.Listen("tcp", fmt.Sprintf(":%d", m.DashboardPort))
 		if err != nil {
-			log.Panicf("[MoniGo] Failed to bind to default port %d: %v\n", defaultPort, err)
+			return fmt.Errorf("[MoniGo] Failed to bind to default port %d: %v", defaultPort, err)
 		}
 	}
 	defer listener.Close()
+	return nil
 }
 
 // MonigoInstanceConstructor is the constructor for the Monigo struct
-func (m *Monigo) MonigoInstanceConstructor() {
+func (m *Monigo) MonigoInstanceConstructor() error {
 
 	if m.TimeZone == "" { // Setting default TimeZone if not provided
 		m.TimeZone = "Local"
@@ -103,7 +104,9 @@ func (m *Monigo) MonigoInstanceConstructor() {
 		location = time.Local
 	}
 
-	setDashboardPort(m) // Setting the dashboard port
+	if err := setDashboardPort(m); err != nil {
+		return err
+	}
 	m.DataPointsSyncFrequency = common.DefaultIfEmpty(m.DataPointsSyncFrequency, "5m")
 	m.DataRetentionPeriod = common.DefaultIfEmpty(m.DataRetentionPeriod, "7d")
 	m.MaxCPUUsage = common.DefaultFloatIfZero(m.MaxCPUUsage, 95)
@@ -117,6 +120,7 @@ func (m *Monigo) MonigoInstanceConstructor() {
 	})
 
 	m.ServiceStartTime = time.Now().In(location) // Setting the service start time
+	return nil
 }
 
 // MonigoInstanceConstructorWithoutPort is the constructor for the Monigo struct without port binding
@@ -151,16 +155,18 @@ func (m *Monigo) MonigoInstanceConstructorWithoutPort() {
 
 // Initialize initializes the monigo service without starting the dashboard
 // This is useful when you want to integrate MoniGo with your existing HTTP server
-func (m *Monigo) Initialize() {
+func (m *Monigo) Initialize() error {
 	// Validate service name
 	if m.ServiceName == "" {
-		log.Panic("[MoniGo] service_name is required, please provide the service name")
+		return fmt.Errorf("[MoniGo] service_name is required, please provide the service name")
 	}
 
 	m.MonigoInstanceConstructorWithoutPort() // Use constructor without port binding
-	timeseries.PurgeStorage()                // Purge storage and set sync frequency for metrics
+	if err := timeseries.PurgeStorage(); err != nil {
+		return fmt.Errorf("[MoniGo] Warning: failed to purge storage: %v", err)
+	}
 	if err := timeseries.SetDataPointsSyncFrequency(m.DataPointsSyncFrequency); err != nil {
-		log.Panic("[MoniGo] failed to set data points sync frequency: ", err)
+		return fmt.Errorf("[MoniGo] failed to set data points sync frequency: %v", err)
 	}
 
 	// Fetching runtime details
@@ -201,20 +207,26 @@ func (m *Monigo) Initialize() {
 	_, err := timeseries.GetStorageInstance()
 	if err != nil {
 		log.Printf("[MoniGo] Warning: failed to initialize storage: %v", err)
+		return fmt.Errorf("failed to initialize storage: %w", err)
 	}
+	return nil
 }
 
 // Function to start the monigo service
-func (m *Monigo) Start() {
+func (m *Monigo) Start() error {
 	// Validate service name
 	if m.ServiceName == "" {
-		log.Panic("[MoniGo] service_name is required, please provide the service name")
+		return fmt.Errorf("[MoniGo] service_name is required, please provide the service name")
 	}
 
-	m.MonigoInstanceConstructor() // Use the original constructor with port binding
-	timeseries.PurgeStorage()     // Purge storage and set sync frequency for metrics
+	if err := m.MonigoInstanceConstructor(); err != nil {
+		return err
+	}
+	if err := timeseries.PurgeStorage(); err != nil {
+		return fmt.Errorf("[MoniGo] Warning: failed to purge storage: %v", err)
+	}
 	if err := timeseries.SetDataPointsSyncFrequency(m.DataPointsSyncFrequency); err != nil {
-		log.Panic("[MoniGo] failed to set data points sync frequency: ", err)
+		return fmt.Errorf("[MoniGo] failed to set data points sync frequency: %v", err)
 	}
 
 	// Fetching runtime details
@@ -252,8 +264,9 @@ func (m *Monigo) Start() {
 	)
 
 	if err := StartDashboardWithCustomPath(m.DashboardPort, m.CustomBaseAPIPath); err != nil {
-		log.Panic("[MoniGo] error starting the dashboard: ", err)
+		return fmt.Errorf("[MoniGo] error starting the dashboard: %v", err)
 	}
+	return nil
 }
 
 // GetGoRoutinesStats get back the Go routines stats from the core package

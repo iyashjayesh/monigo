@@ -10,19 +10,20 @@ import (
 
 func main() {
 
-	monigoInstance := &monigo.Monigo{
-		ServiceName:             "data-api", // Mandatory field
-		DashboardPort:           8080,       // Default is 8080
-		DataPointsSyncFrequency: "5m",       // Default is 5 Minutes
-		DataRetentionPeriod:     "4d",       // Default is 7 days. Supported values: "1h", "1d", "1w", "1m"
-		TimeZone:                "Local",    // Default is Local timezone. Supported values: "Local", "UTC", "Asia/Kolkata", "America/New_York" etc. (https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
-		// MaxCPUUsage:             90,         // Default is 95%
-		// MaxMemoryUsage:          90,         // Default is 95%
-		// MaxGoRoutines:           100,        // Default is 100
-	}
+	// New way: Use Builder Pattern
+	monigoInstance := monigo.NewBuilder().
+		WithServiceName("data-api").
+		WithPort(8080).
+		WithRetentionPeriod("4d").
+		WithDataPointsSyncFrequency("5m").
+		Build()
 
 	// Traditional way: Start MoniGo dashboard on a separate port
-	go monigoInstance.Start() // Starting monigo dashboard
+	go func() {
+		if err := monigoInstance.Start(); err != nil {
+			log.Fatalf("Failed to start MoniGo: %v", err)
+		}
+	}()
 	log.Println("Monigo dashboard started at port 8080")
 
 	// Your application runs on a different port

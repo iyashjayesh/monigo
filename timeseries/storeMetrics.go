@@ -58,7 +58,8 @@ func RemovePercentage(s string) float64 {
 
 // Helper function to convert a string to a formatted float.
 func StringToFloat(s string) float64 {
-	val, _ := strconv.ParseFloat(fmt.Sprintf("%.4f", s), 64)
+	val, _ := strconv.ParseFloat(s, 64)
+	val, _ = strconv.ParseFloat(fmt.Sprintf("%.4f", val), 64)
 	return val
 }
 

@@ -82,7 +82,10 @@ func calculateServiceHealth(stats *models.ServiceStats) (float64, string, error)
 func calculateSystemHealth(stats *models.ServiceStats) (float64, string, error) {
 
 	// Calculating cpu & memory usage percentage for the system
-	cpuUsagePercentage := GetCPUPrecent()
+	cpuUsagePercentage, err := GetCPUPrecent()
+	if err != nil {
+		return 0, "", fmt.Errorf("failed to get CPU percent: %w", err)
+	}
 	memoryUsagePercentage, err := calculateMemoryUsagePercentage(
 		stats.MemoryStatistics.MemoryUsedBySystem,
 		stats.MemoryStatistics.TotalSystemMemory,

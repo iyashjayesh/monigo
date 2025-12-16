@@ -16,7 +16,10 @@ type ServiceStats struct {
 	HeapAllocBySystem   string `json:"heap_alloc_by_system"`
 	TotalAllocByService string `json:"total_alloc_by_service"`
 	TotalMemoryByOS     string `json:"total_memory_by_os"`
-	// DiskIO            float64 `json:"disk_io"` @TODO: Need to work on this
+	DiskIO              struct {
+		ReadBytes  uint64 `json:"read_bytes"`
+		WriteBytes uint64 `json:"write_bytes"`
+	} `json:"disk_io"` // Disk Use percentage
 	NetworkIO struct {
 		BytesSent     float64 `json:"bytes_sent"`
 		BytesReceived float64 `json:"bytes_received"`
@@ -43,9 +46,9 @@ type LoadStatistics struct {
 	SystemMemLoad        string `json:"system_memory_load"`
 	TotalMemLoad         string `json:"total_memory_load"`
 	OverallLoadOfService string `json:"overall_load_of_service"` // Final load of the service
-	// ServiceDiskLoad      string `json:"service_disk_load"`  @TODO: Need to work on this
-	// SystemDiskLoad       string `json:"system_disk_load"`   @TODO: Need to work on this
-	// TotalDiskLoad        string `json:"total_disk_load"`	   @TODO: Need to work on this
+	ServiceDiskLoad      string `json:"service_disk_load"`
+	SystemDiskLoad       string `json:"system_disk_load"`
+	TotalDiskLoad        string `json:"total_disk_load"`
 }
 
 // CPUStatistics represents the CPU statistics of the service.

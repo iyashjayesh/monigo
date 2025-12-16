@@ -64,15 +64,16 @@ func GetStorageInstance() (Storage, error) {
 	var err error
 	once.Do(func() {
 		basePath = common.GetBasePath()
-		tstorageInstance, err := tstorage.NewStorage(
+		storageInstance, initErr := tstorage.NewStorage(
 			tstorage.WithDataPath(basePath+"/data"),
 			tstorage.WithRetention(common.GetDataRetentionPeriod()),
 		)
-		if err != nil {
-			log.Panicf("[MoniGo] Error initializing storage: %v\n", err)
+		if initErr != nil {
+			err = initErr
+			log.Printf("[MoniGo] Error initializing storage: %v\n", err)
+			return
 		}
-		storage = &StorageWrapper{storage: tstorageInstance}
-
+		storage = &StorageWrapper{storage: storageInstance}
 		// Initialize context and cancel function for goroutines
 		ctx, cancel = context.WithCancel(context.Background())
 	})
@@ -80,25 +81,30 @@ func GetStorageInstance() (Storage, error) {
 }
 
 // CloseStorage closes the storage instance and stops any running goroutines.
-func CloseStorage() {
+func CloseStorage() error {
+	var err error
 	closeOnce.Do(func() {
 		if cancel != nil {
 			cancel() // Stop any goroutines
 		}
 		if storage != nil {
-			if err := storage.Close(); err != nil {
-				log.Panicf("[MoniGo] Error closing storage: %v\n", err)
+			if closeErr := storage.Close(); closeErr != nil {
+				log.Printf("[MoniGo] Error closing storage: %v\n", closeErr)
+				err = closeErr
 			}
 		}
 	})
+	return err
 }
 
 // PurgeStorage removes all storage data and closes the storage.
-func PurgeStorage() {
+func PurgeStorage() error {
 	basePath := common.GetBasePath()
 	if err := os.RemoveAll(basePath); err != nil {
-		log.Panicf("[MoniGo] Error purging storage: %v\n", err)
+		log.Printf("[MoniGo] Error purging storage: %v\n", err)
+		return err
 	}
+	return nil
 }
 
 // SetDataPointsSyncFrequency sets the frequency at which data points are synchronized.

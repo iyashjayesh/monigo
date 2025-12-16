@@ -170,7 +170,8 @@ func executeFunctionWithProfiling(name string, fn func()) {
 
 	folderPath := fmt.Sprintf("%s/profiles", basePath)
 	if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
-		log.Panicf("[MoniGo] could not create profiles directory: %v", err)
+		log.Printf("[MoniGo] Warning: could not create profiles directory: %v", err)
+		return
 	}
 
 	cpuProfName := fmt.Sprintf("%s_cpu.prof", name)

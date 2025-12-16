@@ -183,7 +183,7 @@ func ConvertToReadableUnit(value interface{}) string {
 	case reflect.String:
 		num = ParseStringToFloat64(v.String())
 	default:
-		log.Panic("[MoniGo] unsupported type: ", v.Kind())
+		log.Printf("[MoniGo] Warning: unsupported type: %v", v.Kind())
 		return ""
 	}
 

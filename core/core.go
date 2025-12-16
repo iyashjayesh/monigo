@@ -22,7 +22,7 @@ func GetServiceStats() models.ServiceStats {
 	stats.CoreStatistics = GetCoreStatistics()
 
 	var wg sync.WaitGroup
-	wg.Add(5)
+	wg.Add(6)
 
 	// Goroutine to fetch load statistics
 	go func() {
@@ -58,10 +58,15 @@ func GetServiceStats() models.ServiceStats {
 		stats.NetworkIO.BytesReceived, stats.NetworkIO.BytesSent = GetNetworkIO()
 	}()
 
+	// Goroutine to fetch disk I/O statistics
+	go func() {
+		defer wg.Done()
+		stats.DiskIO.ReadBytes, stats.DiskIO.WriteBytes = GetDiskIO()
+	}()
+
 	wg.Wait()
 
 	stats.Health = GetServiceHealth(&stats)
-	// stats.DiskIO = GetDiskIO()  // TODO: Implement Disk I/O collection logic
 
 	return stats
 }
@@ -108,6 +113,9 @@ func GetLoadStatistics() models.LoadStatistics {
 	// Fetch memory load statistics
 	serviceMemLoad, systemMemLoad, totalMemAvailable := common.GetMemoryLoad()
 
+	// Fetch disk load statistics
+	serviceDisk, systemDisk, totalDisk := common.GetDiskLoad()
+
 	return models.LoadStatistics{
 		ServiceCPULoad:       serviceCPULoad,
 		SystemCPULoad:        systemCPULoad,
@@ -116,10 +124,9 @@ func GetLoadStatistics() models.LoadStatistics {
 		SystemMemLoad:        systemMemLoad,
 		TotalMemLoad:         common.ConvertToReadableUnit(totalMemAvailable),
 		OverallLoadOfService: CalculateOverallLoad(serviceCPULoad, serviceMemLoad),
-		// Disk load can be added later if required
-		// ServiceDiskLoad: common.ParseFloat64ToString(serviceDisk), @TODO: Need to work on this
-		// SystemDiskLoad:  common.ParseFloat64ToString(systemDisk),  @TODO: Need to work on this
-		// TotalDiskLoad:   common.ParseFloat64ToString(totalDisk),
+		ServiceDiskLoad:      serviceDisk,
+		SystemDiskLoad:       systemDisk,
+		TotalDiskLoad:        totalDisk,
 	}
 }
 
@@ -146,12 +153,21 @@ func CalculateOverallLoad(serviceCPU, serviceMem string) string {
 func GetCPUStatistics() models.CPUStatistics {
 	var cpuStats models.CPUStatistics
 
-	sysCPUPercent := GetCPUPrecent()
-	memInfo := GetVirtualMemoryStats()
+	sysCPUPercent, err := GetCPUPrecent()
+	if err != nil {
+		log.Printf("[MoniGo] Error fetching system CPU percent: %v", err)
+		sysCPUPercent = 0
+	}
+	memInfo, err := GetVirtualMemoryStats()
+	if err != nil {
+		log.Printf("[MoniGo] Error fetching virtual memory stats: %v", err)
+		memInfo = mem.VirtualMemoryStat{}
+	}
 
 	procCPUPercent, _, err := getProcessUsage(common.GetProcessObject(), &memInfo)
 	if err != nil {
-		log.Panicf("[MoniGo] Error fetching process usage: %v\n", err)
+		log.Printf("[MoniGo] Error fetching process usage: %v\n", err)
+		procCPUPercent = 0
 	}
 
 	totalLogicalCores, _ := cpu.Counts(true)
@@ -176,12 +192,15 @@ func GetMemoryStatistics() models.MemoryStatistics {
 
 	memInfo, err := mem.VirtualMemory() // Fetcing system memory statistics
 	if err != nil {
-		log.Panicf("[MoniGo] Error fetching virtual memory info: %v", err)
+		log.Printf("[MoniGo] Error fetching virtual memory info: %v", err)
+		return models.MemoryStatistics{}
 	}
 
 	swapInfo, err := mem.SwapMemory() // Fetching swap memory statistics
 	if err != nil {
-		log.Panicf("[MoniGo] Error fetching swap memory info: %v", err)
+		log.Printf("[MoniGo] Error fetching swap memory info: %v", err)
+		// valid SwapMemory struct to prevent nil pointer later if used, or continue with zeroed swapInfo
+		swapInfo = &mem.SwapMemoryStat{}
 	}
 
 	m := ReadMemStats() // Get the memory statistics for the service
@@ -239,7 +258,8 @@ func GetNetworkIO() (float64, float64) {
 	// Fetch network I/O statistics
 	netIO, err := net.IOCounters(true)
 	if err != nil {
-		log.Panicf("[MoniGo] Error fetching network I/O statistics: %v", err)
+		log.Printf("[MoniGo] Error fetching network I/O statistics: %v", err)
+		return 0, 0
 	}
 
 	var totalBytesReceived, totalBytesSent float64

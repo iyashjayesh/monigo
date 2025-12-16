@@ -18,12 +18,12 @@ var (
 	serviceHealthThresholds models.ServiceHealthThresholds
 )
 
-// GetRequestCount returns the total number of requests
-func GetCPUPrecent() float64 {
+// GetCPUPrecent returns the total number of requests
+func GetCPUPrecent() (float64, error) {
 	cpuPercents, err := cpu.Percent(time.Second, false)
 	if err != nil {
-		log.Panicf("[MoniGo] Error fetching CPU usage: %v\n", err)
-		return 0
+		log.Printf("[MoniGo] Error fetching CPU usage: %v\n", err)
+		return 0, err
 	}
 
 	var total float64
@@ -31,18 +31,18 @@ func GetCPUPrecent() float64 {
 		total += percent
 	}
 
-	return total / float64(len(cpuPercents))
+	return total / float64(len(cpuPercents)), nil
 }
 
 // GetVirtualMemoryStats returns the virtual memory statistics
-func GetVirtualMemoryStats() mem.VirtualMemoryStat {
+func GetVirtualMemoryStats() (mem.VirtualMemoryStat, error) {
 	memInfo, err := mem.VirtualMemory()
 	if err != nil {
-		log.Panicf("[MoniGo] Error fetching memory usage: %v\n", err)
-		return mem.VirtualMemoryStat{}
+		log.Printf("[MoniGo] Error fetching memory usage: %v\n", err)
+		return mem.VirtualMemoryStat{}, err
 	}
 
-	return *memInfo
+	return *memInfo, nil
 }
 
 // Fetches and returns process CPU and memory usage
