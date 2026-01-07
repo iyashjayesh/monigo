@@ -340,6 +340,7 @@ func StartDashboardWithCustomPath(port int, customBaseAPIPath string) error {
 	http.HandleFunc(fmt.Sprintf("%s/go-routines-stats", apiPath), api.GetGoRoutinesStats)
 	http.HandleFunc(fmt.Sprintf("%s/function", apiPath), api.GetFunctionTraceDetails)
 	http.HandleFunc(fmt.Sprintf("%s/function-details", apiPath), api.ViewFunctionMaetrtics)
+	http.HandleFunc("/metrics", api.PrometheusMetricsHandler)
 
 	// Reports
 	http.HandleFunc(fmt.Sprintf("%s/reports", apiPath), api.GetReportData)
@@ -400,6 +401,8 @@ func RegisterAPIHandlers(mux *http.ServeMux, customBaseAPIPath ...string) {
 	mux.HandleFunc(fmt.Sprintf("%s/go-routines-stats", apiPath), api.GetGoRoutinesStats)
 	mux.HandleFunc(fmt.Sprintf("%s/function", apiPath), api.GetFunctionTraceDetails)
 	mux.HandleFunc(fmt.Sprintf("%s/function-details", apiPath), api.ViewFunctionMaetrtics)
+	mux.HandleFunc(fmt.Sprintf("%s/metrics", apiPath), api.GetServiceStatistics) // Existing JSON metrics
+	mux.HandleFunc("/metrics", api.PrometheusMetricsHandler)                     // New Prometheus metrics
 	mux.HandleFunc(fmt.Sprintf("%s/reports", apiPath), api.GetReportData)
 }
 
@@ -443,7 +446,8 @@ func GetAPIHandlers(customBaseAPIPath ...string) map[string]http.HandlerFunc {
 		fmt.Sprintf("%s/go-routines-stats", apiPath): api.GetGoRoutinesStats,
 		fmt.Sprintf("%s/function", apiPath):          api.GetFunctionTraceDetails,
 		fmt.Sprintf("%s/function-details", apiPath):  api.ViewFunctionMaetrtics,
-		fmt.Sprintf("%s/reports", apiPath):           api.GetReportData,
+		"/metrics":                         api.PrometheusMetricsHandler,
+		fmt.Sprintf("%s/reports", apiPath): api.GetReportData,
 	}
 }
 
@@ -523,7 +527,8 @@ func GetSecuredAPIHandlers(m *Monigo, customBaseAPIPath ...string) map[string]ht
 		fmt.Sprintf("%s/go-routines-stats", apiPath): api.GetGoRoutinesStats,
 		fmt.Sprintf("%s/function", apiPath):          api.GetFunctionTraceDetails,
 		fmt.Sprintf("%s/function-details", apiPath):  api.ViewFunctionMaetrtics,
-		fmt.Sprintf("%s/reports", apiPath):           api.GetReportData,
+		"/metrics":                         api.PrometheusMetricsHandler,
+		fmt.Sprintf("%s/reports", apiPath): api.GetReportData,
 	}
 
 	// Apply middleware to each handler

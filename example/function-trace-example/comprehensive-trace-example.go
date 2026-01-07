@@ -36,7 +36,7 @@ func main() {
 	monigoInstance := &monigo.Monigo{
 		ServiceName:             "comprehensive-trace-api",
 		DashboardPort:           8080,
-		DataPointsSyncFrequency: "5m",
+		DataPointsSyncFrequency: "5s",
 		DataRetentionPeriod:     "4d",
 		TimeZone:                "Local",
 	}
