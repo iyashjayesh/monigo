@@ -33,13 +33,14 @@ type Result struct {
 
 func main() {
 	// Initialize MoniGo
-	monigoInstance := &monigo.Monigo{
-		ServiceName:             "comprehensive-trace-api",
-		DashboardPort:           8080,
-		DataPointsSyncFrequency: "5s",
-		DataRetentionPeriod:     "4d",
-		TimeZone:                "Local",
-	}
+	// Initialize MoniGo
+	monigoInstance := monigo.NewBuilder().
+		WithServiceName("comprehensive-trace-api").
+		WithPort(8080).
+		WithDataPointsSyncFrequency("5s").
+		WithRetentionPeriod("4d").
+		WithTimeZone("Local").
+		Build()
 
 	// Start MoniGo dashboard
 	go monigoInstance.Start()
