@@ -57,9 +57,9 @@ package main
 
 import (
     "github.com/iyashjayesh/monigo"
+	"log"
+	"math"
 )
-
-func main() {
 
 func main() {
     // New way: Use Builder Pattern for clean initialization
@@ -78,7 +78,7 @@ func main() {
             log.Fatalf("Failed to start MoniGo: %v", err)
         }
     }()
-	log.Println("Monigo dashboard started at port 8080")
+	log.Printf("Monigo dashboard started at port %d\n", monigoInstance.GetRuningPort())
 
   	// Optional
 	// routinesStats := monigoInstance.GetGoRoutinesStats() // Get go routines stats

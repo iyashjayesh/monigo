@@ -2,14 +2,17 @@ package monigo
 
 import (
 	"embed"
+	"errors"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -69,26 +72,43 @@ type Cache struct {
 func setDashboardPort(m *Monigo) error {
 	defaultPort := 8080
 
-	if m.DashboardPort < 1 || m.DashboardPort > 65535 { // Validating the port range and check if no port is provided
-		if m.DashboardPort == 0 {
-			log.Println("[MoniGo] Port not provided. Setting to default port:", defaultPort)
-		} else {
-			log.Println("[MoniGo] Invalid port provided. Setting to default port:", defaultPort)
-		}
+	// If the port is not provided or is out of range, we will set it to the default port
+	if m.DashboardPort <= 0 || m.DashboardPort > 65535 {
+		log.Println("[MoniGo] Port not provided. Setting to default port:", defaultPort)
 		m.DashboardPort = defaultPort
 	}
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", m.DashboardPort)) // Attempting to listen on the provided or default port
 	if err != nil {
-		log.Printf("[MoniGo] Port %d in use. Setting to default port: %d\n", m.DashboardPort, defaultPort)
-		m.DashboardPort = defaultPort
-		listener, err = net.Listen("tcp", fmt.Sprintf(":%d", m.DashboardPort))
-		if err != nil {
-			return fmt.Errorf("[MoniGo] Failed to bind to default port %d: %v", defaultPort, err)
+		// If the port is in use, we will set it to the default port
+		if portInUse := m.isAddrInUse(err); portInUse {
+			log.Printf("[MoniGo] Port %d in use. Setting to default port: %d\n", m.DashboardPort, defaultPort)
+			m.DashboardPort = defaultPort
+
+			// Attempting to listen on the default port
+			listener, err = net.Listen("tcp", fmt.Sprintf(":%d", m.DashboardPort))
+			if err != nil {
+				return fmt.Errorf("[MoniGo] Failed to bind to default port %d: %v", defaultPort, err)
+			}
 		}
 	}
 	defer listener.Close()
 	return nil
+}
+
+// isAddrInUse checks if the error is due to address in use
+func (m *Monigo) isAddrInUse(err error) bool {
+	var opErr *net.OpError
+	if errors.As(err, &opErr) {
+		var sysErr *os.SyscallError
+		return errors.As(opErr.Err, &sysErr) && errors.Is(sysErr.Err, syscall.EADDRINUSE)
+	}
+	return false
+}
+
+// GetRuningPort returns the running port
+func (m *Monigo) GetRuningPort() int {
+	return m.DashboardPort
 }
 
 // MonigoInstanceConstructor is the constructor for the Monigo struct
