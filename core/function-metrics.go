@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/iyashjayesh/monigo/common"
@@ -18,7 +19,20 @@ import (
 var (
 	functionMetrics = make(map[string]*models.FunctionMetrics)
 	basePath        = common.GetBasePath()
+
+	// Sampling configuration
+	samplingRate = 100 // Trace 1 in 100 calls by default
+	callCounters = make(map[string]uint64)
+	countersMu   sync.Mutex
 )
+
+// SetSamplingRate sets the sampling rate for function tracing
+func SetSamplingRate(rate int) {
+	if rate < 1 {
+		rate = 1
+	}
+	samplingRate = rate
+}
 
 // TraceFunction traces the function and captures the metrics
 // This is the original function maintained for backward compatibility
@@ -162,59 +176,83 @@ func generateFunctionName(fnValue reflect.Value, fnType reflect.Type) string {
 	return baseName
 }
 
-// executeFunctionWithProfiling contains the common profiling logic
+// executeFunctionWithProfiling contains the common profiling logic with sampling
 func executeFunctionWithProfiling(name string, fn func()) {
-	initialGoroutines := runtime.NumGoroutine() // Capturing the initial number of goroutines
-	var memStatsBefore, memStatsAfter runtime.MemStats
-	runtime.ReadMemStats(&memStatsBefore)
+	countersMu.Lock()
+	callCounters[name]++
+	count := callCounters[name]
+	countersMu.Unlock()
 
-	folderPath := fmt.Sprintf("%s/profiles", basePath)
-	if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
-		log.Printf("[MoniGo] Warning: could not create profiles directory: %v", err)
-		return
+	shouldProfile := count%uint64(samplingRate) == 0
+
+	initialGoroutines := runtime.NumGoroutine()
+	var memStatsBefore runtime.MemStats
+	if shouldProfile {
+		runtime.ReadMemStats(&memStatsBefore)
 	}
 
-	cpuProfName := fmt.Sprintf("%s_cpu.prof", name)
-	cpuProfFilePath := filepath.Join(folderPath, cpuProfName)
+	var cpuProfFilePath, memProfFilePath string
+	var cpuProfileFile *os.File
 
-	memProfName := fmt.Sprintf("%s_mem.prof", name)
-	memProfFilePath := filepath.Join(folderPath, memProfName)
+	if shouldProfile {
+		folderPath := fmt.Sprintf("%s/profiles", basePath)
+		_ = os.MkdirAll(folderPath, os.ModePerm)
 
-	cpuProfileFile, err := StartCPUProfile(cpuProfFilePath)
-	if err != nil {
-		log.Printf("[MoniGo] Warning: failed to start CPU profile for function %s: %v. Will retry in next iteration.", name, err)
+		cpuProfFilePath = filepath.Join(folderPath, fmt.Sprintf("%s_cpu.prof", name))
+		memProfFilePath = filepath.Join(folderPath, fmt.Sprintf("%s_mem.prof", name))
+
+		var err error
+		cpuProfileFile, err = StartCPUProfile(cpuProfFilePath)
+		if err != nil {
+			log.Printf("[MoniGo] Warning: failed to start CPU profile: %v", err)
+		}
 	}
-	defer StopCPUProfile(cpuProfileFile)
 
 	start := time.Now()
-	fn() // Execute the actual function
+	fn()
 	elapsed := time.Since(start)
 
-	if err := WriteHeapProfile(memProfFilePath); err != nil {
-		log.Printf("[MoniGo] Warning: failed to write memory profile for function %s: %v. Will retry in next iteration.", name, err)
+	if shouldProfile {
+		StopCPUProfile(cpuProfileFile)
+		_ = WriteHeapProfile(memProfFilePath)
 	}
 
-	runtime.ReadMemStats(&memStatsAfter)
 	finalGoroutines := runtime.NumGoroutine() - initialGoroutines
 	if finalGoroutines < 0 {
 		finalGoroutines = 0
 	}
 
 	var memoryUsage uint64
-	if memStatsAfter.Alloc >= memStatsBefore.Alloc {
-		memoryUsage = memStatsAfter.Alloc - memStatsBefore.Alloc
+	if shouldProfile {
+		var memStatsAfter runtime.MemStats
+		runtime.ReadMemStats(&memStatsAfter)
+		if memStatsAfter.Alloc >= memStatsBefore.Alloc {
+			memoryUsage = memStatsAfter.Alloc - memStatsBefore.Alloc
+		}
 	}
 
 	mu.Lock()
 	defer mu.Unlock()
 
-	functionMetrics[name] = &models.FunctionMetrics{
-		FunctionLastRanAt:  start,
-		CPUProfileFilePath: cpuProfFilePath,
-		MemProfileFilePath: memProfFilePath,
-		MemoryUsage:        memoryUsage,
-		GoroutineCount:     finalGoroutines,
-		ExecutionTime:      elapsed,
+	// Update or create metrics
+	if m, exists := functionMetrics[name]; exists {
+		m.FunctionLastRanAt = start
+		m.ExecutionTime = elapsed
+		m.GoroutineCount = finalGoroutines
+		if shouldProfile {
+			m.MemoryUsage = memoryUsage
+			m.CPUProfileFilePath = cpuProfFilePath
+			m.MemProfileFilePath = memProfFilePath
+		}
+	} else {
+		functionMetrics[name] = &models.FunctionMetrics{
+			FunctionLastRanAt:  start,
+			ExecutionTime:      elapsed,
+			GoroutineCount:     finalGoroutines,
+			MemoryUsage:        memoryUsage,
+			CPUProfileFilePath: cpuProfFilePath,
+			MemProfileFilePath: memProfFilePath,
+		}
 	}
 }
 

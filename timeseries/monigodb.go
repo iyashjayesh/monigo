@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -27,6 +28,48 @@ type Storage interface {
 	InsertRows(rows []tstorage.Row) error
 	Select(metric string, labels []tstorage.Label, start, end int64) ([]*tstorage.DataPoint, error)
 	Close() error
+}
+
+// InMemoryStorage provides an in-memory implementation of the Storage interface.
+type InMemoryStorage struct {
+	mu   sync.RWMutex
+	data map[string][]*tstorage.DataPoint
+}
+
+func NewInMemoryStorage() *InMemoryStorage {
+	return &InMemoryStorage{
+		data: make(map[string][]*tstorage.DataPoint),
+	}
+}
+
+func (s *InMemoryStorage) InsertRows(rows []tstorage.Row) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, row := range rows {
+		s.data[row.Metric] = append(s.data[row.Metric], &row.DataPoint)
+	}
+	return nil
+}
+
+func (s *InMemoryStorage) Select(metric string, labels []tstorage.Label, start, end int64) ([]*tstorage.DataPoint, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	points, ok := s.data[metric]
+	if !ok {
+		return nil, nil
+	}
+
+	var result []*tstorage.DataPoint
+	for _, p := range points {
+		if p.Timestamp >= start && p.Timestamp <= end {
+			result = append(result, p)
+		}
+	}
+	return result, nil
+}
+
+func (s *InMemoryStorage) Close() error {
+	return nil
 }
 
 // StorageWrapper wraps the tstorage.Storage to implement the Storage interface.
@@ -52,20 +95,34 @@ func (s *StorageWrapper) Close() error {
 	defer s.mu.Unlock()
 
 	if s.closed {
-		return nil // or return a specific error indicating it's already closed
+		return nil
 	}
 
 	s.closed = true
 	return s.storage.Close()
 }
 
+// storageType defines which storage to use
+var storageType = "disk" // "disk" or "memory"
+
+// SetStorageType sets the storage type
+func SetStorageType(t string) {
+	storageType = t
+}
+
 // GetStorageInstance initializes and returns a Storage instance.
 func GetStorageInstance() (Storage, error) {
 	var err error
 	once.Do(func() {
+		if storageType == "memory" {
+			storage = NewInMemoryStorage()
+			ctx, cancel = context.WithCancel(context.Background())
+			return
+		}
+
 		basePath = common.GetBasePath()
 		storageInstance, initErr := tstorage.NewStorage(
-			tstorage.WithDataPath(basePath+"/data"),
+			tstorage.WithDataPath(filepath.Join(basePath, "data")),
 			tstorage.WithRetention(common.GetDataRetentionPeriod()),
 		)
 		if initErr != nil {
