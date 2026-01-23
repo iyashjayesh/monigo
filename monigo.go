@@ -50,6 +50,8 @@ type Monigo struct {
 	MaxGoRoutines           int       `json:"max_go_routines"`      // Default is 100, You can set it to any number based on your service
 	CustomBaseAPIPath       string    `json:"custom_base_api_path"` // Custom base API path for integration with existing routers
 	Headless                bool      `json:"headless"`             // If true, dashboard won't be started
+	SamplingRate            int       `json:"sampling_rate"`        // Trace 1 in N calls
+	StorageType             string    `json:"storage_type"`         // "disk" or "memory"
 
 	// Security and Middleware Configuration
 	DashboardMiddleware []func(http.Handler) http.Handler `json:"-"` // Middleware chain for dashboard access (static files)
@@ -225,6 +227,13 @@ func (m *Monigo) Initialize() error {
 	)
 
 	// Initialize storage to ensure it's available for API calls
+	if m.StorageType != "" {
+		timeseries.SetStorageType(m.StorageType)
+	}
+	if m.SamplingRate > 0 {
+		core.SetSamplingRate(m.SamplingRate)
+	}
+
 	_, err := timeseries.GetStorageInstance()
 	if err != nil {
 		log.Printf("[MoniGo] Warning: failed to initialize storage: %v", err)

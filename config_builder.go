@@ -86,6 +86,24 @@ func (b *MonigoBuilder) WithAuthFunction(authFunc func(*http.Request) bool) *Mon
 	return b
 }
 
+// WithSamplingRate sets the sampling rate for function tracing
+func (b *MonigoBuilder) WithSamplingRate(rate int) *MonigoBuilder {
+	b.config.SamplingRate = rate
+	return b
+}
+
+// WithStorageType sets the storage type ("disk" or "memory")
+func (b *MonigoBuilder) WithStorageType(storageType string) *MonigoBuilder {
+	b.config.StorageType = storageType
+	return b
+}
+
+// WithHeadless sets whether the dashboard should be started
+func (b *MonigoBuilder) WithHeadless(headless bool) *MonigoBuilder {
+	b.config.Headless = headless
+	return b
+}
+
 // Build builds the Monigo struct
 func (b *MonigoBuilder) Build() *Monigo {
 	return b.config

@@ -35,6 +35,10 @@
 
 ## Features
 
+- **Asynchronous Telemetry Pipeline**: Decoupled metric collection from processing to ensure zero impact on application latency.
+- **Adaptive Sampling**: Intelligent function tracing that only captures heavy profiles (CPU/Heap) for a sampled percentage of calls, significantly reducing overhead.
+- **Pluggable Storage Layer**: Supports both persistent disk storage (via `tstorage`) and volatile in-memory storage for containerized or short-lived environments.
+- **Headless Mode**: Run MoniGo as a background telemetry agent without the dashboard UI.
 - **Real-Time Monitoring**: Access up-to-date performance metrics for your Go applications.
 - **Detailed Insights**: Track and analyze both service and function-level performance.
 - **Disk I/O Monitoring**: Monitor disk read/write bytes and system disk load.
@@ -49,6 +53,9 @@ To install MoniGo, use the following command:
 ```bash
 go get github.com/iyashjayesh/monigo@latest
 ```
+
+> [!TIP]
+> **Recommended Initialization**: The `monigo.NewBuilder()` pattern is the recommended way to initialize Monigo. If you encounter `undefined: monigo.NewBuilder`, ensure you have upgraded to the latest version using the command above.
 
 ## Example:
 
@@ -68,6 +75,9 @@ func main() {
         WithPort(8080).
         WithRetentionPeriod("4d").
         WithDataPointsSyncFrequency("5s").
+        WithSamplingRate(100).      // Trace 1 in 100 calls
+        WithStorageType("memory"). // Use in-memory storage
+        WithHeadless(false).       // Set to true for background-only monitoring
         Build()
 
    	monigo.TraceFunction(highCPUUsage) // Trace function
@@ -215,13 +225,28 @@ result := monigo.TraceFunctionWithReturn(processData, data).(Result)
 // Note: This ignores the error return value
 ```
 
+### Adaptive Sampling
+MoniGo implements **Adaptive Sampling** to ensure production-grade performance. By default, heavy profiling (CPU and Heap profiles) is only performed for 1 in every 100 calls. Lightweight metrics (duration and concurrency) are still captured for every call.
+
+You can configure the sampling rate via the builder:
+```go
+monigoInstance := monigo.NewBuilder().
+    WithSamplingRate(10). // Profile 1 in 10 calls
+    Build()
+```
+Or globally:
+```go
+monigo.SetSamplingRate(1000)
+```
+
 ### Benefits of Enhanced Tracing
 
-- **Cleaner Code**: No need to wrap functions in anonymous functions
-- **Better Function Identification**: Actual function names appear in metrics instead of anonymous functions
-- **Type Safety**: Compile-time checking of function signatures
-- **Flexibility**: Support for any function signature (parameters, return values, etc.)
-- **Backward Compatibility**: Existing code continues to work without changes
+- **Zero Overhead in Hot Paths**: Non-sampled calls have sub-millisecond overhead.
+- **Cleaner Code**: No need to wrap functions in anonymous functions.
+- **Better Function Identification**: Actual function names appear in metrics instead of anonymous functions.
+- **Type Safety**: Compile-time checking of function signatures.
+- **Flexibility**: Support for any function signature (parameters, return values, etc.).
+- **Backward Compatibility**: Existing code continues to work without changes.
 
 ### Function Name Generation
 
