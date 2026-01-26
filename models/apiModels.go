@@ -16,7 +16,14 @@ type ServiceStats struct {
 	HeapAllocBySystem   string `json:"heap_alloc_by_system"`
 	TotalAllocByService string `json:"total_alloc_by_service"`
 	TotalMemoryByOS     string `json:"total_memory_by_os"`
-	DiskIO              struct {
+
+	// Raw values for storage
+	HeapAllocByServiceRaw  uint64 `json:"-"`
+	HeapAllocBySystemRaw   uint64 `json:"-"`
+	TotalAllocByServiceRaw uint64 `json:"-"`
+	TotalMemoryByOSRaw     uint64 `json:"-"`
+
+	DiskIO struct {
 		ReadBytes  uint64 `json:"read_bytes"`
 		WriteBytes uint64 `json:"write_bytes"`
 	} `json:"disk_io"` // Disk Use percentage
@@ -49,6 +56,14 @@ type LoadStatistics struct {
 	ServiceDiskLoad      string `json:"service_disk_load"`
 	SystemDiskLoad       string `json:"system_disk_load"`
 	TotalDiskLoad        string `json:"total_disk_load"`
+	// Raw values for storage
+	ServiceCPULoadRaw       float64 `json:"-"`
+	SystemCPULoadRaw        float64 `json:"-"`
+	ServiceMemLoadRaw       float64 `json:"-"`
+	SystemMemLoadRaw        float64 `json:"-"`
+	OverallLoadOfServiceRaw float64 `json:"-"`
+	SystemDiskLoadRaw       float64 `json:"-"`
+	TotalDiskLoadRaw        float64 `json:"-"`
 }
 
 // CPUStatistics represents the CPU statistics of the service.
@@ -73,6 +88,13 @@ type MemoryStatistics struct {
 	FreeSwapMemory      string               `json:"free_swap_memory"`
 	MemStatsRecords     []Record             `json:"mem_stats_records"`     // List of memory statistic records.
 	RawMemStatsRecords  []RawMemStatsRecords `json:"raw_mem_stats_records"` // RawMemStatsRecords holds a list of raw memory statistic records.
+	// Raw values for storage
+	TotalSystemMemoryRaw   float64 `json:"-"`
+	MemoryUsedBySystemRaw  float64 `json:"-"`
+	MemoryUsedByServiceRaw float64 `json:"-"`
+	AvailableMemoryRaw     float64 `json:"-"`
+	GCPauseDurationRaw     float64 `json:"-"`
+	StackMemoryUsageRaw    float64 `json:"-"`
 }
 
 // ServiceHealth represents the health of the service.

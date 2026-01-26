@@ -2,9 +2,6 @@ package timeseries
 
 import (
 	"fmt"
-	"regexp"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/iyashjayesh/monigo/models"
@@ -49,20 +46,6 @@ func StoreServiceMetrics(serviceMetrics *models.ServiceStats) error {
 	return nil
 }
 
-// Helper function to remove percentage from a string.
-func RemovePercentage(s string) float64 {
-	var val float64
-	fmt.Sscanf(s, "%f", &val)
-	return val
-}
-
-// Helper function to convert a string to a formatted float.
-func StringToFloat(s string) float64 {
-	val, _ := strconv.ParseFloat(s, 64)
-	val, _ = strconv.ParseFloat(fmt.Sprintf("%.4f", val), 64)
-	return val
-}
-
 // generateCoreStatsRows generates rows for core statistics.
 func generateCoreStatsRows(serviceMetrics *models.ServiceStats, label tstorage.Label, timestamp int64) []tstorage.Row {
 	return []tstorage.Row{
@@ -71,41 +54,40 @@ func generateCoreStatsRows(serviceMetrics *models.ServiceStats, label tstorage.L
 			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: float64(serviceMetrics.CoreStatistics.Goroutines)},
 			Labels:    []tstorage.Label{label},
 		},
-		// {
-		// 	Metric:    "request_count",
-		// 	DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: float64(serviceMetrics.CoreStatistics.RequestCount)},
-		// 	Labels:    []tstorage.Label{label},
-		// },
 	}
 }
 
 // generateLoadStatsRows generates rows for load statistics.
 func generateLoadStatsRows(serviceMetrics *models.ServiceStats, label tstorage.Label, timestamp int64) []tstorage.Row {
-
 	return []tstorage.Row{
 		{
 			Metric:    "overall_load_of_service",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: RemovePercentage(serviceMetrics.LoadStatistics.OverallLoadOfService)},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.LoadStatistics.OverallLoadOfServiceRaw},
 			Labels:    []tstorage.Label{label},
 		},
 		{
 			Metric:    "service_cpu_load",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: RemovePercentage(serviceMetrics.LoadStatistics.ServiceCPULoad)},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.LoadStatistics.ServiceCPULoadRaw},
 			Labels:    []tstorage.Label{label},
 		},
 		{
 			Metric:    "service_memory_load",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: RemovePercentage(serviceMetrics.LoadStatistics.ServiceMemLoad)},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.LoadStatistics.ServiceMemLoadRaw},
 			Labels:    []tstorage.Label{label},
 		},
 		{
 			Metric:    "system_cpu_load",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: RemovePercentage(serviceMetrics.LoadStatistics.SystemCPULoad)},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.LoadStatistics.SystemCPULoadRaw},
 			Labels:    []tstorage.Label{label},
 		},
 		{
 			Metric:    "system_memory_load",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: RemovePercentage(serviceMetrics.LoadStatistics.SystemMemLoad)},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.LoadStatistics.SystemMemLoadRaw},
+			Labels:    []tstorage.Label{label},
+		},
+		{
+			Metric:    "system_disk_load",
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.LoadStatistics.SystemDiskLoadRaw},
 			Labels:    []tstorage.Label{label},
 		},
 	}
@@ -132,52 +114,37 @@ func generateCPUStatsRows(serviceMetrics *models.ServiceStats, label tstorage.La
 	}
 }
 
-func extractFloat(s string) float64 {
-	re := regexp.MustCompile(`\d+(\.\d+)?`)
-	match := re.FindString(strings.TrimSpace(s))
-	if match == "" {
-		return 0.0
-	}
-
-	value, err := strconv.ParseFloat(match, 64)
-	if err != nil {
-		return 0.0
-	}
-
-	return value
-}
-
 // generateMemoryStatsRows generates rows for memory statistics.
 func generateMemoryStatsRows(serviceMetrics *models.ServiceStats, label tstorage.Label, timestamp int64) []tstorage.Row {
 	rows := []tstorage.Row{
 		{
 			Metric:    "total_system_memory",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: extractFloat(serviceMetrics.MemoryStatistics.TotalSystemMemory)},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.MemoryStatistics.TotalSystemMemoryRaw},
 			Labels:    []tstorage.Label{label},
 		},
 		{
 			Metric:    "memory_used_by_system",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: extractFloat(serviceMetrics.MemoryStatistics.MemoryUsedBySystem)},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.MemoryStatistics.MemoryUsedBySystemRaw},
 			Labels:    []tstorage.Label{label},
 		},
 		{
 			Metric:    "memory_used_by_service",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: extractFloat(serviceMetrics.MemoryStatistics.MemoryUsedByService)},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.MemoryStatistics.MemoryUsedByServiceRaw},
 			Labels:    []tstorage.Label{label},
 		},
 		{
 			Metric:    "available_memory",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: extractFloat(serviceMetrics.MemoryStatistics.AvailableMemory)},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.MemoryStatistics.AvailableMemoryRaw},
 			Labels:    []tstorage.Label{label},
 		},
 		{
 			Metric:    "gc_pause_duration",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: extractFloat(serviceMetrics.MemoryStatistics.GCPauseDuration)},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.MemoryStatistics.GCPauseDurationRaw},
 			Labels:    []tstorage.Label{label},
 		},
 		{
 			Metric:    "stack_memory_usage",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: extractFloat(serviceMetrics.MemoryStatistics.StackMemoryUsage)},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.MemoryStatistics.StackMemoryUsageRaw},
 			Labels:    []tstorage.Label{label},
 		},
 	}
@@ -195,22 +162,27 @@ func generateMemoryStatsRows(serviceMetrics *models.ServiceStats, label tstorage
 	rows = append(rows, []tstorage.Row{
 		{
 			Metric:    "heap_alloc_by_service",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: extractFloat(serviceMetrics.HeapAllocByService)},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: float64(serviceMetrics.HeapAllocByServiceRaw)},
 			Labels:    []tstorage.Label{label},
 		},
 		{
 			Metric:    "heap_alloc_by_system",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: extractFloat(serviceMetrics.HeapAllocBySystem)},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: float64(serviceMetrics.HeapAllocBySystemRaw)},
 			Labels:    []tstorage.Label{label},
 		},
 		{
 			Metric:    "total_alloc_by_service",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: extractFloat(serviceMetrics.TotalAllocByService)},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: float64(serviceMetrics.TotalAllocByServiceRaw)},
 			Labels:    []tstorage.Label{label},
 		},
 		{
 			Metric:    "total_memory_by_os",
-			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: extractFloat(serviceMetrics.TotalMemoryByOS)},
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: float64(serviceMetrics.TotalMemoryByOSRaw)},
+			Labels:    []tstorage.Label{label},
+		},
+		{
+			Metric:    "total_disk_size",
+			DataPoint: tstorage.DataPoint{Timestamp: timestamp, Value: serviceMetrics.LoadStatistics.TotalDiskLoadRaw},
 			Labels:    []tstorage.Label{label},
 		},
 	}...)

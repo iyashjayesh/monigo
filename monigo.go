@@ -176,15 +176,13 @@ func (m *Monigo) MonigoInstanceConstructorWithoutPort() {
 	m.ServiceStartTime = time.Now().In(location) // Setting the service start time
 }
 
-// Initialize initializes the monigo service without starting the dashboard
-// This is useful when you want to integrate MoniGo with your existing HTTP server
-func (m *Monigo) Initialize() error {
+// setup contains common initialization logic for both Initialize and Start
+func (m *Monigo) setup() error {
 	// Validate service name
 	if m.ServiceName == "" {
 		return fmt.Errorf("[MoniGo] service_name is required, please provide the service name")
 	}
 
-	m.MonigoInstanceConstructorWithoutPort() // Use constructor without port binding
 	if err := timeseries.PurgeStorage(); err != nil {
 		return fmt.Errorf("[MoniGo] Warning: failed to purge storage: %v", err)
 	}
@@ -200,7 +198,6 @@ func (m *Monigo) Initialize() error {
 	cache := common.Cache{Data: make(map[string]time.Time)}
 	if err := cache.LoadFromFile(cachePath); err != nil {
 		log.Printf("[MoniGo] Warning: failed to load cache from file: %v. Starting with fresh cache.", err)
-		// Continue with empty cache instead of panicking
 	}
 
 	// Updating the service start time in the cache
@@ -214,7 +211,6 @@ func (m *Monigo) Initialize() error {
 	// Save the cache data to file
 	if err := cache.SaveToFile(cachePath); err != nil {
 		log.Printf("[MoniGo] Warning: failed to save cache to file: %v", err)
-		// Continue without saving cache
 	}
 
 	// Setting common service information
@@ -226,7 +222,7 @@ func (m *Monigo) Initialize() error {
 		m.DataRetentionPeriod,
 	)
 
-	// Initialize storage to ensure it's available for API calls
+	// Initialize storage and core settings
 	if m.StorageType != "" {
 		timeseries.SetStorageType(m.StorageType)
 	}
@@ -239,64 +235,28 @@ func (m *Monigo) Initialize() error {
 		log.Printf("[MoniGo] Warning: failed to initialize storage: %v", err)
 		return fmt.Errorf("failed to initialize storage: %w", err)
 	}
+
 	return nil
 }
 
-// Function to start the monigo service
-func (m *Monigo) Start() error {
-	// Validate service name
-	if m.ServiceName == "" {
-		return fmt.Errorf("[MoniGo] service_name is required, please provide the service name")
-	}
+// Initialize initializes the monigo service without starting the dashboard
+func (m *Monigo) Initialize() error {
+	m.MonigoInstanceConstructorWithoutPort()
+	return m.setup()
+}
 
+// Start starts the monigo service with dashboard
+func (m *Monigo) Start() error {
 	if err := m.MonigoInstanceConstructor(); err != nil {
 		return err
 	}
-	if err := timeseries.PurgeStorage(); err != nil {
-		return fmt.Errorf("[MoniGo] Warning: failed to purge storage: %v", err)
-	}
-	if err := timeseries.SetDataPointsSyncFrequency(m.DataPointsSyncFrequency); err != nil {
-		return fmt.Errorf("[MoniGo] failed to set data points sync frequency: %v", err)
-	}
 
-	// Fetching runtime details
-	m.ProcessId = common.GetProcessId()
-	m.GoVersion = runtime.Version()
-
-	cachePath := BasePath + "/cache.dat"
-	cache := common.Cache{Data: make(map[string]time.Time)}
-	if err := cache.LoadFromFile(cachePath); err != nil {
-		log.Printf("[MoniGo] Warning: failed to load cache from file: %v. Starting with fresh cache.", err)
-		// Continue with empty cache instead of panicking
+	if err := m.setup(); err != nil {
+		return err
 	}
-
-	// Updating the service start time in the cache
-	if startTime, exists := cache.Data[m.ServiceName]; exists {
-		m.ServiceStartTime = startTime
-	} else {
-		m.ServiceStartTime = time.Now()
-		cache.Data[m.ServiceName] = m.ServiceStartTime
-	}
-
-	// Save the cache data to file
-	if err := cache.SaveToFile(cachePath); err != nil {
-		log.Printf("[MoniGo] Warning: failed to save cache to file: %v", err)
-		// Continue without saving cache
-	}
-
-	// Setting common service information
-	common.SetServiceInfo(
-		m.ServiceName,
-		m.ServiceStartTime,
-		m.GoVersion,
-		m.ProcessId,
-		m.DataRetentionPeriod,
-	)
 
 	if m.Headless {
 		log.Println("[MoniGo] Running in headless mode. Dashboard disabled.")
-		// Keep the process alive if only monigo is running, or just return nil
-		// Since this is embedded, we usually just return nil anyway
 		return nil
 	}
 
@@ -895,8 +855,22 @@ func RateLimitMiddleware(requests int, window time.Duration) func(http.Handler) 
 		lastReset time.Time
 	}
 
-	clients := make(map[string]*clientInfo)
-	var mu sync.RWMutex
+	var mu sync.Mutex
+	var clients = make(map[string]*clientInfo)
+
+	// Start a cleanup goroutine to prevent memory leak
+	go func() {
+		ticker := time.NewTicker(window * 2)
+		for range ticker.C {
+			mu.Lock()
+			for ip, info := range clients {
+				if time.Since(info.lastReset) > window*2 {
+					delete(clients, ip)
+				}
+			}
+			mu.Unlock()
+		}
+	}()
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

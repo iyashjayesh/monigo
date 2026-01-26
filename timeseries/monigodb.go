@@ -3,24 +3,17 @@ package timeseries
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/iyashjayesh/monigo/common"
 	"github.com/iyashjayesh/monigo/core"
 	"github.com/nakabonne/tstorage"
-)
-
-var (
-	once      sync.Once          // Ensures that the storage is initialized only once
-	basePath  string             // Base path for storage
-	storage   Storage            // Storage instance
-	closeOnce sync.Once          // Ensures that the storage is closed only once
-	ctx       context.Context    // Context for goroutines
-	cancel    context.CancelFunc // Cancel function for goroutines
 )
 
 // Storage defines the methods required for storage operations.
@@ -102,8 +95,19 @@ func (s *StorageWrapper) Close() error {
 	return s.storage.Close()
 }
 
-// storageType defines which storage to use
-var storageType = "disk" // "disk" or "memory"
+type storageManager struct {
+	storage   Storage
+	ctx       context.Context
+	cancel    context.CancelFunc
+	once      sync.Once
+	closeOnce sync.Once
+	mu        sync.Mutex
+}
+
+var (
+	manager     = &storageManager{}
+	storageType = "disk" // "disk" or "memory"
+)
 
 // SetStorageType sets the storage type
 func SetStorageType(t string) {
@@ -113,14 +117,14 @@ func SetStorageType(t string) {
 // GetStorageInstance initializes and returns a Storage instance.
 func GetStorageInstance() (Storage, error) {
 	var err error
-	once.Do(func() {
+	manager.once.Do(func() {
 		if storageType == "memory" {
-			storage = NewInMemoryStorage()
-			ctx, cancel = context.WithCancel(context.Background())
+			manager.storage = NewInMemoryStorage()
+			manager.ctx, manager.cancel = context.WithCancel(context.Background())
 			return
 		}
 
-		basePath = common.GetBasePath()
+		basePath := common.GetBasePath()
 		storageInstance, initErr := tstorage.NewStorage(
 			tstorage.WithDataPath(filepath.Join(basePath, "data")),
 			tstorage.WithRetention(common.GetDataRetentionPeriod()),
@@ -130,22 +134,22 @@ func GetStorageInstance() (Storage, error) {
 			log.Printf("[MoniGo] Error initializing storage: %v\n", err)
 			return
 		}
-		storage = &StorageWrapper{storage: storageInstance}
+		manager.storage = &StorageWrapper{storage: storageInstance}
 		// Initialize context and cancel function for goroutines
-		ctx, cancel = context.WithCancel(context.Background())
+		manager.ctx, manager.cancel = context.WithCancel(context.Background())
 	})
-	return storage, err
+	return manager.storage, err
 }
 
 // CloseStorage closes the storage instance and stops any running goroutines.
 func CloseStorage() error {
 	var err error
-	closeOnce.Do(func() {
-		if cancel != nil {
-			cancel() // Stop any goroutines
+	manager.closeOnce.Do(func() {
+		if manager.cancel != nil {
+			manager.cancel() // Stop any goroutines
 		}
-		if storage != nil {
-			if closeErr := storage.Close(); closeErr != nil {
+		if manager.storage != nil {
+			if closeErr := manager.storage.Close(); closeErr != nil {
 				log.Printf("[MoniGo] Error closing storage: %v\n", closeErr)
 				err = closeErr
 			}
@@ -154,13 +158,26 @@ func CloseStorage() error {
 	return err
 }
 
-// PurgeStorage removes all storage data and closes the storage.
+// PurgeStorage removes only the monigo data directory to avoid accidental deletions of other files.
 func PurgeStorage() error {
 	basePath := common.GetBasePath()
+
+	// Safety check: ensure we are only deleting the 'monigo' directory
+	if !strings.HasSuffix(basePath, "monigo") {
+		return fmt.Errorf("[MoniGo] Refusing to purge storage: basePath %q does not end with 'monigo'", basePath)
+	}
+
 	if err := os.RemoveAll(basePath); err != nil {
 		log.Printf("[MoniGo] Error purging storage: %v\n", err)
 		return err
 	}
+
+	// Recreate the directory
+	if err := os.MkdirAll(basePath, os.ModePerm); err != nil {
+		log.Printf("[MoniGo] Error recreating storage directory: %v\n", err)
+		return err
+	}
+
 	return nil
 }
 
@@ -177,25 +194,29 @@ func SetDataPointsSyncFrequency(frequency ...string) error {
 		freqTime = 5 * time.Minute
 	}
 
+	// Ensure storage is initialized before starting the sync loop
+	if _, err := GetStorageInstance(); err != nil {
+		return err
+	}
+
 	// Initializing service metrics once
 	serviceMetrics := core.GetServiceStats()
 	if err := StoreServiceMetrics(&serviceMetrics); err != nil {
 		return errors.New("[MoniGo] error storing service metrics, err: " + err.Error())
 	}
 
-	timer := time.NewTimer(freqTime)
+	ticker := time.NewTicker(freqTime)
 	go func() {
-		defer timer.Stop()
+		defer ticker.Stop()
 		for {
 			select {
-			case <-ctx.Done():
+			case <-manager.ctx.Done():
 				return
-			case <-timer.C:
+			case <-ticker.C:
 				serviceMetrics := core.GetServiceStats()
 				if err := StoreServiceMetrics(&serviceMetrics); err != nil {
 					log.Printf("[MoniGo] Error storing service metrics: %v\n", err)
 				}
-				timer.Reset(freqTime)
 			}
 		}
 	}()

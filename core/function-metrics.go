@@ -258,16 +258,44 @@ func executeFunctionWithProfiling(name string, fn func()) {
 
 // ViewFunctionMetrics generates the function metrics
 func ViewFunctionMetrics(name, reportType string, metrics *models.FunctionMetrics) models.FunctionTraceDetails {
+	// Check if 'go' command is available
+	_, err := exec.LookPath("go")
+	if err != nil {
+		log.Printf("[MoniGo] Warning: 'go' command not found in PATH. pprof reports will be unavailable.")
+		return models.FunctionTraceDetails{
+			FunctionName: name,
+			CoreProfile: models.Profiles{
+				CPU: "Error: 'go' command not found. pprof reports require the Go SDK.",
+				Mem: "Error: 'go' command not found. pprof reports require the Go SDK.",
+			},
+			FunctionCodeTrace: "Error: 'go' command not found.",
+		}
+	}
+
 	// Function to execute the pprof command and return the output or log an error
 	executePprof := func(profileFilePath, reportType string) string {
+		if profileFilePath == "" {
+			return "Error: Profile file path is empty"
+		}
 		cmd := exec.Command("go", "tool", "pprof", "-"+reportType, profileFilePath)
-		output, _ := cmd.Output()
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Sprintf("Error executing pprof: %v\nOutput: %s", err, string(output))
+		}
 		return string(output)
 	}
 
 	// Generating the function code stack trace for CPU profile
-	codeStackView := exec.Command("go", "tool", "pprof", "-list", name, metrics.CPUProfileFilePath)
-	codeStack, _ := codeStackView.Output()
+	var codeStack string
+	if metrics.CPUProfileFilePath != "" {
+		codeStackView := exec.Command("go", "tool", "pprof", "-list", name, metrics.CPUProfileFilePath)
+		output, err := codeStackView.CombinedOutput()
+		if err != nil {
+			codeStack = fmt.Sprintf("Error generating code trace: %v\nOutput: %s", err, string(output))
+		} else {
+			codeStack = string(output)
+		}
+	}
 
 	// Return the function trace details
 	return models.FunctionTraceDetails{
@@ -276,6 +304,6 @@ func ViewFunctionMetrics(name, reportType string, metrics *models.FunctionMetric
 			CPU: executePprof(metrics.CPUProfileFilePath, reportType),
 			Mem: executePprof(metrics.MemProfileFilePath, reportType),
 		},
-		FunctionCodeTrace: string(codeStack),
+		FunctionCodeTrace: codeStack,
 	}
 }

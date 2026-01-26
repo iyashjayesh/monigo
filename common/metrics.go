@@ -13,7 +13,7 @@ import (
 )
 
 // GetCPULoad calculates the CPU load for the service, system, and total.
-func GetCPULoad() (serviceCPU, systemCPU, totalCPU string) {
+func GetCPULoad() (serviceCPU, systemCPU, totalCPU string, serviceCPUF, systemCPUF, totalCPUF float64) {
 
 	proc := GetProcessObject()            // Getting process details
 	serviceCPUF, err := proc.CPUPercent() // 	Measure CPU percent for the current process
@@ -26,41 +26,49 @@ func GetCPULoad() (serviceCPU, systemCPU, totalCPU string) {
 	cpuPercents, err := cpu.Percent(time.Second, false) // Get total system CPU percentage
 	if err != nil {
 		log.Printf("[MoniGo] Error fetching CPU load for the system: %v\n", err)
-		return serviceCPU, "0%", "0%"
+		return serviceCPU, "0%", "0%", serviceCPUF, 0, 0
 	}
 	if len(cpuPercents) > 0 {
-		systemCPU = ParseFloat64ToString(cpuPercents[0]-serviceCPUF) + "%" // System CPU usage percentage
+		systemCPUF = cpuPercents[0] - serviceCPUF
+		if systemCPUF < 0 {
+			systemCPUF = 0
+		}
+		systemCPU = ParseFloat64ToString(systemCPUF) + "%" // System CPU usage percentage
+		totalCPUF = cpuPercents[0]
 	}
 
-	totalCPU = ParseFloat64ToString(serviceCPUF+cpuPercents[0]) + "%" // Total CPU usage percentage
-	return serviceCPU, systemCPU, totalCPU
+	totalCPU = ParseFloat64ToString(totalCPUF) + "%" // Total CPU usage percentage
+	return serviceCPU, systemCPU, totalCPU, serviceCPUF, systemCPUF, totalCPUF
 }
 
 // GetMemoryLoad calculates the memory load for the service, system, and total.
-func GetMemoryLoad() (serviceMem, systemMem, totalMem string) {
+func GetMemoryLoad() (serviceMem, systemMem, totalMem string, serviceMemF, systemMemF, totalMemF float64) {
 	// Get system memory statistics
 	vmStat, err := mem.VirtualMemory()
 	if err != nil {
 		log.Printf("[MoniGo] Error fetching memory load for the system: %v\n", err)
-		return "0%", "0%", "0%"
+		return "0%", "0%", "0%", 0, 0, 0
 	}
-	systemMem = ParseFloat64ToString(vmStat.UsedPercent) + "%"          // Calculate system memory as a percentage of total memory
-	totalMem = ParseFloat64ToString(ParseUint64ToFloat64(vmStat.Total)) // Total memory in bytes Total amount of RAM on this system
+	systemMemF = vmStat.UsedPercent
+	systemMem = ParseFloat64ToString(systemMemF) + "%" // Calculate system memory as a percentage of total memory
+	totalMemF = float64(vmStat.Total)
+	totalMem = ParseFloat64ToString(totalMemF) // Total memory in bytes Total amount of RAM on this system
 
 	proc := GetProcessObject()
 	memInfo, err := proc.MemoryInfo()
 	if err != nil {
 		log.Printf("[MoniGo] Error fetching memory load for the service: %v\n", err)
-		return "0%", systemMem, totalMem
+		return "0%", systemMem, totalMem, 0, systemMemF, totalMemF
 	}
 
-	serviceMem = ParseFloat64ToString(float64(memInfo.RSS)/float64(vmStat.Total)*100) + "%" // Calculate service memory as a percentage of total memory
+	serviceMemF = (float64(memInfo.RSS) / float64(vmStat.Total)) * 100
+	serviceMem = ParseFloat64ToString(serviceMemF) + "%" // Calculate service memory as a percentage of total memory
 
-	return serviceMem, systemMem, totalMem
+	return serviceMem, systemMem, totalMem, serviceMemF, systemMemF, totalMemF
 }
 
 // GetDiskLoad calculates the disk load for the service, system, and total.
-func GetDiskLoad() (serviceDisk, systemDisk, totalDisk string) {
+func GetDiskLoad() (serviceDisk, systemDisk, totalDisk string, systemDiskF, totalDiskF float64) {
 	// For disk, "Service" usage handles read/write bytes or handle count, but normally "Load" implies storage usage.
 	// However, gathering "Disk Usage by Process" is complex and often requires root or specific tracking.
 	// For now, we will track System Disk Usage (Root Partition).
@@ -68,20 +76,22 @@ func GetDiskLoad() (serviceDisk, systemDisk, totalDisk string) {
 	diskUsage, err := disk.Usage("/")
 	if err != nil {
 		log.Printf("[MoniGo] Error fetching disk usage: %v\n", err) // Changed from Panic to Printf as agreed in plan
-		return "0%", "0%", "0%"
+		return "0%", "0%", "0%", 0, 0
 	}
 
 	// ServiceDiskLoad is complex to calculate per process without cgroups/root.
 	// We will mistakenly leave it as 0% or maybe revisit if we can get FD count as proxy?
 	// For now, let's just return System Disk Usage.
 
-	systemDisk = ParseFloat64ToString(diskUsage.UsedPercent) + "%"
-	totalDisk = ParseFloat64ToString(float64(diskUsage.Total)) // Total disk size in bytes
+	systemDiskF = diskUsage.UsedPercent
+	systemDisk = ParseFloat64ToString(systemDiskF) + "%"
+	totalDiskF = float64(diskUsage.Total)
+	totalDisk = ParseFloat64ToString(totalDiskF) // Total disk size in bytes
 
 	// ServiceDiskLoad: Not easily available.
 	serviceDisk = "0%"
 
-	return serviceDisk, systemDisk, totalDisk
+	return serviceDisk, systemDisk, totalDisk, systemDiskF, totalDiskF
 }
 
 // GetProcessDetails returns the process ID and process object.
