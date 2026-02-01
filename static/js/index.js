@@ -543,15 +543,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     data: [
                         {
                             value: cpu_statistics.cores_used_by_service,
-                            name: 'Cores Used by Service'
+                            name: 'Cores Used by Service',
+                            itemStyle: { color: '#00A1E4' }
                         },
                         {
                             value: cpu_statistics.cores_used_by_system,
-                            name: 'Cores Used by System'
+                            name: 'Cores Used by System',
+                            itemStyle: { color: '#FF6F61' }
                         },
                         {
                             value: cpu_statistics.total_cores,
-                            name: 'Total Cores'
+                            name: 'Total Cores',
+                            itemStyle: { color: '#FFD166' }
                         }
                     ],
                     emphasis: {
