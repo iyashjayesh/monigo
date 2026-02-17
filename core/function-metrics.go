@@ -1,8 +1,8 @@
 package core
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/iyashjayesh/monigo/common"
+	"github.com/iyashjayesh/monigo/internal/logger"
 	"github.com/iyashjayesh/monigo/models"
 )
 
@@ -41,9 +42,9 @@ func SetSamplingRate(rate int) {
 
 // TraceFunction traces the function and captures the metrics
 // This is the original function maintained for backward compatibility
-func TraceFunction(f func()) {
+func TraceFunction(ctx context.Context, f func()) {
 	name := strings.ReplaceAll(runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(), "/", "-") // Getting the name of the function
-	executeFunctionWithProfiling(name, f)
+	executeFunctionWithProfiling(ctx, name, f)
 }
 
 // FunctionTraceDetails returns a snapshot copy of the function trace details (thread-safe)
@@ -61,11 +62,11 @@ func FunctionTraceDetails() map[string]*models.FunctionMetrics {
 
 // TraceFunctionWithArgs traces a function with parameters and captures the metrics
 // This function uses reflection to call functions with arbitrary signatures
-func TraceFunctionWithArgs(f interface{}, args ...interface{}) {
+func TraceFunctionWithArgs(ctx context.Context, f interface{}, args ...interface{}) {
 	// Validate that f is a function
 	fnValue := reflect.ValueOf(f)
 	if fnValue.Kind() != reflect.Func {
-		log.Printf("[MoniGo] Error: first argument must be a function, got %T", f)
+		logger.Log.Error("first argument must be a function", "type", fmt.Sprintf("%T", f))
 		return
 	}
 
@@ -74,7 +75,7 @@ func TraceFunctionWithArgs(f interface{}, args ...interface{}) {
 
 	// Validate argument count
 	if len(args) != fnType.NumIn() {
-		log.Printf("[MoniGo] Error: function expects %d arguments, got %d", fnType.NumIn(), len(args))
+		logger.Log.Error("function argument count mismatch", "expected", fnType.NumIn(), "got", len(args))
 		return
 	}
 
@@ -86,7 +87,7 @@ func TraceFunctionWithArgs(f interface{}, args ...interface{}) {
 
 		// Check if types are compatible
 		if !argValue.Type().AssignableTo(expectedType) {
-			log.Printf("[MoniGo] Error: argument %d type mismatch. Expected %v, got %v", i, expectedType, argValue.Type())
+			logger.Log.Error("argument type mismatch", "index", i, "expected", expectedType, "got", argValue.Type())
 			return
 		}
 		argValues[i] = argValue
@@ -96,15 +97,15 @@ func TraceFunctionWithArgs(f interface{}, args ...interface{}) {
 	name := generateFunctionName(fnValue, fnType)
 
 	// Execute the function with profiling
-	executeFunctionWithProfiling(name, func() {
+	executeFunctionWithProfiling(ctx, name, func() {
 		fnValue.Call(argValues)
 	})
 }
 
 // TraceFunctionWithReturn traces a function with parameters and return values
 // Returns the first result of the function call (for backward compatibility)
-func TraceFunctionWithReturn(f interface{}, args ...interface{}) interface{} {
-	results := TraceFunctionWithReturns(f, args...)
+func TraceFunctionWithReturn(ctx context.Context, f interface{}, args ...interface{}) interface{} {
+	results := TraceFunctionWithReturns(ctx, f, args...)
 	if len(results) > 0 {
 		return results[0]
 	}
@@ -113,11 +114,11 @@ func TraceFunctionWithReturn(f interface{}, args ...interface{}) interface{} {
 
 // TraceFunctionWithReturns traces a function with parameters and return values
 // Returns all results of the function call as a slice of interface{}
-func TraceFunctionWithReturns(f interface{}, args ...interface{}) []interface{} {
+func TraceFunctionWithReturns(ctx context.Context, f interface{}, args ...interface{}) []interface{} {
 	// Validate that f is a function
 	fnValue := reflect.ValueOf(f)
 	if fnValue.Kind() != reflect.Func {
-		log.Printf("[MoniGo] Error: first argument must be a function, got %T", f)
+		logger.Log.Error("first argument must be a function", "type", fmt.Sprintf("%T", f))
 		return nil
 	}
 
@@ -126,7 +127,7 @@ func TraceFunctionWithReturns(f interface{}, args ...interface{}) []interface{} 
 
 	// Validate argument count
 	if len(args) != fnType.NumIn() {
-		log.Printf("[MoniGo] Error: function expects %d arguments, got %d", fnType.NumIn(), len(args))
+		logger.Log.Error("function argument count mismatch", "expected", fnType.NumIn(), "got", len(args))
 		return nil
 	}
 
@@ -138,7 +139,7 @@ func TraceFunctionWithReturns(f interface{}, args ...interface{}) []interface{} 
 
 		// Check if types are compatible
 		if !argValue.Type().AssignableTo(expectedType) {
-			log.Printf("[MoniGo] Error: argument %d type mismatch. Expected %v, got %v", i, expectedType, argValue.Type())
+			logger.Log.Error("argument type mismatch", "index", i, "expected", expectedType, "got", argValue.Type())
 			return nil
 		}
 		argValues[i] = argValue
@@ -149,7 +150,7 @@ func TraceFunctionWithReturns(f interface{}, args ...interface{}) []interface{} 
 
 	// Execute the function with profiling and capture return values
 	var results []interface{}
-	executeFunctionWithProfiling(name, func() {
+	executeFunctionWithProfiling(ctx, name, func() {
 		reflectResults := fnValue.Call(argValues)
 		results = make([]interface{}, len(reflectResults))
 		for i, result := range reflectResults {
@@ -187,7 +188,8 @@ func generateFunctionName(fnValue reflect.Value, fnType reflect.Type) string {
 }
 
 // executeFunctionWithProfiling contains the common profiling logic with sampling
-func executeFunctionWithProfiling(name string, fn func()) {
+func executeFunctionWithProfiling(ctx context.Context, name string, fn func()) {
+	_ = ctx // stored for future use
 	countersMu.Lock()
 	callCounters[name]++
 	count := callCounters[name]
@@ -214,7 +216,7 @@ func executeFunctionWithProfiling(name string, fn func()) {
 		var err error
 		cpuProfileFile, err = StartCPUProfile(cpuProfFilePath)
 		if err != nil {
-			log.Printf("[MoniGo] Warning: failed to start CPU profile: %v", err)
+			logger.Log.Warn("failed to start CPU profile", "error", err)
 		}
 	}
 
@@ -271,7 +273,7 @@ func ViewFunctionMetrics(name, reportType string, metrics *models.FunctionMetric
 	// Check if 'go' command is available
 	_, err := exec.LookPath("go")
 	if err != nil {
-		log.Printf("[MoniGo] Warning: 'go' command not found in PATH. pprof reports will be unavailable.")
+		logger.Log.Warn("'go' command not found in PATH, pprof reports will be unavailable")
 		return models.FunctionTraceDetails{
 			FunctionName: name,
 			CoreProfile: models.Profiles{

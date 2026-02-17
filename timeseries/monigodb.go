@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,38 +12,39 @@ import (
 
 	"github.com/iyashjayesh/monigo/common"
 	"github.com/iyashjayesh/monigo/core"
+	"github.com/iyashjayesh/monigo/internal/logger"
 	"github.com/nakabonne/tstorage"
 )
 
 // Storage defines the methods required for storage operations.
 type Storage interface {
-	InsertRows(rows []tstorage.Row) error
-	Select(metric string, labels []tstorage.Label, start, end int64) ([]*tstorage.DataPoint, error)
+	InsertRows(rows []Row) error
+	Select(metric string, labels []Label, start, end int64) ([]DataPoint, error)
 	Close() error
 }
 
 // InMemoryStorage provides an in-memory implementation of the Storage interface.
 type InMemoryStorage struct {
 	mu   sync.RWMutex
-	data map[string][]*tstorage.DataPoint
+	data map[string][]DataPoint
 }
 
 func NewInMemoryStorage() *InMemoryStorage {
 	return &InMemoryStorage{
-		data: make(map[string][]*tstorage.DataPoint),
+		data: make(map[string][]DataPoint),
 	}
 }
 
-func (s *InMemoryStorage) InsertRows(rows []tstorage.Row) error {
+func (s *InMemoryStorage) InsertRows(rows []Row) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for _, row := range rows {
-		s.data[row.Metric] = append(s.data[row.Metric], &row.DataPoint)
+		s.data[row.Metric] = append(s.data[row.Metric], row.DataPoint)
 	}
 	return nil
 }
 
-func (s *InMemoryStorage) Select(metric string, labels []tstorage.Label, start, end int64) ([]*tstorage.DataPoint, error) {
+func (s *InMemoryStorage) Select(metric string, labels []Label, start, end int64) ([]DataPoint, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	points, ok := s.data[metric]
@@ -52,7 +52,7 @@ func (s *InMemoryStorage) Select(metric string, labels []tstorage.Label, start, 
 		return nil, nil
 	}
 
-	var result []*tstorage.DataPoint
+	var result []DataPoint
 	for _, p := range points {
 		if p.Timestamp >= start && p.Timestamp <= end {
 			result = append(result, p)
@@ -72,14 +72,18 @@ type StorageWrapper struct {
 	mu      sync.Mutex
 }
 
-// InsertRows inserts rows into the storage.
-func (s *StorageWrapper) InsertRows(rows []tstorage.Row) error {
-	return s.storage.InsertRows(rows)
+// InsertRows inserts rows into the storage, converting monigo types to tstorage types.
+func (s *StorageWrapper) InsertRows(rows []Row) error {
+	return s.storage.InsertRows(toTStorageRows(rows))
 }
 
-// Select retrieves data points from the storage.
-func (s *StorageWrapper) Select(metric string, labels []tstorage.Label, start, end int64) ([]*tstorage.DataPoint, error) {
-	return s.storage.Select(metric, labels, start, end)
+// Select retrieves data points from the storage, converting tstorage types to monigo types.
+func (s *StorageWrapper) Select(metric string, labels []Label, start, end int64) ([]DataPoint, error) {
+	points, err := s.storage.Select(metric, toTStorageLabels(labels), start, end)
+	if err != nil {
+		return nil, err
+	}
+	return fromTStorageDataPoints(points), nil
 }
 
 // Close closes the storage connection.
@@ -131,7 +135,7 @@ func GetStorageInstance() (Storage, error) {
 		)
 		if initErr != nil {
 			err = initErr
-			log.Printf("[MoniGo] Error initializing storage: %v\n", err)
+			logger.Log.Error("initializing storage", "error", err)
 			return
 		}
 		manager.storage = &StorageWrapper{storage: storageInstance}
@@ -150,7 +154,7 @@ func CloseStorage() error {
 		}
 		if manager.storage != nil {
 			if closeErr := manager.storage.Close(); closeErr != nil {
-				log.Printf("[MoniGo] Error closing storage: %v\n", closeErr)
+				logger.Log.Error("closing storage", "error", closeErr)
 				err = closeErr
 			}
 		}
@@ -168,13 +172,13 @@ func PurgeStorage() error {
 	}
 
 	if err := os.RemoveAll(basePath); err != nil {
-		log.Printf("[MoniGo] Error purging storage: %v\n", err)
+		logger.Log.Error("purging storage", "error", err)
 		return err
 	}
 
 	// Recreate the directory
 	if err := os.MkdirAll(basePath, os.ModePerm); err != nil {
-		log.Printf("[MoniGo] Error recreating storage directory: %v\n", err)
+		logger.Log.Error("recreating storage directory", "error", err)
 		return err
 	}
 
@@ -190,7 +194,7 @@ func SetDataPointsSyncFrequency(frequency ...string) error {
 
 	freqTime, err := time.ParseDuration(freqStr)
 	if err != nil {
-		log.Printf("[MoniGo] Invalid frequency format: %v. Using default of 5m.\n", err)
+		logger.Log.Warn("invalid frequency format, using default 5m", "error", err)
 		freqTime = 5 * time.Minute
 	}
 
@@ -200,7 +204,7 @@ func SetDataPointsSyncFrequency(frequency ...string) error {
 	}
 
 	// Initializing service metrics once
-	serviceMetrics := core.GetServiceStats()
+	serviceMetrics := core.GetServiceStats(context.Background())
 	if err := StoreServiceMetrics(&serviceMetrics); err != nil {
 		return errors.New("[MoniGo] error storing service metrics, err: " + err.Error())
 	}
@@ -213,9 +217,9 @@ func SetDataPointsSyncFrequency(frequency ...string) error {
 			case <-manager.ctx.Done():
 				return
 			case <-ticker.C:
-				serviceMetrics := core.GetServiceStats()
+				serviceMetrics := core.GetServiceStats(manager.ctx)
 				if err := StoreServiceMetrics(&serviceMetrics); err != nil {
-					log.Printf("[MoniGo] Error storing service metrics: %v\n", err)
+					logger.Log.Error("storing service metrics", "error", err)
 				}
 			}
 		}

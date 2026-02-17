@@ -1,12 +1,12 @@
 package core
 
 import (
-	"log"
 	"runtime"
 	"sync"
 	"time"
 
 	"github.com/iyashjayesh/monigo/common"
+	"github.com/iyashjayesh/monigo/internal/logger"
 	"github.com/iyashjayesh/monigo/models"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/mem"
@@ -22,7 +22,7 @@ var (
 func GetCPUPrecent() (float64, error) {
 	cpuPercents, err := cpu.Percent(time.Second, false)
 	if err != nil {
-		log.Printf("[MoniGo] Error fetching CPU usage: %v\n", err)
+		logger.Log.Error("Error fetching CPU usage", "error", err)
 		return 0, err
 	}
 
@@ -38,7 +38,7 @@ func GetCPUPrecent() (float64, error) {
 func GetVirtualMemoryStats() (mem.VirtualMemoryStat, error) {
 	memInfo, err := mem.VirtualMemory()
 	if err != nil {
-		log.Printf("[MoniGo] Error fetching memory usage: %v\n", err)
+		logger.Log.Error("Error fetching memory usage", "error", err)
 		return mem.VirtualMemoryStat{}, err
 	}
 

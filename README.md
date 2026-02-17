@@ -46,6 +46,61 @@
 - **Visualizations**: Utilize graphs and charts to interpret performance trends.
 - **Custom Thresholds**: Configure custom thresholds for your application's performance and resource usage.
 
+## What's New in v2.0.0
+
+- **context.Context support**: All tracing functions now accept `context.Context` as the first parameter
+- **OpenTelemetry export**: Send metrics to any OTel Collector via `WithOTelEndpoint()`
+- **Structured logging**: Uses `log/slog` — configure via `WithLogLevel()` or `WithLogger()`
+- **Graceful shutdown**: SIGINT/SIGTERM triggers proper cleanup
+- **Builder validation**: `Build()` validates config at construction time
+- **Decoupled storage types**: Storage interface uses monigo-owned types (no tstorage leak)
+
+### Architecture
+
+```mermaid
+flowchart LR
+    App["Your Go App"] -->|"import"| SDK["monigo SDK"]
+    SDK --> Core["Metric Collection"]
+    SDK --> Trace["Function Tracing"]
+    Core --> Storage["Time-Series Storage"]
+    Core --> Prom["Prometheus /metrics"]
+    Core --> OTel["OTel Collector"]
+    Storage --> Dashboard["Built-in Dashboard"]
+```
+
+### Benchmarks (Apple M4)
+
+| Operation | ns/op |
+|---|---|
+| GetCoreStatistics | 235 |
+| CalculateOverallLoad | 139 |
+| ConstructRawMemStats | 273 |
+| InMemoryStorage Insert | 84 |
+| InMemoryStorage Select (1000 pts) | 4,116 |
+| StoreServiceMetrics | 7,513 |
+| BytesToUnit | 140 |
+| ConvertBytesToUnit | 4 |
+
+### OpenTelemetry Integration
+
+```go
+monigoInstance := monigo.NewBuilder().
+    WithServiceName("my-service").
+    WithOTelEndpoint("localhost:4317").
+    Build()
+```
+
+### Custom Logger
+
+```go
+monigoInstance := monigo.NewBuilder().
+    WithServiceName("my-service").
+    WithLogLevel(slog.LevelDebug).
+    // Or bring your own:
+    // WithLogger(myCustomSlogLogger).
+    Build()
+```
+
 ## Installation
 
 To install MoniGo, use the following command:
@@ -63,47 +118,45 @@ go get github.com/iyashjayesh/monigo@latest
 package main
 
 import (
+    "context"
+    "log"
+    "math"
+    "net/http"
+
     "github.com/iyashjayesh/monigo"
-	"log"
-	"math"
 )
 
 func main() {
-    // New way: Use Builder Pattern for clean initialization
     monigoInstance := monigo.NewBuilder().
         WithServiceName("data-api").
         WithPort(8080).
         WithRetentionPeriod("4d").
         WithDataPointsSyncFrequency("5s").
-        WithSamplingRate(100).      // Trace 1 in 100 calls
-        WithStorageType("memory"). // Use in-memory storage
-        WithHeadless(false).       // Set to true for background-only monitoring
+        WithSamplingRate(100).
+        WithStorageType("memory").
+        WithHeadless(false).
         Build()
 
-   	monigo.TraceFunction(highCPUUsage) // Trace function
-
-	go func() {
-        // Start returns an error now, so handle it!
+    go func() {
         if err := monigoInstance.Start(); err != nil {
             log.Fatalf("Failed to start MoniGo: %v", err)
         }
     }()
-	log.Printf("Monigo dashboard started at port %d\n", monigoInstance.GetRunningPort())
+    log.Printf("Monigo dashboard started at port %d\n", monigoInstance.GetRunningPort())
 
-  	// Optional
-	// routinesStats := monigoInstance.GetGoRoutinesStats() // Get go routines stats
-	// log.Println(routinesStats)
+    http.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
+        monigo.TraceFunction(r.Context(), highCPUUsage)
+        w.Write([]byte("done"))
+    })
 
-  	select {} // To keep the program running
+    log.Fatal(http.ListenAndServe(":8000", nil))
 }
 
-// highCPUUsage is a function that simulates high CPU usage
 func highCPUUsage() {
-	// Simulate high CPU usage by performing heavy computations
-	var sum float64
-	for i := 0; i < 1e8; i++ { // 100 million iterations
-		sum += math.Sqrt(float64(i))
-	}
+    var sum float64
+    for i := 0; i < 1e8; i++ {
+        sum += math.Sqrt(float64(i))
+    }
 }
 ```
 
@@ -122,7 +175,7 @@ The original `TraceFunction` method for functions without parameters:
 ```go
 func apiHandler(w http.ResponseWriter, r *http.Request) {
     // Trace function: when the highMemoryUsage function is called, it will be traced.
-    monigo.TraceFunction(highMemoryUsage)
+    monigo.TraceFunction(r.Context(), highMemoryUsage)
     w.Write([]byte("API1 response: memexpensiveFunc"))
 }
 
@@ -151,7 +204,7 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
     userName := r.URL.Query().Get("name")
     
     // NEW WAY: Direct function tracing with parameters
-    monigo.TraceFunctionWithArgs(processUser, userID, userName)
+    monigo.TraceFunctionWithArgs(r.Context(), processUser, userID, userName)
     
     w.Write([]byte("User processed"))
 }
@@ -177,7 +230,7 @@ func calculateHandler(w http.ResponseWriter, r *http.Request) {
     }
     
     // NEW WAY: Trace function with return value
-    total := monigo.TraceFunctionWithReturn(calculateTotal, items).(float64)
+    total := monigo.TraceFunctionWithReturn(r.Context(), calculateTotal, items).(float64)
     
     w.Write([]byte(fmt.Sprintf("Total: $%.2f", total)))
 }
@@ -200,7 +253,7 @@ func processHandler(w http.ResponseWriter, r *http.Request) {
     data := "test-data"
     
     // NEW WAY: Trace function with multiple returns
-    results := monigo.TraceFunctionWithReturns(processData, data)
+    results := monigo.TraceFunctionWithReturns(r.Context(), processData, data)
     
     if len(results) >= 2 {
         result := results[0].(Result)
@@ -221,7 +274,7 @@ func processHandler(w http.ResponseWriter, r *http.Request) {
 ```go
 // For functions with multiple returns, you can still use TraceFunctionWithReturn
 // to get just the first return value
-result := monigo.TraceFunctionWithReturn(processData, data).(Result)
+result := monigo.TraceFunctionWithReturn(ctx, processData, data).(Result)
 // Note: This ignores the error return value
 ```
 
@@ -269,7 +322,7 @@ func processData(data string) (Result, error) {
 }
 
 // Get all return values
-results := monigo.TraceFunctionWithReturns(processData, data)
+results := monigo.TraceFunctionWithReturns(ctx, processData, data)
 result := results[0].(Result)
 err := results[1].(error)
 ```
@@ -277,12 +330,12 @@ err := results[1].(error)
 #### Option 2: Get Only the First Return Value
 ```go
 // Get only the first return value (ignores error)
-result := monigo.TraceFunctionWithReturn(processData, data).(Result)
+result := monigo.TraceFunctionWithReturn(ctx, processData, data).(Result)
 ```
 
 #### Option 3: Handle Different Return Counts
 ```go
-results := monigo.TraceFunctionWithReturns(myFunction, args...)
+results := monigo.TraceFunctionWithReturns(ctx, myFunction, args...)
 
 switch len(results) {
 case 0:
@@ -342,7 +395,7 @@ func calculateTotal(items []Item) float64 {
 
 func userHandler(w http.ResponseWriter, r *http.Request) {
     // Enhanced tracing - direct function calls
-    monigo.TraceFunctionWithArgs(processUser, "123", "John")
+    monigo.TraceFunctionWithArgs(r.Context(), processUser, "123", "John")
     w.Write([]byte("User processed"))
 }
 
@@ -350,7 +403,7 @@ func calculateHandler(w http.ResponseWriter, r *http.Request) {
     items := []Item{{Name: "Item1", Price: 10.0}}
     
     // Enhanced tracing - with return value
-    total := monigo.TraceFunctionWithReturn(calculateTotal, items).(float64)
+    total := monigo.TraceFunctionWithReturn(r.Context(), calculateTotal, items).(float64)
     w.Write([]byte(fmt.Sprintf("Total: %.2f", total)))
 }
 ```
@@ -407,7 +460,7 @@ func main() {
 
 func usersHandler(w http.ResponseWriter, r *http.Request) {
     // Trace functions for monitoring
-    monigo.TraceFunction(func() {
+    monigo.TraceFunction(r.Context(), func() {
         // Your function logic here
     })
     
@@ -917,6 +970,28 @@ func main() {
 We welcome contributions! If you encounter any issues or have suggestions, please submit a pull request or open an issue.
 
 **If you find MoniGo useful, consider giving it a star! ⭐**
+
+## Migrating from v1 to v2
+
+### Breaking Changes
+
+| v1 | v2 |
+|---|---|
+| `monigo.TraceFunction(fn)` | `monigo.TraceFunction(ctx, fn)` |
+| `monigo.TraceFunctionWithArgs(fn, args...)` | `monigo.TraceFunctionWithArgs(ctx, fn, args...)` |
+| `monigo.TraceFunctionWithReturn(fn, args...)` | `monigo.TraceFunctionWithReturn(ctx, fn, args...)` |
+| `monigo.GetRuningPort()` | `monigo.GetRunningPort()` |
+| `api.ViewFunctionMaetrtics` | `api.ViewFunctionMetrics` |
+| `Build()` silent on errors | `Build()` panics on invalid config |
+
+### Quick Migration
+
+1. Add `context.Context` as first argument to all `TraceFunction*` calls
+2. In HTTP handlers, use `r.Context()` 
+3. Rename `GetRuningPort()` to `GetRunningPort()`
+4. Update `Build()` calls — ensure `ServiceName` is set
+
+See [CHANGELOG.md](CHANGELOG.md) for the full list.
 
 ## Contact
 

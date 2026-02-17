@@ -2,8 +2,6 @@ package models
 
 import (
 	"time"
-
-	"github.com/nakabonne/tstorage"
 )
 
 // ServiceInfo is the struct to store the service information
@@ -30,8 +28,8 @@ type FetchDataPoints struct {
 
 // DataPointsInfo is the struct to store the data points information
 type DataPointsInfo struct {
-	FieldName string                `json:"field_name"`
-	Data      []*tstorage.DataPoint `json:"data_points"`
+	FieldName string        `json:"field_name"`
+	Data      []interface{} `json:"data_points"`
 }
 
 // ReportsRequest is the struct to store the reports request

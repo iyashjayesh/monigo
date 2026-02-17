@@ -1,6 +1,11 @@
 package monigo
 
-import "net/http"
+import (
+	"log/slog"
+	"net/http"
+
+	"github.com/iyashjayesh/monigo/internal/logger"
+)
 
 // MonigoBuilder is the builder for the Monigo struct
 type MonigoBuilder struct {
@@ -101,6 +106,30 @@ func (b *MonigoBuilder) WithStorageType(storageType string) *MonigoBuilder {
 // WithHeadless sets whether the dashboard should be started
 func (b *MonigoBuilder) WithHeadless(headless bool) *MonigoBuilder {
 	b.config.Headless = headless
+	return b
+}
+
+// WithOTelEndpoint sets the OTLP gRPC endpoint for OpenTelemetry export (e.g. "localhost:4317")
+func (b *MonigoBuilder) WithOTelEndpoint(endpoint string) *MonigoBuilder {
+	b.config.OTelEndpoint = endpoint
+	return b
+}
+
+// WithOTelHeaders sets optional headers for the OTel exporter
+func (b *MonigoBuilder) WithOTelHeaders(headers map[string]string) *MonigoBuilder {
+	b.config.OTelHeaders = headers
+	return b
+}
+
+// WithLogLevel sets the log level for monigo's structured logger
+func (b *MonigoBuilder) WithLogLevel(level slog.Level) *MonigoBuilder {
+	logger.Init(level)
+	return b
+}
+
+// WithLogger sets a custom slog.Logger for monigo
+func (b *MonigoBuilder) WithLogger(l *slog.Logger) *MonigoBuilder {
+	logger.SetLogger(l)
 	return b
 }
 

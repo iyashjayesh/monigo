@@ -1,8 +1,7 @@
 package core
 
 import (
-	"log"
-
+	"github.com/iyashjayesh/monigo/internal/logger"
 	"github.com/shirou/gopsutil/disk"
 )
 
@@ -11,7 +10,7 @@ func GetDiskIO() (uint64, uint64) {
 	// fetching IO counters for all disks
 	ioCounters, err := disk.IOCounters()
 	if err != nil {
-		log.Printf("[MoniGo] Warning: Error fetching disk I/O statistics: %v", err)
+		logger.Log.Warn("Error fetching disk I/O statistics", "error", err)
 		return 0, 0
 	}
 

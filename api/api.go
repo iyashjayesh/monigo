@@ -11,8 +11,6 @@ import (
 	"github.com/iyashjayesh/monigo/core"
 	"github.com/iyashjayesh/monigo/models"
 	"github.com/iyashjayesh/monigo/timeseries"
-
-	"github.com/nakabonne/tstorage"
 )
 
 var (
@@ -45,7 +43,7 @@ func GetServiceStatistics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(core.GetServiceStats()); err != nil {
+	if err := json.NewEncoder(w).Encode(core.GetServiceStats(r.Context())); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
 }
@@ -118,7 +116,7 @@ func GetServiceMetricsFromStorage(w http.ResponseWriter, r *http.Request) {
 	dataByTimestamp := make(map[int64]map[string]float64)
 
 	for _, fieldName := range req.FieldName {
-		datapoints, err := timeseries.GetDataPoints(fieldName, []tstorage.Label{hostLabel}, startTime.Unix(), endTime.Unix())
+		datapoints, err := timeseries.GetDataPoints(fieldName, []timeseries.Label{hostLabel}, startTime.Unix(), endTime.Unix())
 		if err != nil {
 			http.Error(w, "Failed to get data points", http.StatusInternalServerError)
 			return
@@ -208,7 +206,7 @@ func GetReportData(w http.ResponseWriter, r *http.Request) {
 
 	dataByTimestamp := make(map[int64]map[string]float64)
 	for _, fieldName := range fieldNameList {
-		datapoints, err := timeseries.GetDataPoints(fieldName, []tstorage.Label{hostLabel}, startTime.Unix(), endTime.Unix())
+		datapoints, err := timeseries.GetDataPoints(fieldName, []timeseries.Label{hostLabel}, startTime.Unix(), endTime.Unix())
 		if err != nil {
 			http.Error(w, "Failed to get data points", http.StatusInternalServerError)
 			return

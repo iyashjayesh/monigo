@@ -5,7 +5,6 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -21,6 +20,8 @@ import (
 	"github.com/iyashjayesh/monigo/api"
 	"github.com/iyashjayesh/monigo/common"
 	"github.com/iyashjayesh/monigo/core"
+	"github.com/iyashjayesh/monigo/exporters"
+	"github.com/iyashjayesh/monigo/internal/logger"
 	"github.com/iyashjayesh/monigo/models"
 	"github.com/iyashjayesh/monigo/timeseries"
 )
@@ -55,6 +56,10 @@ type Monigo struct {
 	SamplingRate            int       `json:"sampling_rate"`        // Trace 1 in N calls
 	StorageType             string    `json:"storage_type"`         // "disk" or "memory"
 
+	// OpenTelemetry Configuration
+	OTelEndpoint string            `json:"otel_endpoint,omitempty"` // OTLP gRPC endpoint (e.g. "localhost:4317")
+	OTelHeaders  map[string]string `json:"-"`                       // Optional headers for OTel export
+
 	// Security and Middleware Configuration
 	DashboardMiddleware []func(http.Handler) http.Handler `json:"-"` // Middleware chain for dashboard access (static files)
 	APIMiddleware       []func(http.Handler) http.Handler `json:"-"` // Middleware chain for API endpoints
@@ -79,7 +84,7 @@ func setDashboardPort(m *Monigo) error {
 
 	// If the port is not provided or is out of range, we will set it to the default port
 	if m.DashboardPort <= 0 || m.DashboardPort > 65535 {
-		log.Println("[MoniGo] Port not provided. Setting to default port:", defaultPort)
+		logger.Log.Info("port not provided, setting to default", "port", defaultPort)
 		m.DashboardPort = defaultPort
 	}
 
@@ -87,7 +92,7 @@ func setDashboardPort(m *Monigo) error {
 	if err != nil {
 		// If the port is in use, we will set it to the default port
 		if portInUse := m.isAddrInUse(err); portInUse {
-			log.Printf("[MoniGo] Port %d in use. Setting to default port: %d\n", m.DashboardPort, defaultPort)
+			logger.Log.Warn("port in use, setting to default", "requested", m.DashboardPort, "default", defaultPort)
 			m.DashboardPort = defaultPort
 
 			// Attempting to listen on the default port
@@ -125,7 +130,7 @@ func (m *Monigo) MonigoInstanceConstructor() error {
 
 	location, err := time.LoadLocation(m.TimeZone) // Loading the time zone location
 	if err != nil {
-		log.Println("[MoniGo] Error loading timezone. Setting to Local, Error: ", err)
+		logger.Log.Warn("error loading timezone, using Local", "error", err)
 		location = time.Local
 	}
 
@@ -158,7 +163,7 @@ func (m *Monigo) MonigoInstanceConstructorWithoutPort() {
 
 	location, err := time.LoadLocation(m.TimeZone) // Loading the time zone location
 	if err != nil {
-		log.Println("[MoniGo] Error loading timezone. Setting to Local, Error: ", err)
+		logger.Log.Warn("error loading timezone, using Local", "error", err)
 		location = time.Local
 	}
 
@@ -196,7 +201,7 @@ func (m *Monigo) setup() error {
 	cachePath := BasePath + "/cache.dat"
 	cache := common.Cache{Data: make(map[string]time.Time)}
 	if err := cache.LoadFromFile(cachePath); err != nil {
-		log.Printf("[MoniGo] Warning: failed to load cache from file: %v. Starting with fresh cache.", err)
+		logger.Log.Warn("failed to load cache, starting fresh", "error", err)
 	}
 
 	// Updating the service start time in the cache
@@ -209,7 +214,7 @@ func (m *Monigo) setup() error {
 
 	// Save the cache data to file
 	if err := cache.SaveToFile(cachePath); err != nil {
-		log.Printf("[MoniGo] Warning: failed to save cache to file: %v", err)
+		logger.Log.Warn("failed to save cache", "error", err)
 	}
 
 	// Setting common service information
@@ -231,8 +236,22 @@ func (m *Monigo) setup() error {
 
 	_, err := timeseries.GetStorageInstance()
 	if err != nil {
-		log.Printf("[MoniGo] Warning: failed to initialize storage: %v", err)
+		logger.Log.Error("failed to initialize storage", "error", err)
 		return fmt.Errorf("failed to initialize storage: %w", err)
+	}
+
+	// Initialize OTel exporter if configured
+	if m.OTelEndpoint != "" {
+		otelExp, otelErr := exporters.NewOTelExporter(context.Background(), exporters.OTelConfig{
+			Endpoint: m.OTelEndpoint,
+			Headers:  m.OTelHeaders,
+		})
+		if otelErr != nil {
+			logger.Log.Error("failed to initialize OTel exporter", "error", otelErr)
+		} else {
+			logger.Log.Info("OTel exporter initialized", "endpoint", m.OTelEndpoint)
+			_ = otelExp // Provider runs in background via PeriodicReader
+		}
 	}
 
 	return nil
@@ -255,7 +274,7 @@ func (m *Monigo) Start() error {
 	}
 
 	if m.Headless {
-		log.Println("[MoniGo] Running in headless mode. Dashboard disabled.")
+		logger.Log.Info("running in headless mode, dashboard disabled")
 		return nil
 	}
 
@@ -272,8 +291,8 @@ func (m *Monigo) GetGoRoutinesStats() models.GoRoutinesStatistic {
 
 // TraceFunction traces the function
 // This is the original function maintained for backward compatibility
-func TraceFunction(f func()) {
-	core.TraceFunction(f)
+func TraceFunction(ctx context.Context, f func()) {
+	core.TraceFunction(ctx, f)
 }
 
 // SetSamplingRate sets the sampling rate for function tracing
@@ -288,8 +307,8 @@ func SetSamplingRate(rate int) {
 //
 //	func processUser(userID string) { ... }
 //	monigo.TraceFunctionWithArgs(processUser, "123")
-func TraceFunctionWithArgs(f interface{}, args ...interface{}) {
-	core.TraceFunctionWithArgs(f, args...)
+func TraceFunctionWithArgs(ctx context.Context, f interface{}, args ...interface{}) {
+	core.TraceFunctionWithArgs(ctx, f, args...)
 }
 
 // TraceFunctionWithReturn traces a function with parameters and return values
@@ -298,8 +317,8 @@ func TraceFunctionWithArgs(f interface{}, args ...interface{}) {
 //
 //	func calculateTotal(items []Item) int { ... }
 //	result := monigo.TraceFunctionWithReturn(calculateTotal, items)
-func TraceFunctionWithReturn(f interface{}, args ...interface{}) interface{} {
-	return core.TraceFunctionWithReturn(f, args...)
+func TraceFunctionWithReturn(ctx context.Context, f interface{}, args ...interface{}) interface{} {
+	return core.TraceFunctionWithReturn(ctx, f, args...)
 }
 
 // TraceFunctionWithReturns traces a function with parameters and return values
@@ -310,8 +329,8 @@ func TraceFunctionWithReturn(f interface{}, args ...interface{}) interface{} {
 //	results := monigo.TraceFunctionWithReturns(processData, data)
 //	result := results[0].(Result)
 //	err := results[1].(error)
-func TraceFunctionWithReturns(f interface{}, args ...interface{}) []interface{} {
-	return core.TraceFunctionWithReturns(f, args...)
+func TraceFunctionWithReturns(ctx context.Context, f interface{}, args ...interface{}) []interface{} {
+	return core.TraceFunctionWithReturns(ctx, f, args...)
 }
 
 // StartDashboard starts the dashboard on the specified port
@@ -357,19 +376,19 @@ func StartDashboardWithCustomPath(port int, customBaseAPIPath string) error {
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 		<-sigChan
 
-		log.Println("[MoniGo] Shutting down dashboard server...")
+		logger.Log.Info("shutting down dashboard server")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
 		if err := srv.Shutdown(ctx); err != nil {
-			log.Printf("[MoniGo] Error during server shutdown: %v", err)
+			logger.Log.Error("error during server shutdown", "error", err)
 		}
 		if err := timeseries.CloseStorage(); err != nil {
-			log.Printf("[MoniGo] Error closing storage: %v", err)
+			logger.Log.Error("error closing storage", "error", err)
 		}
 	}()
 
-	log.Printf("[MoniGo] Dashboard started on http://localhost:%d\n", port)
+	logger.Log.Info("dashboard started", "url", fmt.Sprintf("http://localhost:%d", port))
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return fmt.Errorf("error starting the dashboard: %v", err)
 	}
@@ -398,19 +417,19 @@ func StartSecuredDashboard(m *Monigo) error {
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 		<-sigChan
 
-		log.Println("[MoniGo] Shutting down secured dashboard server...")
+		logger.Log.Info("shutting down secured dashboard server")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
 		if err := srv.Shutdown(ctx); err != nil {
-			log.Printf("[MoniGo] Error during server shutdown: %v", err)
+			logger.Log.Error("error during server shutdown", "error", err)
 		}
 		if err := timeseries.CloseStorage(); err != nil {
-			log.Printf("[MoniGo] Error closing storage: %v", err)
+			logger.Log.Error("error closing storage", "error", err)
 		}
 	}()
 
-	log.Printf("[MoniGo] Secured dashboard started on http://localhost:%d\n", m.DashboardPort)
+	logger.Log.Info("secured dashboard started", "url", fmt.Sprintf("http://localhost:%d", m.DashboardPort))
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return fmt.Errorf("error starting the secured dashboard: %v", err)
 	}
@@ -961,7 +980,7 @@ func LoggingMiddleware() func(http.Handler) http.Handler {
 			next.ServeHTTP(wrapped, r)
 
 			duration := time.Since(start)
-			log.Printf("[MoniGo] %s %s %d %v %s", r.Method, r.URL.Path, wrapped.statusCode, duration, r.RemoteAddr)
+			logger.Log.Info("request", "method", r.Method, "path", r.URL.Path, "status", wrapped.statusCode, "duration", duration, "remote", r.RemoteAddr)
 		})
 	}
 }

@@ -1,8 +1,9 @@
 package common
 
 import (
-	"log"
 	"os"
+
+	"github.com/iyashjayesh/monigo/internal/logger"
 	"strconv"
 	"time"
 
@@ -18,14 +19,14 @@ func GetCPULoad() (serviceCPU, systemCPU, totalCPU string, serviceCPUF, systemCP
 	proc := GetProcessObject()            // Getting process details
 	serviceCPUF, err := proc.CPUPercent() // 	Measure CPU percent for the current process
 	if err != nil {
-		log.Printf("[MoniGo] Error fetching CPU load for the service: %v\n", err)
+		logger.Log.Error("fetching CPU load for the service", "error", err)
 		serviceCPUF = 0
 	}
 	serviceCPU = ParseFloat64ToString(serviceCPUF) + "%" // Service CPU usage percentage
 
 	cpuPercents, err := cpu.Percent(time.Second, false) // Get total system CPU percentage
 	if err != nil {
-		log.Printf("[MoniGo] Error fetching CPU load for the system: %v\n", err)
+		logger.Log.Error("fetching CPU load for the system", "error", err)
 		return serviceCPU, "0%", "0%", serviceCPUF, 0, 0
 	}
 	if len(cpuPercents) > 0 {
@@ -46,7 +47,7 @@ func GetMemoryLoad() (serviceMem, systemMem, totalMem string, serviceMemF, syste
 	// Get system memory statistics
 	vmStat, err := mem.VirtualMemory()
 	if err != nil {
-		log.Printf("[MoniGo] Error fetching memory load for the system: %v\n", err)
+		logger.Log.Error("fetching memory load for the system", "error", err)
 		return "0%", "0%", "0%", 0, 0, 0
 	}
 	systemMemF = vmStat.UsedPercent
@@ -57,7 +58,7 @@ func GetMemoryLoad() (serviceMem, systemMem, totalMem string, serviceMemF, syste
 	proc := GetProcessObject()
 	memInfo, err := proc.MemoryInfo()
 	if err != nil {
-		log.Printf("[MoniGo] Error fetching memory load for the service: %v\n", err)
+		logger.Log.Error("fetching memory load for the service", "error", err)
 		return "0%", systemMem, totalMem, 0, systemMemF, totalMemF
 	}
 
@@ -75,7 +76,7 @@ func GetDiskLoad() (serviceDisk, systemDisk, totalDisk string, systemDiskF, tota
 
 	diskUsage, err := disk.Usage("/")
 	if err != nil {
-		log.Printf("[MoniGo] Error fetching disk usage: %v\n", err) // Changed from Panic to Printf as agreed in plan
+		logger.Log.Error("fetching disk usage", "error", err)
 		return "0%", "0%", "0%", 0, 0
 	}
 
@@ -99,7 +100,7 @@ func GetProcessDetails() (int32, *process.Process) {
 	pid := GetProcessId()
 	proc, err := process.NewProcess(pid)
 	if err != nil {
-		log.Printf("[MoniGo] Error fetching process details: %v\n", err)
+		logger.Log.Error("fetching process details", "error", err)
 		return pid, nil
 	}
 	return pid, proc

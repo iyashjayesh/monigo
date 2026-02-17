@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"github.com/iyashjayesh/monigo/internal/logger"
 	"math"
 	"os"
 	"path/filepath"
@@ -36,12 +36,12 @@ func GetBasePath() string {
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		if err := os.MkdirAll(path, os.ModePerm); err != nil {
-			log.Printf("[MoniGo] Warning: failed to create cache directory %s: %v", path, err)
+			logger.Log.Warn("failed to create cache directory", "path", path, "error", err)
 			// Fallback to a temporary directory if we can't create in current directory
 			tempDir := os.TempDir()
 			path = fmt.Sprintf("%s/%s", tempDir, monigoFolder)
 			if err := os.MkdirAll(path, os.ModePerm); err != nil {
-				log.Printf("[MoniGo] Warning: failed to create fallback cache directory %s: %v", path, err)
+				logger.Log.Warn("failed to create fallback cache directory", "path", path, "error", err)
 			}
 		}
 	}
@@ -183,7 +183,7 @@ func ConvertToReadableUnit(value interface{}) string {
 	case reflect.String:
 		num = ParseStringToFloat64(v.String())
 	default:
-		log.Printf("[MoniGo] Warning: unsupported type: %v", v.Kind())
+		logger.Log.Warn("unsupported type", "type", v.Kind())
 		return ""
 	}
 
@@ -249,7 +249,7 @@ func ConvertBytesToUnit(bytes float64, unit string) float64 {
 	case "TB":
 		return bytes / (base * base * base * base)
 	default:
-		log.Printf("[MoniGo] Warning: unknown unit %q in ConvertBytesToUnit", unit)
+		logger.Log.Warn("unknown unit in ConvertBytesToUnit", "unit", unit)
 		return 0
 	}
 }
@@ -290,7 +290,7 @@ func GetDataRetentionPeriod() time.Duration {
 
 	duration, err := parseDuration(period)
 	if err != nil {
-		log.Printf("[MoniGo] Error parsing retention period, using default retention period (7d): %v", err)
+		logger.Log.Error("parsing retention period, using default retention period (7d)", "error", err)
 		duration = 7 * 24 * time.Hour
 	}
 

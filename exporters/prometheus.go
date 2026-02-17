@@ -1,6 +1,7 @@
 package exporters
 
 import (
+	"context"
 	"sync"
 
 	"github.com/iyashjayesh/monigo/core"
@@ -76,7 +77,7 @@ func (c *MonigoCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect is called by the Prometheus registry when collecting metrics.
 func (c *MonigoCollector) Collect(ch chan<- prometheus.Metric) {
-	stats := core.GetServiceStats()
+	stats := core.GetServiceStats(context.Background())
 
 	// CPU Load — use raw float64 values directly, no string parsing
 	ch <- prometheus.MustNewConstMetric(
