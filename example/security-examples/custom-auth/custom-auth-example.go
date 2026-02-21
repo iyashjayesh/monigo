@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"strings"
@@ -10,6 +11,10 @@ import (
 )
 
 func main() {
+	// Rate limit middleware returns (mw, stop) - call stop on shutdown
+	rateLimitMW, stop := monigo.RateLimitMiddleware(100, time.Minute)
+	defer stop()
+
 	// Initialize MoniGo with custom authentication function
 	monigoInstance := &monigo.Monigo{
 		ServiceName:             "custom-auth-example",
@@ -24,7 +29,7 @@ func main() {
 			monigo.LoggingMiddleware(),
 		},
 		APIMiddleware: []func(http.Handler) http.Handler{
-			monigo.RateLimitMiddleware(100, time.Minute),
+			rateLimitMW,
 		},
 	}
 
@@ -84,7 +89,7 @@ func customAuthFunction(r *http.Request) bool {
 
 func usersHandler(w http.ResponseWriter, r *http.Request) {
 	// Trace this function for monitoring
-	monigo.TraceFunction(func() {
+	monigo.TraceFunction(context.Background(), func() {
 		// Simulate some work
 		_ = make([]byte, 1024*1024) // 1MB allocation
 	})
@@ -96,7 +101,7 @@ func usersHandler(w http.ResponseWriter, r *http.Request) {
 
 func ordersHandler(w http.ResponseWriter, r *http.Request) {
 	// Trace this function for monitoring
-	monigo.TraceFunction(func() {
+	monigo.TraceFunction(context.Background(), func() {
 		// Simulate some work
 		_ = make([]byte, 512*1024) // 512KB allocation
 	})

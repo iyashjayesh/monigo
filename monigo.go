@@ -28,49 +28,65 @@ import (
 
 var (
 	//go:embed static/*
-	staticFiles embed.FS                         // Embedding the static files
-	Once        sync.Once          = sync.Once{} // Ensures that the storage is initialized only once
-	BasePath    string                           // Base path for the monigo
-	baseAPIPath = "/monigo/api/v1"               // Base API path for the dashboard
+	staticFiles embed.FS
+	BasePath    string
+	baseAPIPath = "/monigo/api/v1"
+
+	// Content-type mapping shared by both HTTP and Fiber static file handlers.
+	staticContentTypes = map[string]string{
+		".html":  "text/html",
+		".ico":   "image/x-icon",
+		".css":   "text/css",
+		".js":    "application/javascript",
+		".png":   "image/png",
+		".jpg":   "image/jpeg",
+		".jpeg":  "image/jpeg",
+		".svg":   "image/svg+xml",
+		".woff":  "font/woff",
+		".woff2": "font/woff2",
+	}
 )
 
 func init() {
-	BasePath = common.GetBasePath() // Get the base path for the monigo
+	BasePath = common.GetBasePath()
 }
 
 // Monigo is the main struct to start the monigo service
 type Monigo struct {
-	ServiceName             string    `json:"service_name"`         // Mandatory field ex. "backend", "OrderAPI", "PaymentService", etc.
-	DashboardPort           int       `json:"dashboard_port"`       // Default is 8080
-	DataPointsSyncFrequency string    `json:"db_sync_frequency"`    // Default is 5 Minutes
-	DataRetentionPeriod     string    `json:"retention_period"`     // Default is 7 Day
-	TimeZone                string    `json:"time_zone"`            // Default is Local
-	GoVersion               string    `json:"go_version"`           // Dynamically set from runtime.Version()
-	ServiceStartTime        time.Time `json:"service_start_time"`   // Dynamically setting it based on the service start time
-	ProcessId               int32     `json:"process_id"`           // Dynamically set from os.Getpid()
-	MaxCPUUsage             float64   `json:"max_cpu_usage"`        // Default is 95%, You can set it to 100% if you want to monitor 100% CPU usage
-	MaxMemoryUsage          float64   `json:"max_memory_usage"`     // Default is 95%, You can set it to 100% if you want to monitor 100% Memory usage
-	MaxGoRoutines           int       `json:"max_go_routines"`      // Default is 100, You can set it to any number based on your service
-	CustomBaseAPIPath       string    `json:"custom_base_api_path"` // Custom base API path for integration with existing routers
-	Headless                bool      `json:"headless"`             // If true, dashboard won't be started
-	SamplingRate            int       `json:"sampling_rate"`        // Trace 1 in N calls
-	StorageType             string    `json:"storage_type"`         // "disk" or "memory"
+	ServiceName             string    `json:"service_name"`
+	DashboardPort           int       `json:"dashboard_port"`
+	DataPointsSyncFrequency string    `json:"db_sync_frequency"`
+	DataRetentionPeriod     string    `json:"retention_period"`
+	TimeZone                string    `json:"time_zone"`
+	GoVersion               string    `json:"go_version"`
+	ServiceStartTime        time.Time `json:"service_start_time"`
+	ProcessId               int32     `json:"process_id"`
+	MaxCPUUsage             float64   `json:"max_cpu_usage"`
+	MaxMemoryUsage          float64   `json:"max_memory_usage"`
+	MaxGoRoutines           int       `json:"max_go_routines"`
+	CustomBaseAPIPath       string    `json:"custom_base_api_path"`
+	Headless                bool      `json:"headless"`
+	SamplingRate            int       `json:"sampling_rate"`
+	StorageType             string    `json:"storage_type"`
 
 	// OpenTelemetry Configuration
-	OTelEndpoint string            `json:"otel_endpoint,omitempty"` // OTLP gRPC endpoint (e.g. "localhost:4317")
-	OTelHeaders  map[string]string `json:"-"`                       // Optional headers for OTel export
+	OTelEndpoint string            `json:"otel_endpoint,omitempty"`
+	OTelHeaders  map[string]string `json:"-"`
 
 	// Security and Middleware Configuration
-	DashboardMiddleware []func(http.Handler) http.Handler `json:"-"` // Middleware chain for dashboard access (static files)
-	APIMiddleware       []func(http.Handler) http.Handler `json:"-"` // Middleware chain for API endpoints
-	AuthFunction        func(*http.Request) bool          `json:"-"` // Simple authentication function for dashboard access
+	DashboardMiddleware []func(http.Handler) http.Handler `json:"-"`
+	APIMiddleware       []func(http.Handler) http.Handler `json:"-"`
+	AuthFunction        func(*http.Request) bool          `json:"-"`
+
+	// Holds a reference so we can shut down cleanly.
+	otelExporter *exporters.OTelExporter
 }
 
 // MonigoInt is the interface to start the monigo service
 type MonigoInt interface {
-	Start() error                                   // Start the monigo service with dashboard
-	Initialize() error                              // Initialize monigo without starting dashboard
-	GetGoRoutinesStats() models.GoRoutinesStatistic // Print the Go routines stats
+	Start() error
+	Initialize() error
+	GetGoRoutinesStats() models.GoRoutinesStatistic
 }
 
 // Cache is the struct to store the cache data
@@ -78,35 +94,33 @@ type Cache struct {
 	Data map[string]time.Time
 }
 
-// setDashboardPort sets the dashboard port
+// setDashboardPort validates and binds the dashboard port.
 func setDashboardPort(m *Monigo) error {
 	defaultPort := 8080
 
-	// If the port is not provided or is out of range, we will set it to the default port
 	if m.DashboardPort <= 0 || m.DashboardPort > 65535 {
-		logger.Log.Info("port not provided, setting to default", "port", defaultPort)
+		logger.Log.Info("port not provided or out of range, setting to default", "port", defaultPort)
 		m.DashboardPort = defaultPort
 	}
 
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", m.DashboardPort)) // Attempting to listen on the provided or default port
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", m.DashboardPort))
 	if err != nil {
-		// If the port is in use, we will set it to the default port
 		if portInUse := m.isAddrInUse(err); portInUse {
 			logger.Log.Warn("port in use, setting to default", "requested", m.DashboardPort, "default", defaultPort)
 			m.DashboardPort = defaultPort
 
-			// Attempting to listen on the default port
 			listener, err = net.Listen("tcp", fmt.Sprintf(":%d", m.DashboardPort))
 			if err != nil {
 				return fmt.Errorf("[MoniGo] Failed to bind to default port %d: %v", defaultPort, err)
 			}
+		} else {
+			return fmt.Errorf("[MoniGo] Failed to bind to port %d: %v", m.DashboardPort, err)
 		}
 	}
 	defer listener.Close()
 	return nil
 }
 
-// isAddrInUse checks if the error is due to address in use
 func (m *Monigo) isAddrInUse(err error) bool {
 	var opErr *net.OpError
 	if errors.As(err, &opErr) {
@@ -121,71 +135,48 @@ func (m *Monigo) GetRunningPort() int {
 	return m.DashboardPort
 }
 
-// MonigoInstanceConstructor is the constructor for the Monigo struct
-func (m *Monigo) MonigoInstanceConstructor() error {
-
-	if m.TimeZone == "" { // Setting default TimeZone if not provided
+func (m *Monigo) initCommon() {
+	if m.TimeZone == "" {
 		m.TimeZone = "Local"
 	}
 
-	location, err := time.LoadLocation(m.TimeZone) // Loading the time zone location
+	location, err := time.LoadLocation(m.TimeZone)
 	if err != nil {
 		logger.Log.Warn("error loading timezone, using Local", "error", err)
 		location = time.Local
 	}
 
+	m.DataPointsSyncFrequency = common.DefaultIfEmpty(m.DataPointsSyncFrequency, "5m")
+	m.DataRetentionPeriod = common.DefaultIfEmpty(m.DataRetentionPeriod, "7d")
+	m.MaxCPUUsage = common.DefaultFloatIfZero(m.MaxCPUUsage, 95)
+	m.MaxMemoryUsage = common.DefaultFloatIfZero(m.MaxMemoryUsage, 95)
+	m.MaxGoRoutines = common.DefaultIntIfZero(m.MaxGoRoutines, 100)
+
+	core.ConfigureServiceThresholds(&models.ServiceHealthThresholds{
+		MaxCPUUsage:    m.MaxCPUUsage,
+		MaxMemoryUsage: m.MaxMemoryUsage,
+		MaxGoRoutines:  m.MaxGoRoutines,
+	})
+
+	m.ServiceStartTime = time.Now().In(location)
+}
+
+// MonigoInstanceConstructor validates the port then initialises common fields.
+func (m *Monigo) MonigoInstanceConstructor() error {
 	if err := setDashboardPort(m); err != nil {
 		return err
 	}
-	m.DataPointsSyncFrequency = common.DefaultIfEmpty(m.DataPointsSyncFrequency, "5m")
-	m.DataRetentionPeriod = common.DefaultIfEmpty(m.DataRetentionPeriod, "7d")
-	m.MaxCPUUsage = common.DefaultFloatIfZero(m.MaxCPUUsage, 95)
-	m.MaxMemoryUsage = common.DefaultFloatIfZero(m.MaxMemoryUsage, 95)
-	m.MaxGoRoutines = common.DefaultIntIfZero(m.MaxGoRoutines, 100)
-
-	core.ConfigureServiceThresholds(&models.ServiceHealthThresholds{
-		MaxCPUUsage:    m.MaxCPUUsage,
-		MaxMemoryUsage: m.MaxMemoryUsage,
-		MaxGoRoutines:  m.MaxGoRoutines,
-	})
-
-	m.ServiceStartTime = time.Now().In(location) // Setting the service start time
+	m.initCommon()
 	return nil
 }
 
-// MonigoInstanceConstructorWithoutPort is the constructor for the Monigo struct without port binding
-// This is used for router integration where we don't want MoniGo to bind to any port
+// MonigoInstanceConstructorWithoutPort initialises common fields without port binding.
 func (m *Monigo) MonigoInstanceConstructorWithoutPort() {
-
-	if m.TimeZone == "" { // Setting default TimeZone if not provided
-		m.TimeZone = "Local"
-	}
-
-	location, err := time.LoadLocation(m.TimeZone) // Loading the time zone location
-	if err != nil {
-		logger.Log.Warn("error loading timezone, using Local", "error", err)
-		location = time.Local
-	}
-
-	// Skip setDashboardPort for router integration
-	m.DataPointsSyncFrequency = common.DefaultIfEmpty(m.DataPointsSyncFrequency, "5m")
-	m.DataRetentionPeriod = common.DefaultIfEmpty(m.DataRetentionPeriod, "7d")
-	m.MaxCPUUsage = common.DefaultFloatIfZero(m.MaxCPUUsage, 95)
-	m.MaxMemoryUsage = common.DefaultFloatIfZero(m.MaxMemoryUsage, 95)
-	m.MaxGoRoutines = common.DefaultIntIfZero(m.MaxGoRoutines, 100)
-
-	core.ConfigureServiceThresholds(&models.ServiceHealthThresholds{
-		MaxCPUUsage:    m.MaxCPUUsage,
-		MaxMemoryUsage: m.MaxMemoryUsage,
-		MaxGoRoutines:  m.MaxGoRoutines,
-	})
-
-	m.ServiceStartTime = time.Now().In(location) // Setting the service start time
+	m.initCommon()
 }
 
 // setup contains common initialization logic for both Initialize and Start
 func (m *Monigo) setup() error {
-	// Validate service name
 	if m.ServiceName == "" {
 		return fmt.Errorf("[MoniGo] service_name is required, please provide the service name")
 	}
@@ -194,7 +185,6 @@ func (m *Monigo) setup() error {
 		return fmt.Errorf("[MoniGo] failed to set data points sync frequency: %v", err)
 	}
 
-	// Fetching runtime details
 	m.ProcessId = common.GetProcessId()
 	m.GoVersion = runtime.Version()
 
@@ -204,7 +194,6 @@ func (m *Monigo) setup() error {
 		logger.Log.Warn("failed to load cache, starting fresh", "error", err)
 	}
 
-	// Updating the service start time in the cache
 	if startTime, exists := cache.Data[m.ServiceName]; exists {
 		m.ServiceStartTime = startTime
 	} else {
@@ -212,12 +201,10 @@ func (m *Monigo) setup() error {
 		cache.Data[m.ServiceName] = m.ServiceStartTime
 	}
 
-	// Save the cache data to file
 	if err := cache.SaveToFile(cachePath); err != nil {
 		logger.Log.Warn("failed to save cache", "error", err)
 	}
 
-	// Setting common service information
 	common.SetServiceInfo(
 		m.ServiceName,
 		m.ServiceStartTime,
@@ -226,7 +213,6 @@ func (m *Monigo) setup() error {
 		m.DataRetentionPeriod,
 	)
 
-	// Initialize storage and core settings
 	if m.StorageType != "" {
 		timeseries.SetStorageType(m.StorageType)
 	}
@@ -240,21 +226,35 @@ func (m *Monigo) setup() error {
 		return fmt.Errorf("failed to initialize storage: %w", err)
 	}
 
-	// Initialize OTel exporter if configured
 	if m.OTelEndpoint != "" {
 		otelExp, otelErr := exporters.NewOTelExporter(context.Background(), exporters.OTelConfig{
 			Endpoint: m.OTelEndpoint,
 			Headers:  m.OTelHeaders,
+			Insecure: true,
 		})
 		if otelErr != nil {
 			logger.Log.Error("failed to initialize OTel exporter", "error", otelErr)
 		} else {
+			m.otelExporter = otelExp
 			logger.Log.Info("OTel exporter initialized", "endpoint", m.OTelEndpoint)
-			_ = otelExp // Provider runs in background via PeriodicReader
 		}
 	}
 
 	return nil
+}
+
+// Shutdown performs a graceful cleanup of resources (OTel provider, storage, etc.).
+func (m *Monigo) Shutdown(ctx context.Context) error {
+	var errs []error
+	if m.otelExporter != nil {
+		if err := m.otelExporter.Shutdown(ctx); err != nil {
+			errs = append(errs, fmt.Errorf("otel shutdown: %w", err))
+		}
+	}
+	if err := timeseries.CloseStorage(); err != nil {
+		errs = append(errs, fmt.Errorf("storage close: %w", err))
+	}
+	return errors.Join(errs...)
 }
 
 // Initialize initializes the monigo service without starting the dashboard
@@ -278,69 +278,56 @@ func (m *Monigo) Start() error {
 		return nil
 	}
 
-	if err := StartDashboardWithCustomPath(m.DashboardPort, m.CustomBaseAPIPath); err != nil {
+	if err := m.startDashboard(m.DashboardPort, m.CustomBaseAPIPath); err != nil {
 		return fmt.Errorf("[MoniGo] error starting the dashboard: %v", err)
 	}
 	return nil
 }
 
-// GetGoRoutinesStats get back the Go routines stats from the core package
+// GetGoRoutinesStats returns Go routines statistics.
 func (m *Monigo) GetGoRoutinesStats() models.GoRoutinesStatistic {
 	return core.CollectGoRoutinesInfo()
 }
 
 // TraceFunction traces the function
-// This is the original function maintained for backward compatibility
 func TraceFunction(ctx context.Context, f func()) {
 	core.TraceFunction(ctx, f)
 }
 
 // SetSamplingRate sets the sampling rate for function tracing
-// For example, a rate of 100 means 1 in 100 calls will be profiled
 func SetSamplingRate(rate int) {
 	core.SetSamplingRate(rate)
 }
 
 // TraceFunctionWithArgs traces a function with parameters and captures the metrics
-// This function uses reflection to call functions with arbitrary signatures
-// Example usage:
-//
-//	func processUser(userID string) { ... }
-//	monigo.TraceFunctionWithArgs(processUser, "123")
 func TraceFunctionWithArgs(ctx context.Context, f interface{}, args ...interface{}) {
 	core.TraceFunctionWithArgs(ctx, f, args...)
 }
 
 // TraceFunctionWithReturn traces a function with parameters and return values
-// Returns the first result of the function call (for backward compatibility)
-// Example usage:
-//
-//	func calculateTotal(items []Item) int { ... }
-//	result := monigo.TraceFunctionWithReturn(calculateTotal, items)
 func TraceFunctionWithReturn(ctx context.Context, f interface{}, args ...interface{}) interface{} {
 	return core.TraceFunctionWithReturn(ctx, f, args...)
 }
 
-// TraceFunctionWithReturns traces a function with parameters and return values
-// Returns all results of the function call as a slice of interface{}
-// Example usage:
-//
-//	func processData(data []byte) (Result, error) { ... }
-//	results := monigo.TraceFunctionWithReturns(processData, data)
-//	result := results[0].(Result)
-//	err := results[1].(error)
+// TraceFunctionWithReturns traces a function with parameters and returns all results
 func TraceFunctionWithReturns(ctx context.Context, f interface{}, args ...interface{}) []interface{} {
 	return core.TraceFunctionWithReturns(ctx, f, args...)
 }
 
 // StartDashboard starts the dashboard on the specified port
 func StartDashboard(port int) error {
-	return StartDashboardWithCustomPath(port, baseAPIPath)
+	m := &Monigo{}
+	return m.startDashboard(port, baseAPIPath)
 }
 
 // StartDashboardWithCustomPath starts the dashboard on the specified port with a custom API path
 func StartDashboardWithCustomPath(port int, customBaseAPIPath string) error {
-	if port == 0 {
+	m := &Monigo{}
+	return m.startDashboard(port, customBaseAPIPath)
+}
+
+func (m *Monigo) startDashboard(port int, customBaseAPIPath string) error {
+	if port <= 0 || port > 65535 {
 		port = 8080
 	}
 
@@ -350,19 +337,9 @@ func StartDashboardWithCustomPath(port int, customBaseAPIPath string) error {
 	}
 
 	mux := http.NewServeMux()
-
-	// Static files
 	mux.HandleFunc("/", serveHtmlSite)
 
-	// API endpoints
-	mux.HandleFunc(fmt.Sprintf("%s/metrics", apiPath), api.GetServiceStatistics)
-	mux.HandleFunc(fmt.Sprintf("%s/service-info", apiPath), api.GetServiceInfoAPI)
-	mux.HandleFunc(fmt.Sprintf("%s/service-metrics", apiPath), api.GetServiceMetricsFromStorage)
-	mux.HandleFunc(fmt.Sprintf("%s/go-routines-stats", apiPath), api.GetGoRoutinesStats)
-	mux.HandleFunc(fmt.Sprintf("%s/function", apiPath), api.GetFunctionTraceDetails)
-	mux.HandleFunc(fmt.Sprintf("%s/function-details", apiPath), api.ViewFunctionMetrics)
-	mux.HandleFunc("/metrics", api.PrometheusMetricsHandler)
-	mux.HandleFunc(fmt.Sprintf("%s/reports", apiPath), api.GetReportData)
+	registerAPIEndpoints(mux, apiPath)
 
 	srv := &http.Server{
 		Addr:              fmt.Sprintf(":%d", port),
@@ -370,23 +347,7 @@ func StartDashboardWithCustomPath(port int, customBaseAPIPath string) error {
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
-	// Graceful shutdown on SIGINT/SIGTERM
-	go func() {
-		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-		<-sigChan
-
-		logger.Log.Info("shutting down dashboard server")
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		if err := srv.Shutdown(ctx); err != nil {
-			logger.Log.Error("error during server shutdown", "error", err)
-		}
-		if err := timeseries.CloseStorage(); err != nil {
-			logger.Log.Error("error closing storage", "error", err)
-		}
-	}()
+	m.registerShutdownHandler(srv)
 
 	logger.Log.Info("dashboard started", "url", fmt.Sprintf("http://localhost:%d", port))
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -398,7 +359,7 @@ func StartDashboardWithCustomPath(port int, customBaseAPIPath string) error {
 
 // StartSecuredDashboard starts the dashboard with middleware support
 func StartSecuredDashboard(m *Monigo) error {
-	if m.DashboardPort == 0 {
+	if m.DashboardPort <= 0 || m.DashboardPort > 65535 {
 		m.DashboardPort = 8080
 	}
 
@@ -412,22 +373,7 @@ func StartSecuredDashboard(m *Monigo) error {
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
-	go func() {
-		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-		<-sigChan
-
-		logger.Log.Info("shutting down secured dashboard server")
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		if err := srv.Shutdown(ctx); err != nil {
-			logger.Log.Error("error during server shutdown", "error", err)
-		}
-		if err := timeseries.CloseStorage(); err != nil {
-			logger.Log.Error("error closing storage", "error", err)
-		}
-	}()
+	m.registerShutdownHandler(srv)
 
 	logger.Log.Info("secured dashboard started", "url", fmt.Sprintf("http://localhost:%d", m.DashboardPort))
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -437,31 +383,29 @@ func StartSecuredDashboard(m *Monigo) error {
 	return nil
 }
 
-// RegisterDashboardHandlers registers all dashboard handlers (both API and static files) to the provided HTTP mux
-// This allows developers to integrate MoniGo dashboard into their existing HTTP server
-func RegisterDashboardHandlers(mux *http.ServeMux, customBaseAPIPath ...string) {
-	// Use the unified handler internally
-	unifiedHandler := GetUnifiedHandler(customBaseAPIPath...)
-	mux.Handle("/", http.HandlerFunc(unifiedHandler))
+// registerShutdownHandler sets up a goroutine that listens for SIGINT/SIGTERM
+// and performs a graceful server + storage shutdown.
+func (m *Monigo) registerShutdownHandler(srv *http.Server) {
+	go func() {
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+		<-sigChan
+
+		logger.Log.Info("shutting down dashboard server")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		if err := srv.Shutdown(ctx); err != nil {
+			logger.Log.Error("error during server shutdown", "error", err)
+		}
+		if err := m.Shutdown(ctx); err != nil {
+			logger.Log.Error("error during resource cleanup", "error", err)
+		}
+	}()
 }
 
-// RegisterSecuredDashboardHandlers registers all dashboard handlers with middleware support to the provided HTTP mux
-// This allows developers to integrate MoniGo dashboard with security middleware into their existing HTTP server
-func RegisterSecuredDashboardHandlers(mux *http.ServeMux, m *Monigo, customBaseAPIPath ...string) {
-	// Use the secured unified handler internally
-	unifiedHandler := GetSecuredUnifiedHandler(m, customBaseAPIPath...)
-	mux.Handle("/", http.HandlerFunc(unifiedHandler))
-}
-
-// RegisterAPIHandlers registers only the API handlers to the provided HTTP mux
-// This is useful when developers want to handle static file serving themselves
-func RegisterAPIHandlers(mux *http.ServeMux, customBaseAPIPath ...string) {
-	apiPath := baseAPIPath
-	if len(customBaseAPIPath) > 0 && customBaseAPIPath[0] != "" {
-		apiPath = customBaseAPIPath[0]
-	}
-
-	// Register only API handlers
+// registerAPIEndpoints registers the standard API endpoints on the mux.
+func registerAPIEndpoints(mux *http.ServeMux, apiPath string) {
 	mux.HandleFunc(fmt.Sprintf("%s/metrics", apiPath), api.GetServiceStatistics)
 	mux.HandleFunc(fmt.Sprintf("%s/service-info", apiPath), api.GetServiceInfoAPI)
 	mux.HandleFunc(fmt.Sprintf("%s/service-metrics", apiPath), api.GetServiceMetricsFromStorage)
@@ -472,33 +416,47 @@ func RegisterAPIHandlers(mux *http.ServeMux, customBaseAPIPath ...string) {
 	mux.HandleFunc(fmt.Sprintf("%s/reports", apiPath), api.GetReportData)
 }
 
-// RegisterSecuredAPIHandlers registers only the API handlers with middleware support to the provided HTTP mux
-// This is useful when developers want to handle static file serving themselves but need API security
-func RegisterSecuredAPIHandlers(mux *http.ServeMux, m *Monigo, customBaseAPIPath ...string) {
-	// Get secured API handlers
-	securedHandlers := GetSecuredAPIHandlers(m, customBaseAPIPath...)
+// RegisterDashboardHandlers registers all dashboard handlers to the provided HTTP mux
+func RegisterDashboardHandlers(mux *http.ServeMux, customBaseAPIPath ...string) {
+	unifiedHandler := GetUnifiedHandler(customBaseAPIPath...)
+	mux.Handle("/", http.HandlerFunc(unifiedHandler))
+}
 
-	// Register secured API handlers
+// RegisterSecuredDashboardHandlers registers all dashboard handlers with middleware support
+func RegisterSecuredDashboardHandlers(mux *http.ServeMux, m *Monigo, customBaseAPIPath ...string) {
+	unifiedHandler := GetSecuredUnifiedHandler(m, customBaseAPIPath...)
+	mux.Handle("/", http.HandlerFunc(unifiedHandler))
+}
+
+// RegisterAPIHandlers registers only the API handlers
+func RegisterAPIHandlers(mux *http.ServeMux, customBaseAPIPath ...string) {
+	apiPath := baseAPIPath
+	if len(customBaseAPIPath) > 0 && customBaseAPIPath[0] != "" {
+		apiPath = customBaseAPIPath[0]
+	}
+	registerAPIEndpoints(mux, apiPath)
+}
+
+// RegisterSecuredAPIHandlers registers only the API handlers with middleware support
+func RegisterSecuredAPIHandlers(mux *http.ServeMux, m *Monigo, customBaseAPIPath ...string) {
+	securedHandlers := GetSecuredAPIHandlers(m, customBaseAPIPath...)
 	for path, handler := range securedHandlers {
 		mux.HandleFunc(path, handler)
 	}
 }
 
-// RegisterStaticHandlers registers only the static file handlers to the provided HTTP mux
-// This is useful when developers want to handle API routing themselves
+// RegisterStaticHandlers registers only the static file handlers
 func RegisterStaticHandlers(mux *http.ServeMux) {
 	mux.HandleFunc("/", serveHtmlSite)
 }
 
-// RegisterSecuredStaticHandlers registers only the static file handlers with middleware support to the provided HTTP mux
-// This is useful when developers want to handle API routing themselves but need static file security
+// RegisterSecuredStaticHandlers registers only the static file handlers with middleware
 func RegisterSecuredStaticHandlers(mux *http.ServeMux, m *Monigo) {
 	securedHandler := GetSecuredStaticHandler(m)
 	mux.HandleFunc("/", securedHandler)
 }
 
-// GetAPIHandlers returns a map of API handlers that can be registered to any HTTP router
-// This provides maximum flexibility for integration with different router libraries
+// GetAPIHandlers returns a map of API handlers for any HTTP router
 func GetAPIHandlers(customBaseAPIPath ...string) map[string]http.HandlerFunc {
 	apiPath := baseAPIPath
 	if len(customBaseAPIPath) > 0 && customBaseAPIPath[0] != "" {
@@ -512,19 +470,17 @@ func GetAPIHandlers(customBaseAPIPath ...string) map[string]http.HandlerFunc {
 		fmt.Sprintf("%s/go-routines-stats", apiPath): api.GetGoRoutinesStats,
 		fmt.Sprintf("%s/function", apiPath):          api.GetFunctionTraceDetails,
 		fmt.Sprintf("%s/function-details", apiPath):  api.ViewFunctionMetrics,
-		"/metrics":                         api.PrometheusMetricsHandler,
-		fmt.Sprintf("%s/reports", apiPath): api.GetReportData,
+		"/metrics":                                   api.PrometheusMetricsHandler,
+		fmt.Sprintf("%s/reports", apiPath):           api.GetReportData,
 	}
 }
 
 // GetStaticHandler returns the static file handler function
-// This can be used to register static file serving to any HTTP router
 func GetStaticHandler() http.HandlerFunc {
 	return serveHtmlSite
 }
 
 // GetUnifiedHandler returns a unified handler that handles both API and static files
-// This is the recommended way to integrate MoniGo with any HTTP router
 func GetUnifiedHandler(customBaseAPIPath ...string) http.HandlerFunc {
 	apiPath := baseAPIPath
 	if len(customBaseAPIPath) > 0 && customBaseAPIPath[0] != "" {
@@ -536,13 +492,11 @@ func GetUnifiedHandler(customBaseAPIPath ...string) http.HandlerFunc {
 			routeToAPIHandler(w, r, apiPath)
 			return
 		}
-
 		serveHtmlSite(w, r)
 	}
 }
 
-// GetFiberHandler returns a Fiber-compatible handler that handles both API and static files
-// This is specifically designed for Fiber framework integration
+// GetFiberHandler returns a Fiber-compatible handler
 func GetFiberHandler(customBaseAPIPath ...string) func(*fiber.Ctx) error {
 	apiPath := baseAPIPath
 	if len(customBaseAPIPath) > 0 && customBaseAPIPath[0] != "" {
@@ -558,15 +512,13 @@ func GetFiberHandler(customBaseAPIPath ...string) func(*fiber.Ctx) error {
 	}
 }
 
-// GetSecuredUnifiedHandler returns a unified handler with middleware support for both API and static files
-// This is the recommended way to integrate MoniGo with security middleware
+// GetSecuredUnifiedHandler returns a unified handler with middleware
 func GetSecuredUnifiedHandler(m *Monigo, customBaseAPIPath ...string) http.HandlerFunc {
 	apiPath := baseAPIPath
 	if len(customBaseAPIPath) > 0 && customBaseAPIPath[0] != "" {
 		apiPath = customBaseAPIPath[0]
 	}
 
-	// Create the base handler
 	baseHandler := func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasPrefix(r.URL.Path, apiPath) {
 			routeToAPIHandler(w, r, apiPath)
@@ -575,11 +527,10 @@ func GetSecuredUnifiedHandler(m *Monigo, customBaseAPIPath ...string) http.Handl
 		serveHtmlSite(w, r)
 	}
 
-	// Apply middleware if provided
 	return applyMiddlewareChain(baseHandler, m.DashboardMiddleware, m.AuthFunction)
 }
 
-// GetSecuredAPIHandlers returns a map of API handlers with middleware support
+// GetSecuredAPIHandlers returns secured API handlers
 func GetSecuredAPIHandlers(m *Monigo, customBaseAPIPath ...string) map[string]http.HandlerFunc {
 	apiPath := baseAPIPath
 	if len(customBaseAPIPath) > 0 && customBaseAPIPath[0] != "" {
@@ -593,11 +544,10 @@ func GetSecuredAPIHandlers(m *Monigo, customBaseAPIPath ...string) map[string]ht
 		fmt.Sprintf("%s/go-routines-stats", apiPath): api.GetGoRoutinesStats,
 		fmt.Sprintf("%s/function", apiPath):          api.GetFunctionTraceDetails,
 		fmt.Sprintf("%s/function-details", apiPath):  api.ViewFunctionMetrics,
-		"/metrics":                         api.PrometheusMetricsHandler,
-		fmt.Sprintf("%s/reports", apiPath): api.GetReportData,
+		"/metrics":                                   api.PrometheusMetricsHandler,
+		fmt.Sprintf("%s/reports", apiPath):           api.GetReportData,
 	}
 
-	// Apply middleware to each handler
 	securedHandlers := make(map[string]http.HandlerFunc)
 	for path, handler := range baseHandlers {
 		securedHandlers[path] = applyMiddlewareChain(handler, m.APIMiddleware, nil)
@@ -606,25 +556,20 @@ func GetSecuredAPIHandlers(m *Monigo, customBaseAPIPath ...string) map[string]ht
 	return securedHandlers
 }
 
-// GetSecuredStaticHandler returns the static file handler with middleware support
+// GetSecuredStaticHandler returns the static file handler with middleware
 func GetSecuredStaticHandler(m *Monigo) http.HandlerFunc {
 	return applyMiddlewareChain(serveHtmlSite, m.DashboardMiddleware, m.AuthFunction)
 }
 
-// applyMiddlewareChain applies a chain of middleware to a handler
 func applyMiddlewareChain(handler http.HandlerFunc, middleware []func(http.Handler) http.Handler, authFunc func(*http.Request) bool) http.HandlerFunc {
-	// Start with the base handler
 	var finalHandler http.Handler = http.HandlerFunc(handler)
 
-	// Apply authentication function if provided
 	if authFunc != nil {
 		finalHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Skip authentication for static files
 			if isStaticFile(r.URL.Path) {
 				handler(w, r)
 				return
 			}
-
 			if !authFunc(r) {
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return
@@ -633,7 +578,6 @@ func applyMiddlewareChain(handler http.HandlerFunc, middleware []func(http.Handl
 		})
 	}
 
-	// Apply middleware chain in reverse order (last middleware wraps the handler first)
 	for i := len(middleware) - 1; i >= 0; i-- {
 		finalHandler = middleware[i](finalHandler)
 	}
@@ -643,7 +587,6 @@ func applyMiddlewareChain(handler http.HandlerFunc, middleware []func(http.Handl
 	})
 }
 
-// routeToAPIHandler routes API requests to the appropriate handler
 func routeToAPIHandler(w http.ResponseWriter, r *http.Request, apiPath string) {
 	path := r.URL.Path
 
@@ -667,7 +610,6 @@ func routeToAPIHandler(w http.ResponseWriter, r *http.Request, apiPath string) {
 	}
 }
 
-// routeToFiberAPIHandler routes API requests to the appropriate handler for Fiber
 func routeToFiberAPIHandler(c *fiber.Ctx, path, apiPath string) error {
 	switch {
 	case path == fmt.Sprintf("%s/metrics", apiPath):
@@ -690,15 +632,10 @@ func routeToFiberAPIHandler(c *fiber.Ctx, path, apiPath string) error {
 	}
 }
 
-// handleFiberAPI converts Fiber context to HTTP and calls the API handler
 func handleFiberAPI(c *fiber.Ctx, handler func(http.ResponseWriter, *http.Request)) error {
-	// Creating a response writer adapter
 	respWriter := &fiberResponseWriter{c: c}
-
-	// Getting the request body
 	body := c.Request().Body()
 
-	// Creating a proper HTTP request from Fiber context with body
 	req, err := http.NewRequest(
 		string(c.Request().Header.Method()),
 		"http://localhost"+string(c.Request().URI().Path()),
@@ -709,52 +646,38 @@ func handleFiberAPI(c *fiber.Ctx, handler func(http.ResponseWriter, *http.Reques
 		return nil
 	}
 
-	// Copying headers
 	c.Request().Header.VisitAll(func(key, value []byte) {
 		req.Header.Set(string(key), string(value))
 	})
 
-	// Setting Content-Length header if body is not empty
 	if len(body) > 0 {
 		req.ContentLength = int64(len(body))
 	}
 
-	// Calling the original handler
 	handler(respWriter, req)
-
 	return nil
 }
 
-// serveFiberStaticFiles serves static files for Fiber
-func serveFiberStaticFiles(c *fiber.Ctx, path string) error {
+// resolveStaticPath maps a URL path to an embedded file path and content type.
+func resolveStaticPath(urlPath string) (filePath string, contentType string) {
 	baseDir := "static"
-
-	// Mapping of content types based on file extensions
-	contentTypes := map[string]string{
-		".html":  "text/html",
-		".ico":   "image/x-icon",
-		".css":   "text/css",
-		".js":    "application/javascript",
-		".png":   "image/png",
-		".jpg":   "image/jpeg",
-		".jpeg":  "image/jpeg",
-		".svg":   "image/svg+xml",
-		".woff":  "font/woff",
-		".woff2": "font/woff2",
-	}
-
-	filePath := baseDir + path
-	if path == "/" {
+	filePath = baseDir + urlPath
+	if urlPath == "/" {
 		filePath = baseDir + "/index.html"
-	} else if path == "/favicon.ico" {
+	} else if urlPath == "/favicon.ico" {
 		filePath = baseDir + "/assets/favicon.ico"
 	}
 
 	ext := filepath.Ext(filePath)
-	contentType, ok := contentTypes[ext]
+	ct, ok := staticContentTypes[ext]
 	if !ok {
-		contentType = "application/octet-stream"
+		ct = "application/octet-stream"
 	}
+	return filePath, ct
+}
+
+func serveFiberStaticFiles(c *fiber.Ctx, path string) error {
+	filePath, contentType := resolveStaticPath(path)
 
 	file, err := staticFiles.ReadFile(filePath)
 	if err != nil {
@@ -766,35 +689,8 @@ func serveFiberStaticFiles(c *fiber.Ctx, path string) error {
 	return c.Send(file)
 }
 
-// serveHtmlSite serves the HTML, CSS, JS, and other static files
 func serveHtmlSite(w http.ResponseWriter, r *http.Request) {
-	baseDir := "static"
-	// Mapping of content types based on file extensions
-	contentTypes := map[string]string{
-		".html":  "text/html",
-		".ico":   "image/x-icon",
-		".css":   "text/css",
-		".js":    "application/javascript",
-		".png":   "image/png",
-		".jpg":   "image/jpeg",
-		".jpeg":  "image/jpeg",
-		".svg":   "image/svg+xml",
-		".woff":  "font/woff",
-		".woff2": "font/woff2",
-	}
-
-	filePath := baseDir + r.URL.Path
-	if r.URL.Path == "/" {
-		filePath = baseDir + "/index.html"
-	} else if r.URL.Path == "/favicon.ico" {
-		filePath = baseDir + "/assets/favicon.ico"
-	}
-
-	ext := filepath.Ext(filePath)
-	contentType, ok := contentTypes[ext]
-	if !ok {
-		contentType = "application/octet-stream"
-	}
+	filePath, contentType := resolveStaticPath(r.URL.Path)
 
 	file, err := staticFiles.ReadFile(filePath)
 	if err != nil {
@@ -806,7 +702,6 @@ func serveHtmlSite(w http.ResponseWriter, r *http.Request) {
 	w.Write(file)
 }
 
-// fiberResponseWriter adapts Fiber context to http.ResponseWriter
 type fiberResponseWriter struct {
 	c      *fiber.Ctx
 	header http.Header
@@ -820,7 +715,6 @@ func (w *fiberResponseWriter) Header() http.Header {
 }
 
 func (w *fiberResponseWriter) Write(data []byte) (int, error) {
-	// Setting headers before writing
 	if w.header != nil {
 		for key, values := range w.header {
 			for _, value := range values {
@@ -835,19 +729,16 @@ func (w *fiberResponseWriter) WriteHeader(statusCode int) {
 	w.c.Status(statusCode)
 }
 
-// Built-in Security Middleware Functions
+// ---- Built-in Security Middleware ----
 
 // BasicAuthMiddleware creates a basic authentication middleware
-// Usage: monigo.BasicAuthMiddleware("admin", "password")
 func BasicAuthMiddleware(username, password string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Skip authentication for static files
 			if isStaticFile(r.URL.Path) {
 				next.ServeHTTP(w, r)
 				return
 			}
-
 			user, pass, ok := r.BasicAuth()
 			if !ok || user != username || pass != password {
 				w.Header().Set("WWW-Authenticate", `Basic realm="MoniGo Dashboard"`)
@@ -860,21 +751,17 @@ func BasicAuthMiddleware(username, password string) func(http.Handler) http.Hand
 }
 
 // APIKeyMiddleware creates an API key authentication middleware
-// Usage: monigo.APIKeyMiddleware("your-secret-api-key")
 func APIKeyMiddleware(apiKey string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Skip authentication for static files
 			if isStaticFile(r.URL.Path) {
 				next.ServeHTTP(w, r)
 				return
 			}
-
 			providedKey := r.Header.Get("X-API-Key")
 			if providedKey == "" {
 				providedKey = r.URL.Query().Get("api_key")
 			}
-
 			if providedKey != apiKey {
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return
@@ -885,57 +772,58 @@ func APIKeyMiddleware(apiKey string) func(http.Handler) http.Handler {
 }
 
 // IPWhitelistMiddleware creates an IP whitelist middleware
-// Usage: monigo.IPWhitelistMiddleware([]string{"127.0.0.1", "192.168.1.0/24"})
 func IPWhitelistMiddleware(allowedIPs []string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Skip IP check for static files
 			if isStaticFile(r.URL.Path) {
 				next.ServeHTTP(w, r)
 				return
 			}
-
 			clientIP := getClientIP(r)
-
-			// Check if client IP is in whitelist
 			for _, allowedIP := range allowedIPs {
 				if isIPAllowed(clientIP, allowedIP) {
 					next.ServeHTTP(w, r)
 					return
 				}
 			}
-
 			http.Error(w, "Forbidden", http.StatusForbidden)
 		})
 	}
 }
 
-// RateLimitMiddleware creates a simple rate limiting middleware
-// Usage: monigo.RateLimitMiddleware(100, time.Minute) // 100 requests per minute
-func RateLimitMiddleware(requests int, window time.Duration) func(http.Handler) http.Handler {
+// RateLimitMiddleware creates a simple rate limiting middleware.
+// The returned stop function should be called during shutdown to release the cleanup goroutine.
+func RateLimitMiddleware(requests int, window time.Duration) (mw func(http.Handler) http.Handler, stop func()) {
 	type clientInfo struct {
 		count     int
 		lastReset time.Time
 	}
 
 	var mu sync.Mutex
-	var clients = make(map[string]*clientInfo)
+	clients := make(map[string]*clientInfo)
 
-	// Start a cleanup goroutine to prevent memory leak
+	ctx, cancel := context.WithCancel(context.Background())
+
 	go func() {
 		ticker := time.NewTicker(window * 2)
-		for range ticker.C {
-			mu.Lock()
-			for ip, info := range clients {
-				if time.Since(info.lastReset) > window*2 {
-					delete(clients, ip)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				mu.Lock()
+				for ip, info := range clients {
+					if time.Since(info.lastReset) > window*2 {
+						delete(clients, ip)
+					}
 				}
+				mu.Unlock()
+			case <-ctx.Done():
+				return
 			}
-			mu.Unlock()
 		}
 	}()
 
-	return func(next http.Handler) http.Handler {
+	mw = func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			clientIP := getClientIP(r)
 			now := time.Now()
@@ -946,26 +834,24 @@ func RateLimitMiddleware(requests int, window time.Duration) func(http.Handler) 
 				client = &clientInfo{count: 0, lastReset: now}
 				clients[clientIP] = client
 			}
-
-			// Reset counter if window has passed
 			if now.Sub(client.lastReset) > window {
 				client.count = 0
 				client.lastReset = now
 			}
-
-			// Check if limit exceeded
 			if client.count >= requests {
 				mu.Unlock()
 				http.Error(w, "Too Many Requests", http.StatusTooManyRequests)
 				return
 			}
-
 			client.count++
 			mu.Unlock()
 
 			next.ServeHTTP(w, r)
 		})
 	}
+
+	stop = cancel
+	return
 }
 
 // LoggingMiddleware creates a request logging middleware
@@ -973,37 +859,26 @@ func LoggingMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
-
-			// Create a response writer wrapper to capture status code
 			wrapped := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
-
 			next.ServeHTTP(wrapped, r)
-
 			duration := time.Since(start)
 			logger.Log.Info("request", "method", r.Method, "path", r.URL.Path, "status", wrapped.statusCode, "duration", duration, "remote", r.RemoteAddr)
 		})
 	}
 }
 
-// Helper functions for middleware
+// ---- Helper functions ----
 
-// getClientIP extracts the real client IP from the request
 func getClientIP(r *http.Request) string {
-	// Check X-Forwarded-For header first
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		// X-Forwarded-For can contain multiple IPs, take the first one
 		if idx := strings.Index(xff, ","); idx != -1 {
 			return strings.TrimSpace(xff[:idx])
 		}
 		return strings.TrimSpace(xff)
 	}
-
-	// Check X-Real-IP header
 	if xri := r.Header.Get("X-Real-IP"); xri != "" {
 		return strings.TrimSpace(xri)
 	}
-
-	// Fall back to RemoteAddr
 	ip, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return r.RemoteAddr
@@ -1011,9 +886,7 @@ func getClientIP(r *http.Request) string {
 	return ip
 }
 
-// isIPAllowed checks if an IP is allowed based on CIDR notation or exact match
 func isIPAllowed(clientIP, allowedIP string) bool {
-	// Handle CIDR notation
 	if strings.Contains(allowedIP, "/") {
 		_, network, err := net.ParseCIDR(allowedIP)
 		if err != nil {
@@ -1025,12 +898,9 @@ func isIPAllowed(clientIP, allowedIP string) bool {
 		}
 		return network.Contains(ip)
 	}
-
-	// Exact match
 	return clientIP == allowedIP
 }
 
-// responseWriter wraps http.ResponseWriter to capture status code
 type responseWriter struct {
 	http.ResponseWriter
 	statusCode int
@@ -1041,22 +911,18 @@ func (rw *responseWriter) WriteHeader(code int) {
 	rw.ResponseWriter.WriteHeader(code)
 }
 
-// isStaticFile checks if the request path is for a static file
 func isStaticFile(path string) bool {
-	// List of static file extensions (excluding .html/.htm so auth is enforced on pages)
 	staticExtensions := []string{
 		".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico",
 		".woff", ".woff2", ".ttf", ".eot", ".map",
 	}
 
-	// Check if path has a static file extension
 	for _, ext := range staticExtensions {
 		if strings.HasSuffix(strings.ToLower(path), ext) {
 			return true
 		}
 	}
 
-	// Check for common static file paths
 	staticPaths := []string{
 		"/css/", "/js/", "/assets/", "/images/", "/fonts/", "/static/",
 	}
@@ -1067,7 +933,6 @@ func isStaticFile(path string) bool {
 		}
 	}
 
-	// Special case for favicon
 	if path == "/favicon.ico" {
 		return true
 	}

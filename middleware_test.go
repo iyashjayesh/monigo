@@ -113,14 +113,13 @@ func TestIPWhitelistMiddleware(t *testing.T) {
 }
 
 func TestRateLimitMiddleware(t *testing.T) {
-	// Create a test handler
 	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("success"))
 	})
 
-	// Create middleware with very low limit for testing
-	middleware := RateLimitMiddleware(2, time.Minute)
+	middleware, stop := RateLimitMiddleware(2, time.Minute)
+	defer stop()
 	handler := middleware(testHandler)
 
 	// Test first request (should succeed)

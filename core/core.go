@@ -17,9 +17,7 @@ import (
 )
 
 // GetServiceStats collects statistics related to service and system performance.
-func GetServiceStats(ctx context.Context) models.ServiceStats {
-	_ = ctx // stored for future use
-
+func GetServiceStats(_ context.Context) models.ServiceStats {
 	var stats models.ServiceStats
 	stats.CoreStatistics = GetCoreStatistics()
 
@@ -322,9 +320,6 @@ func GetServiceHealth(serviceStats *models.ServiceStats) models.ServiceHealth {
 	var healthData models.ServiceHealth
 	healthData.ServiceHealth.Percent = healthInPercent.ServiceHealth.Percentage
 	healthData.SystemHealth.Percent = healthInPercent.SystemHealth.Percentage
-
-	// serviceHealth := healthData.ServiceHealth.Percent
-	// systemHealth := healthData.SystemHealth.Percent
 
 	healthData.ServiceHealth = models.Health{
 		Percent: healthData.ServiceHealth.Percent,

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/iyashjayesh/monigo/internal/exporter"
+	"github.com/iyashjayesh/monigo/internal/logger"
 	"github.com/iyashjayesh/monigo/internal/registry"
 )
 
@@ -14,6 +15,7 @@ type Pipeline struct {
 	exporter exporter.Exporter
 	interval time.Duration
 	stopChan chan struct{}
+	stopOnce sync.Once
 	wg       sync.WaitGroup
 }
 
@@ -38,7 +40,9 @@ func (p *Pipeline) Start(ctx context.Context) {
 			case <-ticker.C:
 				metrics := p.registry.GetAll()
 				if len(metrics) > 0 {
-					_ = p.exporter.Export(ctx, metrics)
+					if err := p.exporter.Export(ctx, metrics); err != nil {
+						logger.Log.Error("pipeline export failed", "exporter", p.exporter.Name(), "error", err)
+					}
 				}
 			case <-p.stopChan:
 				return
@@ -49,7 +53,10 @@ func (p *Pipeline) Start(ctx context.Context) {
 	}()
 }
 
+// Stop gracefully stops the pipeline. Safe to call multiple times.
 func (p *Pipeline) Stop() {
-	close(p.stopChan)
+	p.stopOnce.Do(func() {
+		close(p.stopChan)
+	})
 	p.wg.Wait()
 }

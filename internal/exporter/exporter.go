@@ -2,7 +2,9 @@ package exporter
 
 import (
 	"context"
+	"errors"
 
+	"github.com/iyashjayesh/monigo/internal/logger"
 	"github.com/iyashjayesh/monigo/internal/registry"
 )
 
@@ -19,12 +21,19 @@ func NewMultiExporter(exporters ...Exporter) *MultiExporter {
 	return &MultiExporter{exporters: exporters}
 }
 
+// Export fans out to all exporters, collecting errors without short-circuiting.
 func (m *MultiExporter) Export(ctx context.Context, metrics []*registry.MetricValue) error {
+	var errs []error
 	for _, e := range m.exporters {
 		if err := e.Export(ctx, metrics); err != nil {
-			// In a real system, we might want to log this and continue
-			return err
+			logger.Log.Error("exporter failed", "name", e.Name(), "error", err)
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	return errors.Join(errs...)
+}
+
+// Name returns a combined name for the multi-exporter.
+func (m *MultiExporter) Name() string {
+	return "multi"
 }

@@ -16,8 +16,6 @@ type MonigoCollector struct {
 
 	diskReadBytes  *prometheus.Desc
 	diskWriteBytes *prometheus.Desc
-
-	requestCount *prometheus.Desc
 }
 
 var (
@@ -54,11 +52,6 @@ func NewMonigoCollector() *MonigoCollector {
 				"Total bytes written to disk.",
 				nil, nil,
 			),
-			requestCount: prometheus.NewDesc(
-				"monigo_http_requests_total",
-				"Total number of HTTP requests processed by MoniGo traced functions.",
-				nil, nil,
-			),
 		}
 	})
 	return collector
@@ -72,7 +65,6 @@ func (c *MonigoCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.goroutines
 	ch <- c.diskReadBytes
 	ch <- c.diskWriteBytes
-	ch <- c.requestCount
 }
 
 // Collect is called by the Prometheus registry when collecting metrics.

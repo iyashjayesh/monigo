@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 
@@ -45,7 +46,7 @@ func main() {
 
 func usersHandler(w http.ResponseWriter, r *http.Request) {
 	// Trace this function for monitoring
-	monigo.TraceFunction(func() {
+	monigo.TraceFunction(context.Background(), func() {
 		// Simulate some work
 		_ = make([]byte, 1024*1024) // 1MB allocation
 	})
@@ -57,7 +58,7 @@ func usersHandler(w http.ResponseWriter, r *http.Request) {
 
 func ordersHandler(w http.ResponseWriter, r *http.Request) {
 	// Trace this function for monitoring
-	monigo.TraceFunction(func() {
+	monigo.TraceFunction(context.Background(), func() {
 		// Simulate CPU intensive work
 		for i := 0; i < 1000000; i++ {
 			_ = i * i

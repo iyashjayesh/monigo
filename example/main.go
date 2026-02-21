@@ -9,8 +9,6 @@ import (
 )
 
 func main() {
-
-	// New way: Use Builder Pattern
 	monigoInstance := monigo.NewBuilder().
 		WithServiceName("data-api").
 		WithPort(8080).
@@ -18,7 +16,6 @@ func main() {
 		WithDataPointsSyncFrequency("5m").
 		Build()
 
-	// Traditional way: Start MoniGo dashboard on a separate port
 	go func() {
 		if err := monigoInstance.Start(); err != nil {
 			log.Fatalf("Failed to start MoniGo: %v", err)
@@ -26,7 +23,6 @@ func main() {
 	}()
 	log.Printf("Monigo dashboard started at port %d\n", monigoInstance.GetRunningPort())
 
-	// Your application runs on a different port
 	http.HandleFunc("/api", apiHandler)
 	http.HandleFunc("/api2", apiHandler2)
 	log.Println("Your application started at port 8000")
@@ -34,27 +30,26 @@ func main() {
 }
 
 func apiHandler(w http.ResponseWriter, r *http.Request) {
-	monigo.TraceFunction(highMemoryUsage) // Trace function, when the function is called, it will be traced
+	monigo.TraceFunction(r.Context(), highMemoryUsage)
 	w.Write([]byte("API1 response memexpensiveFunc"))
 }
 
 func apiHandler2(w http.ResponseWriter, r *http.Request) {
-	monigo.TraceFunction(highCPUUsage) // Trace function, when the function is called, it will be traced
+	monigo.TraceFunction(r.Context(), highCPUUsage)
 	w.Write([]byte("API2 response cpuexpensiveFunc"))
 }
 
 func highMemoryUsage() {
-	// Simulate high memory usage by allocating a large slice
-	largeSlice := make([]float64, 1e8) // 100 million elements
+	largeSlice := make([]float64, 1e8)
 	for i := 0; i < len(largeSlice); i++ {
 		largeSlice[i] = float64(i)
 	}
 }
 
 func highCPUUsage() {
-	// Simulate high CPU usage by performing heavy computations
 	var sum float64
-	for i := 0; i < 1e8; i++ { // 100 million iterations
+	for i := 0; i < 1e8; i++ {
 		sum += math.Sqrt(float64(i))
 	}
+	_ = sum
 }

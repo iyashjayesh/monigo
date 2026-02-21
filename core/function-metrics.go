@@ -18,18 +18,19 @@ import (
 	"github.com/iyashjayesh/monigo/models"
 )
 
+const maxTrackedFunctions = 10000
+
 var (
 	functionMetrics = make(map[string]*models.FunctionMetrics)
 	basePath        = common.GetBasePath()
 
-	// Sampling configuration (atomic to prevent data races)
 	samplingRate atomic.Int64
 	callCounters = make(map[string]uint64)
 	countersMu   sync.Mutex
 )
 
 func init() {
-	samplingRate.Store(100) // Default: trace 1 in 100 calls
+	samplingRate.Store(100)
 }
 
 // SetSamplingRate sets the sampling rate for function tracing
@@ -41,10 +42,9 @@ func SetSamplingRate(rate int) {
 }
 
 // TraceFunction traces the function and captures the metrics
-// This is the original function maintained for backward compatibility
-func TraceFunction(ctx context.Context, f func()) {
-	name := strings.ReplaceAll(runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(), "/", "-") // Getting the name of the function
-	executeFunctionWithProfiling(ctx, name, f)
+func TraceFunction(_ context.Context, f func()) {
+	name := strings.ReplaceAll(runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name(), "/", "-")
+	executeFunctionWithProfiling(name, f)
 }
 
 // FunctionTraceDetails returns a snapshot copy of the function trace details (thread-safe)
@@ -61,31 +61,25 @@ func FunctionTraceDetails() map[string]*models.FunctionMetrics {
 }
 
 // TraceFunctionWithArgs traces a function with parameters and captures the metrics
-// This function uses reflection to call functions with arbitrary signatures
-func TraceFunctionWithArgs(ctx context.Context, f interface{}, args ...interface{}) {
-	// Validate that f is a function
+func TraceFunctionWithArgs(_ context.Context, f interface{}, args ...interface{}) {
 	fnValue := reflect.ValueOf(f)
 	if fnValue.Kind() != reflect.Func {
 		logger.Log.Error("first argument must be a function", "type", fmt.Sprintf("%T", f))
 		return
 	}
 
-	// Get function type information
 	fnType := fnValue.Type()
 
-	// Validate argument count
 	if len(args) != fnType.NumIn() {
 		logger.Log.Error("function argument count mismatch", "expected", fnType.NumIn(), "got", len(args))
 		return
 	}
 
-	// Convert arguments to reflect.Values and validate types
 	argValues := make([]reflect.Value, len(args))
 	for i, arg := range args {
 		argValue := reflect.ValueOf(arg)
 		expectedType := fnType.In(i)
 
-		// Check if types are compatible
 		if !argValue.Type().AssignableTo(expectedType) {
 			logger.Log.Error("argument type mismatch", "index", i, "expected", expectedType, "got", argValue.Type())
 			return
@@ -93,17 +87,14 @@ func TraceFunctionWithArgs(ctx context.Context, f interface{}, args ...interface
 		argValues[i] = argValue
 	}
 
-	// Generate function name with parameter types for better identification
 	name := generateFunctionName(fnValue, fnType)
 
-	// Execute the function with profiling
-	executeFunctionWithProfiling(ctx, name, func() {
+	executeFunctionWithProfiling(name, func() {
 		fnValue.Call(argValues)
 	})
 }
 
-// TraceFunctionWithReturn traces a function with parameters and return values
-// Returns the first result of the function call (for backward compatibility)
+// TraceFunctionWithReturn traces a function and returns the first result.
 func TraceFunctionWithReturn(ctx context.Context, f interface{}, args ...interface{}) interface{} {
 	results := TraceFunctionWithReturns(ctx, f, args...)
 	if len(results) > 0 {
@@ -112,32 +103,26 @@ func TraceFunctionWithReturn(ctx context.Context, f interface{}, args ...interfa
 	return nil
 }
 
-// TraceFunctionWithReturns traces a function with parameters and return values
-// Returns all results of the function call as a slice of interface{}
-func TraceFunctionWithReturns(ctx context.Context, f interface{}, args ...interface{}) []interface{} {
-	// Validate that f is a function
+// TraceFunctionWithReturns traces a function and returns all results.
+func TraceFunctionWithReturns(_ context.Context, f interface{}, args ...interface{}) []interface{} {
 	fnValue := reflect.ValueOf(f)
 	if fnValue.Kind() != reflect.Func {
 		logger.Log.Error("first argument must be a function", "type", fmt.Sprintf("%T", f))
 		return nil
 	}
 
-	// Get function type information
 	fnType := fnValue.Type()
 
-	// Validate argument count
 	if len(args) != fnType.NumIn() {
 		logger.Log.Error("function argument count mismatch", "expected", fnType.NumIn(), "got", len(args))
 		return nil
 	}
 
-	// Convert arguments to reflect.Values and validate types
 	argValues := make([]reflect.Value, len(args))
 	for i, arg := range args {
 		argValue := reflect.ValueOf(arg)
 		expectedType := fnType.In(i)
 
-		// Check if types are compatible
 		if !argValue.Type().AssignableTo(expectedType) {
 			logger.Log.Error("argument type mismatch", "index", i, "expected", expectedType, "got", argValue.Type())
 			return nil
@@ -145,12 +130,10 @@ func TraceFunctionWithReturns(ctx context.Context, f interface{}, args ...interf
 		argValues[i] = argValue
 	}
 
-	// Generate function name with parameter types for better identification
 	name := generateFunctionName(fnValue, fnType)
 
-	// Execute the function with profiling and capture return values
 	var results []interface{}
-	executeFunctionWithProfiling(ctx, name, func() {
+	executeFunctionWithProfiling(name, func() {
 		reflectResults := fnValue.Call(argValues)
 		results = make([]interface{}, len(reflectResults))
 		for i, result := range reflectResults {
@@ -161,25 +144,21 @@ func TraceFunctionWithReturns(ctx context.Context, f interface{}, args ...interf
 	return results
 }
 
-// generateFunctionName creates a descriptive name for the function including parameter types
 func generateFunctionName(fnValue reflect.Value, fnType reflect.Type) string {
-	// Get the base function name
 	baseName := strings.ReplaceAll(runtime.FuncForPC(fnValue.Pointer()).Name(), "/", "-")
 
-	// Add parameter type information for better identification
 	if fnType.NumIn() > 0 {
-		var paramTypes []string
+		paramTypes := make([]string, fnType.NumIn())
 		for i := 0; i < fnType.NumIn(); i++ {
-			paramTypes = append(paramTypes, fnType.In(i).String())
+			paramTypes[i] = fnType.In(i).String()
 		}
 		baseName = fmt.Sprintf("%s(%s)", baseName, strings.Join(paramTypes, ","))
 	}
 
-	// Add return type information if there are return values
 	if fnType.NumOut() > 0 {
-		var returnTypes []string
+		returnTypes := make([]string, fnType.NumOut())
 		for i := 0; i < fnType.NumOut(); i++ {
-			returnTypes = append(returnTypes, fnType.Out(i).String())
+			returnTypes[i] = fnType.Out(i).String()
 		}
 		baseName = fmt.Sprintf("%s->(%s)", baseName, strings.Join(returnTypes, ","))
 	}
@@ -187,10 +166,27 @@ func generateFunctionName(fnValue reflect.Value, fnType reflect.Type) string {
 	return baseName
 }
 
-// executeFunctionWithProfiling contains the common profiling logic with sampling
-func executeFunctionWithProfiling(ctx context.Context, name string, fn func()) {
-	_ = ctx // stored for future use
+// sanitizeFileName replaces characters that are invalid in file paths.
+func sanitizeFileName(name string) string {
+	replacer := strings.NewReplacer(
+		"(", "_", ")", "_",
+		"<", "_", ">", "_",
+		":", "_", "*", "_",
+		"?", "_", "\"", "_",
+		"|", "_", " ", "_",
+	)
+	return replacer.Replace(name)
+}
+
+func executeFunctionWithProfiling(name string, fn func()) {
 	countersMu.Lock()
+	if len(callCounters) > maxTrackedFunctions {
+		// Evict oldest entries to prevent unbounded growth.
+		for k := range callCounters {
+			delete(callCounters, k)
+			break
+		}
+	}
 	callCounters[name]++
 	count := callCounters[name]
 	countersMu.Unlock()
@@ -208,10 +204,13 @@ func executeFunctionWithProfiling(ctx context.Context, name string, fn func()) {
 
 	if shouldProfile {
 		folderPath := fmt.Sprintf("%s/profiles", basePath)
-		_ = os.MkdirAll(folderPath, os.ModePerm)
+		if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
+			logger.Log.Warn("failed to create profiles directory", "error", err)
+		}
 
-		cpuProfFilePath = filepath.Join(folderPath, fmt.Sprintf("%s_cpu.prof", name))
-		memProfFilePath = filepath.Join(folderPath, fmt.Sprintf("%s_mem.prof", name))
+		safeName := sanitizeFileName(name)
+		cpuProfFilePath = filepath.Join(folderPath, fmt.Sprintf("%s_cpu.prof", safeName))
+		memProfFilePath = filepath.Join(folderPath, fmt.Sprintf("%s_mem.prof", safeName))
 
 		var err error
 		cpuProfileFile, err = StartCPUProfile(cpuProfFilePath)
@@ -226,7 +225,9 @@ func executeFunctionWithProfiling(ctx context.Context, name string, fn func()) {
 
 	if shouldProfile {
 		StopCPUProfile(cpuProfileFile)
-		_ = WriteHeapProfile(memProfFilePath)
+		if err := WriteHeapProfile(memProfFilePath); err != nil {
+			logger.Log.Warn("failed to write heap profile", "error", err)
+		}
 	}
 
 	finalGoroutines := runtime.NumGoroutine() - initialGoroutines
@@ -246,7 +247,14 @@ func executeFunctionWithProfiling(ctx context.Context, name string, fn func()) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	// Update or create metrics
+	if len(functionMetrics) > maxTrackedFunctions {
+		// Evict one arbitrary entry to cap memory.
+		for k := range functionMetrics {
+			delete(functionMetrics, k)
+			break
+		}
+	}
+
 	if m, exists := functionMetrics[name]; exists {
 		m.FunctionLastRanAt = start
 		m.ExecutionTime = elapsed
@@ -270,7 +278,6 @@ func executeFunctionWithProfiling(ctx context.Context, name string, fn func()) {
 
 // ViewFunctionMetrics generates the function metrics
 func ViewFunctionMetrics(name, reportType string, metrics *models.FunctionMetrics) models.FunctionTraceDetails {
-	// Check if 'go' command is available
 	_, err := exec.LookPath("go")
 	if err != nil {
 		logger.Log.Warn("'go' command not found in PATH, pprof reports will be unavailable")
@@ -284,7 +291,6 @@ func ViewFunctionMetrics(name, reportType string, metrics *models.FunctionMetric
 		}
 	}
 
-	// Function to execute the pprof command and return the output or log an error
 	executePprof := func(profileFilePath, reportType string) string {
 		if profileFilePath == "" {
 			return "Error: Profile file path is empty"
@@ -297,7 +303,6 @@ func ViewFunctionMetrics(name, reportType string, metrics *models.FunctionMetric
 		return string(output)
 	}
 
-	// Generating the function code stack trace for CPU profile
 	var codeStack string
 	if metrics.CPUProfileFilePath != "" {
 		codeStackView := exec.Command("go", "tool", "pprof", "-list", name, metrics.CPUProfileFilePath)
@@ -309,7 +314,6 @@ func ViewFunctionMetrics(name, reportType string, metrics *models.FunctionMetric
 		}
 	}
 
-	// Return the function trace details
 	return models.FunctionTraceDetails{
 		FunctionName: name,
 		CoreProfile: models.Profiles{

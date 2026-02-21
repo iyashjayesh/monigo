@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"github.com/gofiber/fiber/v2"
@@ -50,7 +51,7 @@ func main() {
 
 func usersHandler(c *fiber.Ctx) error {
 	// Trace this function for monitoring
-	monigo.TraceFunction(func() {
+	monigo.TraceFunction(context.Background(), func() {
 		// Simulate some work
 		_ = make([]byte, 1024*1024) // 1MB allocation
 	})
@@ -63,7 +64,7 @@ func usersHandler(c *fiber.Ctx) error {
 
 func ordersHandler(c *fiber.Ctx) error {
 	// Trace this function for monitoring
-	monigo.TraceFunction(func() {
+	monigo.TraceFunction(context.Background(), func() {
 		// Simulate CPU intensive work
 		for i := 0; i < 1000000; i++ {
 			_ = i * i
