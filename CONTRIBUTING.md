@@ -29,7 +29,7 @@ go test ./... -race
 
 1. PRs must pass CI (tests, vet, race detector)
 2. One approval from a maintainer is required
-3. Commit messages should be descriptive (not "fix bug" — explain what and why)
+3. Commit messages should be descriptive (not "fix bug" - explain what and why)
 4. Breaking changes must be documented in the PR description
 
 ## Testing

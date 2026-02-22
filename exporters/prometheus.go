@@ -71,14 +71,14 @@ func (c *MonigoCollector) Describe(ch chan<- *prometheus.Desc) {
 func (c *MonigoCollector) Collect(ch chan<- prometheus.Metric) {
 	stats := core.GetServiceStats(context.Background())
 
-	// CPU Load — use raw float64 values directly, no string parsing
+	// CPU Load - use raw float64 values directly, no string parsing
 	ch <- prometheus.MustNewConstMetric(
 		c.cpuUsage,
 		prometheus.GaugeValue,
 		stats.LoadStatistics.SystemCPULoadRaw,
 	)
 
-	// Memory — use raw bytes value directly
+	// Memory - use raw bytes value directly
 	ch <- prometheus.MustNewConstMetric(
 		c.memoryUsage,
 		prometheus.GaugeValue,

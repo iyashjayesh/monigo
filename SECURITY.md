@@ -24,11 +24,11 @@ You should receive a response within 48 hours. We will work with you to understa
 
 MoniGo exposes a dashboard and API endpoints. When deploying in production:
 
-- **Always use HTTPS** — MoniGo does not enforce TLS; deploy behind a TLS-terminating reverse proxy
-- **Enable authentication** — Use `BasicAuthMiddleware`, `APIKeyMiddleware`, or a custom `AuthFunction`
-- **Restrict network access** — Bind the dashboard to internal interfaces or use `IPWhitelistMiddleware`
-- **Trusted proxy requirement** — `X-Forwarded-For` headers are trusted by default; only deploy behind a trusted reverse proxy when using IP-based access control
-- **OTel transport** — The OTel exporter defaults to insecure gRPC; configure TLS for production collectors
+- **Always use HTTPS** - MoniGo does not enforce TLS; deploy behind a TLS-terminating reverse proxy
+- **Enable authentication** - Use `BasicAuthMiddleware`, `APIKeyMiddleware`, or a custom `AuthFunction`
+- **Restrict network access** - Bind the dashboard to internal interfaces or use `IPWhitelistMiddleware`
+- **Trusted proxy requirement** - `X-Forwarded-For` headers are trusted by default; only deploy behind a trusted reverse proxy when using IP-based access control
+- **OTel transport** - The OTel exporter defaults to insecure gRPC; configure TLS for production collectors
 
 ## Known Limitations
 
