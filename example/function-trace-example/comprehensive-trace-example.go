@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"math"
 	"net/http"
+	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/iyashjayesh/monigo"
@@ -50,7 +54,33 @@ func main() {
 
 	log.Println("Comprehensive trace example started at port 8000")
 	log.Println("Visit http://localhost:8080 to see the MoniGo dashboard")
-	http.ListenAndServe(":8000", nil)
+
+	srv := &http.Server{
+		Addr:    ":8000",
+		Handler: nil, // Uses the default ServeMux
+	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Gracefully shutting down the server
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal("Server forced to shutdown:", err)
+	}
+
+	log.Println("Server exited")
 }
 
 func legacyHandler(w http.ResponseWriter, r *http.Request) {
@@ -227,4 +257,3 @@ func highCPUUsage() {
 	}
 	_ = sum
 }
-
