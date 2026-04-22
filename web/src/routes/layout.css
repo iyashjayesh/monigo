@@ -1,0 +1,341 @@
+@import "tailwindcss";
+
+@theme {
+  --color-hud-bg: var(--_hud-bg);
+  --color-hud-bg-panel: var(--_hud-bg-panel);
+  --color-hud-bg-hover: var(--_hud-bg-hover);
+
+  --color-hud-primary: var(--_hud-primary);
+  --color-hud-dim: var(--_hud-dim);
+  --color-hud-line: var(--_hud-line);
+  --color-hud-border: var(--_hud-border);
+
+  --color-hud-text: var(--_hud-text);
+  --color-hud-text-dim: var(--_hud-text-dim);
+  --color-hud-text-bright: var(--_hud-text-bright);
+
+  --color-hud-success: var(--_hud-success);
+  --color-hud-warning: var(--_hud-warning);
+  --color-hud-error: var(--_hud-error);
+  --color-hud-purple: var(--_hud-purple);
+  --color-hud-cyan: var(--_hud-cyan);
+  --color-hud-blue: var(--_hud-blue);
+
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Consolas', monospace;
+}
+
+/* ── Dark mode tokens (default) ── */
+:root {
+  --_hud-bg: #0a0c0e;
+  --_hud-bg-panel: #0d1012;
+  --_hud-bg-hover: #131719;
+  --_hud-primary: #7a9ba8;
+  --_hud-dim: #3a4a52;
+  --_hud-line: rgba(122, 155, 168, 0.15);
+  --_hud-border: rgba(122, 155, 168, 0.2);
+  --_hud-text: #7a9ba8;
+  --_hud-text-dim: #4a5a62;
+  --_hud-text-bright: #c8dce4;
+  --_hud-success: #4a9868;
+  --_hud-warning: #b89848;
+  --_hud-error: #b84848;
+  --_hud-purple: #8a6ab8;
+  --_hud-cyan: #5a9ab8;
+  --_hud-blue: #5a7ab8;
+}
+
+/* ── Light mode tokens ── */
+html.light {
+  --_hud-bg: #f5f6f8;
+  --_hud-bg-panel: #ffffff;
+  --_hud-bg-hover: #eef0f3;
+  --_hud-primary: #4a7a8a;
+  --_hud-dim: #c0c8cc;
+  --_hud-line: rgba(0, 0, 0, 0.08);
+  --_hud-border: rgba(0, 0, 0, 0.12);
+  --_hud-text: #5a6a72;
+  --_hud-text-dim: #8a9aa2;
+  --_hud-text-bright: #1a2a32;
+  --_hud-success: #2d7a4a;
+  --_hud-warning: #9a7a28;
+  --_hud-error: #c03030;
+  --_hud-purple: #6a4aa0;
+  --_hud-cyan: #2a7aa8;
+  --_hud-blue: #3a5a98;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    background-color: var(--_hud-bg);
+    color: var(--_hud-text);
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--_hud-bg);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--_hud-dim);
+    border-radius: 2px;
+  }
+}
+
+@layer components {
+  /* ── Panels ── */
+  .hud-panel {
+    background: var(--_hud-bg-panel);
+    border: 0.5px solid var(--_hud-line);
+    border-radius: 8px;
+    transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .hud-panel:hover {
+    border-color: var(--_hud-border);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  :global(html.light) .hud-panel:hover {
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+  }
+
+  .hud-error-panel {
+    background: var(--_hud-bg-panel);
+    border: 0.5px solid var(--_hud-error);
+    border-radius: 8px;
+    transition: background-color 0.2s;
+  }
+
+  :global(html.light) .hud-error-panel {
+    background: #fef5f5;
+  }
+
+  /* ── Typography ── */
+  .hud-label {
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--_hud-text-dim);
+  }
+
+  .hud-value-xl {
+    font-size: 36px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--_hud-text-bright);
+  }
+
+  .hud-value-lg {
+    font-size: 24px;
+    font-weight: 300;
+    letter-spacing: -0.01em;
+    line-height: 1;
+    color: var(--_hud-text-bright);
+  }
+
+  .hud-value-md {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--_hud-text);
+  }
+
+  .hud-value-sm {
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--_hud-text);
+  }
+
+  /* ── Controls ── */
+  .hud-button {
+    background: transparent;
+    border: 0.5px solid var(--_hud-primary);
+    color: var(--_hud-primary);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 8px 16px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+
+  .hud-button:hover {
+    background: var(--_hud-primary);
+    color: var(--_hud-bg);
+  }
+
+  :global(html.light) .hud-button:hover {
+    color: #ffffff;
+  }
+
+  .hud-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .hud-select {
+    background: var(--_hud-bg);
+    border: 0.5px solid var(--_hud-line);
+    color: var(--_hud-text);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 6px 10px;
+    outline: none;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: border-color 0.2s, background-color 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .hud-select:hover {
+    border-color: var(--_hud-border);
+  }
+
+  .hud-select:focus {
+    border-color: var(--_hud-primary);
+  }
+
+  .hud-select option {
+    background: var(--_hud-bg-panel);
+    color: var(--_hud-text);
+  }
+
+  /* ── Dividers ── */
+  .hud-divider {
+    border: none;
+    border-top: 0.5px solid var(--_hud-line);
+  }
+
+  /* ── Skeletons ── */
+  .hud-skeleton {
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--_hud-bg-panel) 25%, var(--_hud-bg-hover) 50%, var(--_hud-bg-panel) 75%);
+    background-size: 200% 100%;
+    animation: hud-shimmer 1.5s infinite;
+  }
+
+  @keyframes hud-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* ── Navigation ── */
+  .hud-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--_hud-text-dim);
+    text-decoration: none;
+    transition: all 0.2s;
+    border-left: 2px solid transparent;
+  }
+
+  .hud-nav-item:hover {
+    color: var(--_hud-text-bright);
+    background: var(--_hud-bg-hover);
+    border-left-color: var(--_hud-primary);
+  }
+
+  .hud-nav-item.active {
+    color: var(--_hud-text-bright);
+    border-left-color: var(--_hud-cyan);
+  }
+
+  /* ── Theme toggle ── */
+  .theme-toggle {
+    background: transparent;
+    border: 0.5px solid var(--_hud-line);
+    color: var(--_hud-text-dim);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 6px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .theme-toggle:hover {
+    color: var(--_hud-text-bright);
+    border-color: var(--_hud-primary);
+    background: var(--_hud-bg-hover);
+  }
+
+  /* ── Code blocks ── */
+  .hud-code {
+    background: var(--_hud-bg);
+    border: 0.5px solid var(--_hud-line);
+    color: var(--_hud-text);
+    border-radius: 6px;
+    font-size: 11px;
+    line-height: 1.6;
+    overflow: auto;
+    padding: 12px;
+  }
+
+  /* ── Details/accordion ── */
+  .hud-details {
+    border: 0.5px solid var(--_hud-line);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .hud-details:hover {
+    border-color: var(--_hud-border);
+  }
+
+  .hud-details summary {
+    cursor: pointer;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: var(--_hud-text-bright);
+    transition: background-color 0.2s;
+  }
+
+  .hud-details summary:hover {
+    background: var(--_hud-bg-hover);
+  }
+
+  .hud-details pre {
+    padding: 8px 12px;
+    font-size: 10px;
+    line-height: 1.6;
+    overflow: auto;
+    white-space: pre-wrap;
+    color: var(--_hud-text-dim);
+    border-top: 0.5px solid var(--_hud-line);
+    background: var(--_hud-bg);
+  }
+}
