@@ -28,6 +28,7 @@
       <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
       <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
       <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M21 3v5h-5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16M8 16H3v5"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></symbol>
       <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
       <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
       <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
@@ -154,152 +155,99 @@
                 <div class="p-3"></div>
             </div>
         </div>
-        <div class="iq-top-navbar">
-            <div class="iq-navbar-custom">
-                <nav class="navbar navbar-expand-lg navbar-light p-0">
-                    <div class="iq-navbar-logo d-flex align-items-center justify-content-between">
-                        <svg class="icon wrapper-menu" aria-hidden="true"><use href="#i-menu"></use></svg>
-                        <a href="./index.html" class="header-logo">
-                            <img src="./assets/monigo-icon.png" class="img-fluid rounded-normal light-logo" alt="logo">
-                        </a>
-                    </div>
-                    <div class="iq-search-bar device-search">
-                        <div class="d-flex align-items-center">
-                            <div class="collapse navbar-collapse">
-                                <ul class="card navbar-nav ml-auto navbar-list align-items-center border-radius-20">
-                                    <li class="nav-item nav-icon">
-                                        <div class="health-status p-1">
-                                            <span id="health-indicator" class="health-indicator"></span>
-                                            <span id="health-message" class="health-message"></span>
-                                        </div>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center">
-                        <button class="navbar-toggler" type="button" data-toggle="collapse"
-                            data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
-                            aria-label="Toggle navigation">
-                            <svg class="icon" aria-hidden="true"><use href="#i-menu"></use></svg>
-                        </button>
-                        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                            <ul class="navbar-nav ml-auto navbar-list align-items-center">
-                                <!-- on hover cursor-pointer -->
-                                <svg id="refresh-btn" class="icon mr-2 cursor-pointer" aria-hidden="true"><use href="#i-refresh"></use></svg>
-                                <li class="nav-item nav-icon">
-                                    <a class="btn border add-btn">
-                                        <span id="refresh-countdown">Refreshing in 5m 0s</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item nav-icon dropdown">
-                                    <a href="https://github.com/iyashjayesh/monigo" target="_blank">
-                                        <svg class="icon icon-2x cursor-pointer" aria-hidden="true"><use href="#i-github"></use></svg>
-                                        <span class="bg-primary"></span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </nav>
-            </div>
-        </div>
-        <div class="content-page">
-            <div class="container-fluid">
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
-                            <div>
-                                <h2 class="mb-3">Reports</h2>
-                                <p class="mb-0">
-                                    Download comprehensive metrics data in CSV format. Select the metric type and time range
-                                    to generate detailed reports for analysis and monitoring purposes.
-                                </p>
-                            </div>
-                            <div class="float-right">
-                            </div>
-                            <button id="downloadBtn" type="button" class="btn btn-primary add-list">
-                                <svg class="icon" aria-hidden="true"><use href="#i-download"></use></svg>
-                                Download Report
-                            </button>
-                        </div>
-                        <div class="controls d-flex">
-                            <div class="dropdown">
-                                <label for="topic" class="dropdown-label">Select Topic:</label>
-                                <select id="topic" class="dropdown-select">
-                                    <option value="LoadStatistics">Load Statistics</option>
-                                    <option value="CPUStatistics">CPU Statistics</option>
-                                    <option value="MemoryStatistics">Memory Statistics</option>
-                                    <option value="MemoryProfile">Memory Profile</option>
-                                    <option value="NetworkIO">Network I/O</option>
-                                    <option value="OverallHealth">Overall Health</option>
-                                </select>
-                            </div>
-                            <div class="dropdown ml-3">
-                                <label for="timeframe" class="dropdown-label">Select Time Range:</label>
-                                <select id="timeframe" class="dropdown-select">
-                                    <option value="5m">5m</option>
-                                    <option value="10m">10m</option>
-                                    <option value="30m">30m</option>
-                                    <option value="1h">1h</option>
-                                    <option value="6h">6h</option>
-                                    <option value="1d">1d</option>
-                                    <option value="3d">3d</option>
-                                    <option value="7d">7d</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-12 mt-3">
-                        <section id="dataSection">
-                            <!-- <h4 id="sectionTitle">Data</h4> -->
-                            <div id="tablesContainer">
-                            </div>
-                        </section>
-                    </div>
-                </div>
-                <!-- Page end  -->
-            </div>
-        </div>
+<header class="mg-topbar">
+  <button type="button" class="mg-iconbtn mg-topbar-menu" id="mg-topbar-menu"
+          aria-label="Toggle navigation" aria-expanded="false">
+    <svg class="mg-icon" aria-hidden="true" focusable="false"><use href="#i-menu"></use></svg>
+  </button>
+
+  <div class="mg-topbar-heading">
+    <h1 class="mg-topbar-title" id="mg-page-title">Reports</h1>
+    <span class="mg-topbar-subtitle" id="mg-page-subtitle">stored series</span>
+  </div>
+
+  <div class="mg-service-pill" id="mg-service-pill">
+    <span class="mg-service-dot" id="mg-service-dot" aria-hidden="true"></span>
+    <span class="mg-service-name" id="mg-topbar-state">—</span>
+  </div>
+
+  <div class="mg-topbar-actions">
+    <!-- No 5m: samples are written every 5m by default, so that window holds
+         one point. -->
+    <div class="mg-range" id="mg-range" role="group" aria-label="Report window">
+      <button type="button" class="mg-range-seg" data-range="15m" aria-pressed="false">15m</button>
+      <button type="button" class="mg-range-seg is-active" data-range="1h" aria-pressed="true">1h</button>
+      <button type="button" class="mg-range-seg" data-range="6h" aria-pressed="false">6h</button>
+      <button type="button" class="mg-range-seg" data-range="24h" aria-pressed="false">24h</button>
+    </div>
+
+    <button type="button" class="mg-iconbtn" id="mg-theme-toggle" title="Toggle theme"
+            aria-label="Toggle theme">
+      <svg class="mg-icon" aria-hidden="true" focusable="false"><use href="#i-moon" id="mg-theme-icon"></use></svg>
+    </button>
+  </div>
+</header>
+<main class="mg-main" id="mg-main">
+
+  <!-- Window / topic / export. RESOLUTION and Generate PDF are omitted:
+       storage has no downsampling, and there is no PDF renderer that would
+       work on an airgapped host. -->
+  <div class="mg-card mg-rep-toolbar">
+    <div class="mg-rep-fact">
+      <span class="mg-eyebrow">WINDOW</span>
+      <span class="mg-rep-value" id="mg-rep-window">—</span>
+    </div>
+    <div class="mg-rep-sep" aria-hidden="true"></div>
+    <label class="mg-rep-fact">
+      <span class="mg-eyebrow">TOPIC</span>
+      <select id="mg-rep-topic" class="mg-fn-select" aria-label="Report topic">
+        <option value="LoadStatistics">Load statistics</option>
+        <option value="CPUStatistics">CPU statistics</option>
+        <option value="MemoryStatistics">Memory statistics</option>
+        <option value="MemoryProfile">Memory profile</option>
+        <option value="NetworkIO">Network I/O</option>
+        <option value="OverallHealth">Overall health</option>
+      </select>
+    </label>
+    <div class="mg-rep-sep" aria-hidden="true"></div>
+    <div class="mg-rep-fact">
+      <span class="mg-eyebrow">SAMPLES</span>
+      <span class="mg-rep-value" id="mg-rep-samples">—</span>
+    </div>
+    <div class="mg-rep-actions">
+      <button type="button" class="mg-fn-export" id="mg-rep-json">JSON</button>
+      <button type="button" class="mg-fn-export" id="mg-rep-csv">CSV</button>
+    </div>
+  </div>
+
+  <section class="mg-rep-grid" id="mg-rep-grid"></section>
+  <p class="mg-fn-empty" id="mg-rep-empty" hidden></p>
+
+  <template id="mg-rep-card-tpl">
+    <article class="mg-card mg-rep-card">
+      <span class="mg-rep-title"></span>
+      <svg class="mg-rep-spark" viewBox="0 0 280 90" preserveAspectRatio="none"
+           role="img" aria-hidden="true">
+        <path class="mg-rep-area"></path>
+        <path class="mg-rep-line"></path>
+      </svg>
+      <span class="mg-rep-stats"></span>
+    </article>
+  </template>
+</main>
+
     </div>
     <!-- Wrapper End-->
-    <footer class="iq-footer">
-        <div class="container-fluid">
-            <div class="card">
-                <div class="card-body">
-                    <div class="text-center">
-                        <span class="mr-1">
-                            <script>document.write(new Date().getFullYear())</script>©
-                        </span>
-                        <a href="https://github.com/iyashjayesh/monigo/releases/tag/v1.0.0" target="_blank" class="">Moni<strong><em>GO</em></strong> v1.0.0</a>
-                    </div> 
-                    <!-- <div class="row">
-                        <div class="col-lg-6">
-                            <ul class="list-inline mb-0">
-                                <li class="list-inline-item"><a href="../backend/privacy-policy.html">Privacy Policy</a>
-                                </li>
-                                <li class="list-inline-item"><a href="../backend/terms-of-service.html">Terms of Use</a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="col-lg-6 text-right">
-                            <span class="mr-1">
-                                <script>document.write(new Date().getFullYear())</script>©
-                            </span>
-                            <a href="https://github.com/iyashjayesh/monigo/releases/tag/v1.0.0" target="_blank" class="">Moni<strong><em>GO</em></strong> v1.0.0</a>.
-                        </div>
-                    </div> -->
-                </div>
-            </div>
-        </div>
+    <footer class="mg-footer">
+        <span id="mg-footer-year"></span> &copy;
+        <a href="https://github.com/iyashjayesh/monigo/releases" target="_blank" rel="noopener">MoniGo</a>
     </footer>
     <!-- Backend Bundle JavaScript -->
     <script src="./js/core/backend-bundle.min.js"></script>
     <script src="./js/core/app.js"></script>
     <!-- Main JavaScript -->
-    <script src="./js/reports.js"></script>
-    <script src="./js/common.js"></script>
-    <script src="./js/refresh.js"></script>
+    <script src="./js/common.js" defer></script>
+    <script src="./js/reports-view.js" defer></script>
 </body>
 
 </html>

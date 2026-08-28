@@ -101,8 +101,19 @@
     /* 18.51:1 */
     --ink-muted: #5B6674;
     /* 5.84:1 -- secondary labels, table headers */
-    --ink-subtle: #6B7686;
-    /* 4.60:1 -- units, timestamps, axes, eyebrows */
+    --ink-subtle: #657080;
+    /*
+     * 5.02:1 on --surface-1, 4.60:1 on --canvas, 4.76:1 on --surface-2/--inset.
+     *
+     * The design's #6B7686 was tuned against the white panel only, where it
+     * measured 4.60. On every other ground in the system it failed: 4.22 on
+     * --canvas, 4.37 on --surface-2 and --inset. That bit three separate
+     * elements -- the footer, two table headers, and the function detail
+     * panel -- before being fixed here rather than at each call site.
+     *
+     * Tuned along its own hue so the tonal ordering still holds:
+     * --ink 18.51 > --ink-muted 5.84 > --ink-subtle 5.02.
+     */
     --ink-disabled: #A3ACBA;
     /* 2.35:1 -- DISABLED AND PLACEHOLDER ONLY, never readable text */
 
@@ -180,9 +191,16 @@ body.dark-theme {
     /* 15.45:1 */
     --ink-muted: #8892A2;
     /* 5.88:1 */
-    --ink-subtle: #778292;
-    /* 4.75:1 -- raised from the export's #59626F, which was 2.99:1 across
-       90 usages: nav headers, `pid ... · go...`, retention footer */
+    --ink-subtle: #798494;
+    /*
+     * 4.88:1 on --pan, 5.20 on --canvas, 4.56 on --surface-2, 5.07 on --inset.
+     *
+     * Raised twice: first from the export's #59626F (2.99:1 across 90 usages
+     * -- nav headers, `pid ... · go...`, retention footer), then again off
+     * #778292, which passed on --pan at 4.75 but measured 4.44 on the lighter
+     * --surface-2 that table headers sit on. Every ground now clears the
+     * floor, so the token is safe wherever it lands.
+     */
     --ink-disabled: #4A5361;
     /* 2.24:1 -- disabled and decorative only */
 
@@ -1792,6 +1810,21 @@ body {
     gap: var(--s-4);
 }
 
+/*
+ * .mg-card is a bare bordered box -- no padding, display:block. The Overview's
+ * cards supply their own inner layout, so the padding is added here rather
+ * than on .mg-card, where it would double up on those nine.
+ *
+ * Without this the board's content sat flush against the card border, which is
+ * what made the state legend look like it was overflowing.
+ */
+.mg-gor-summary > .mg-card {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 14px 16px;
+}
+
 .mg-gor-live-row {
     display: flex;
     align-items: baseline;
@@ -1822,6 +1855,12 @@ body {
 .mg-tone-warn  { color: var(--warn-text); }
 .mg-tone-info  { color: var(--accent); }
 .mg-tone-dim   { color: var(--ink-subtle); }
+
+.mg-gor-summary > .mg-card > .mg-gor-statebar,
+.mg-gor-summary > .mg-card > .mg-gor-statelist,
+.mg-gor-summary > .mg-card > .mg-gor-blocked {
+    margin-top: 7px;
+}
 
 .mg-gor-statebar {
     display: flex;
@@ -2071,4 +2110,339 @@ body {
 .mg-gor-morestates {
     color: var(--ink-subtle);
     font: 400 var(--t-micro) var(--font-mono);
+}
+
+/* --- Functions board -------------------------------------------------------
+
+   Filter bar plus a table of traced calls. Four data columns, not the
+   design's seven: see functions-view.js for why the other three are absent.
+   -------------------------------------------------------------------------- */
+
+.mg-fn-toolbar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--s-4);
+    flex-wrap: wrap;
+    padding: 12px 16px;
+}
+
+.mg-fn-search {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    flex: 1 1 260px;
+    min-width: 0;
+    padding: 7px 11px;
+    background: var(--inset);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-md);
+}
+
+.mg-fn-search:focus-within {
+    border-color: var(--accent);
+}
+
+.mg-fn-search .mg-icon {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    color: var(--ink-subtle);
+}
+
+.mg-fn-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    font: 400 var(--t-body) var(--font-sans);
+}
+
+.mg-fn-input:focus {
+    outline: none;
+}
+
+.mg-fn-input::placeholder {
+    color: var(--ink-subtle);
+}
+
+.mg-fn-count {
+    font: 500 var(--t-meta) var(--font-mono);
+    color: var(--ink-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.mg-fn-sort {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+}
+
+.mg-fn-select {
+    padding: 6px 9px;
+    background: var(--inset);
+    color: var(--ink);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-sm);
+    font: 500 var(--t-meta) var(--font-mono);
+}
+
+.mg-fn-export {
+    padding: 7px 13px;
+    background: transparent;
+    color: var(--ink-muted);
+    border: 1px solid var(--hairline-strong);
+    border-radius: var(--r-md);
+    font: 500 var(--t-meta) var(--font-mono);
+    cursor: pointer;
+}
+
+.mg-fn-export:hover {
+    background: var(--surface-2);
+    color: var(--ink);
+}
+
+/* Table -------------------------------------------------------------------- */
+
+.mg-fn-tablewrap {
+    padding: 0;
+    overflow: auto;
+}
+
+.mg-fn-table {
+    min-width: 720px;
+}
+
+.mg-fn-thead,
+.mg-fn-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 110px 110px 90px 110px;
+    gap: var(--s-4);
+    align-items: center;
+}
+
+.mg-fn-thead {
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--hairline);
+    background: var(--surface-2);
+    font: 500 9.5px var(--font-mono);
+    letter-spacing: .1em;
+    /* Same reason as .mg-gor-thead: --ink-subtle is short of the floor on
+       --surface-2. */
+    color: var(--ink-muted);
+}
+
+.mg-fn-group {
+    border-bottom: 1px solid var(--hairline);
+}
+
+.mg-fn-row {
+    width: 100%;
+    padding: 11px 18px;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    color: var(--ink);
+    font: inherit;
+}
+
+.mg-fn-row:hover {
+    background: var(--surface-2);
+}
+
+.mg-fn-row:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+
+.mg-fn-namecell {
+    display: flex;
+    align-items: baseline;
+    gap: var(--s-3);
+    min-width: 0;
+}
+
+.mg-fn-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 2px;
+    background: var(--accent);
+    flex: none;
+    align-self: center;
+}
+
+.mg-fn-name {
+    font: 500 var(--t-code) var(--font-mono);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mg-fn-pkg {
+    font: 400 var(--t-micro) var(--font-mono);
+    color: var(--ink-subtle);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mg-fn-exec,
+.mg-fn-mem,
+.mg-fn-gor,
+.mg-fn-last {
+    font: 500 var(--t-code) var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.mg-fn-exec {
+    font-weight: 600;
+}
+
+.mg-fn-last {
+    color: var(--ink-muted);
+}
+
+/* Expanded detail ---------------------------------------------------------- */
+
+.mg-fn-detail {
+    padding: 14px 18px 16px 34px;
+    background: var(--inset);
+    border-top: 1px solid var(--hairline);
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-4);
+}
+
+.mg-fn-detailgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--s-4);
+}
+
+.mg-fn-detailcell {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-1);
+}
+
+.mg-fn-detailvalue {
+    font: 600 var(--t-head) var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+.mg-fn-detailnote {
+    font: 400 var(--t-micro) var(--font-mono);
+    color: var(--ink-subtle);
+}
+
+.mg-fn-profile {
+    align-self: flex-start;
+    font: 500 var(--t-meta) var(--font-mono);
+    color: var(--accent-text);
+}
+
+.mg-fn-empty {
+    margin: 0;
+    padding: 20px 18px;
+    font: 400 var(--t-body) var(--font-sans);
+    color: var(--ink-subtle);
+    text-wrap: pretty;
+}
+
+.mg-fn-noprofile {
+    font: 400 var(--t-meta) var(--font-sans);
+    color: var(--ink-subtle);
+}
+
+/* --- Reports board ---------------------------------------------------------
+
+   Window and topic across the top, one card per field below. RESOLUTION and
+   Generate PDF from the design are absent -- see reports-view.js.
+   -------------------------------------------------------------------------- */
+
+.mg-rep-toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--s-5);
+    flex-wrap: wrap;
+    padding: 14px 16px;
+}
+
+.mg-rep-fact {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+    min-width: 0;
+}
+
+.mg-rep-value {
+    font: 500 var(--t-code) var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+.mg-rep-sep {
+    width: 1px;
+    height: 34px;
+    background: var(--hairline);
+    flex: none;
+}
+
+.mg-rep-actions {
+    margin-left: auto;
+    display: flex;
+    gap: var(--s-3);
+}
+
+.mg-rep-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--s-4);
+}
+
+.mg-rep-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+}
+
+.mg-rep-title {
+    font-weight: 600;
+    font-size: var(--t-body);
+}
+
+.mg-rep-spark {
+    width: 100%;
+    height: 90px;
+    display: block;
+}
+
+.mg-rep-area {
+    fill: color-mix(in srgb, var(--accent) 15%, transparent);
+    stroke: none;
+}
+
+.mg-rep-line {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.6;
+    vector-effect: non-scaling-stroke;
+}
+
+/* One sample has no shape; the card shows the value instead of a fake line. */
+.mg-rep-spark.is-flat {
+    background: repeating-linear-gradient(
+        -45deg,
+        var(--inset) 0 6px,
+        transparent 6px 12px);
+    border-radius: var(--r-sm);
+}
+
+.mg-rep-stats {
+    font: 400 var(--t-meta) var(--font-mono);
+    color: var(--ink-subtle);
+    font-variant-numeric: tabular-nums;
 }
