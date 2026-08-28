@@ -5,6 +5,7 @@ import (
 	"runtime"
 
 	"github.com/iyashjayesh/monigo/common"
+	"github.com/iyashjayesh/monigo/internal/alerting"
 	"github.com/iyashjayesh/monigo/models"
 )
 
@@ -137,6 +138,14 @@ func CalculateHealthScore(serviceStats *models.ServiceStats) (*models.SystemHeal
 	serviceScore, serviceMsg, err := calculateServiceHealth(serviceStats)
 	if err != nil {
 		return nil, fmt.Errorf("failed to calculate service health: %w", err)
+	}
+
+	// Trigger alert webhooks on health score breach (< 70%)
+	if systemScore < 70 {
+		alerting.TriggerAlert(common.GetServiceName(), systemScore, "System Health Alert: "+systemMsg)
+	}
+	if serviceScore < 70 {
+		alerting.TriggerAlert(common.GetServiceName(), serviceScore, "Service Health Alert: "+serviceMsg)
 	}
 
 	t := GetThresholds()

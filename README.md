@@ -96,6 +96,7 @@ m := monigo.NewBuilder().
     WithMaxCPUUsage(90).                    // Health threshold (default: 95%)
     WithMaxMemoryUsage(90).                 // Health threshold (default: 95%)
     WithMaxGoRoutines(500).                 // Health threshold (default: 100)
+    WithAlertWebhook("https://...").        // Health breach webhook (default: off)
     WithHeadless(false).                    // true = no dashboard (default: false)
     WithTimeZone("UTC").                    // Timezone (default: "Local")
     WithLogLevel(slog.LevelInfo).           // Log level
@@ -105,6 +106,37 @@ m := monigo.NewBuilder().
     }).
     Build()
 ```
+
+### Health Breach Alerts
+
+MoniGo computes a system and service health score on every collection cycle. Point
+`WithAlertWebhook` at an HTTP endpoint to be notified when either score drops below
+70. Left unset, MoniGo makes no outbound requests.
+
+```go
+m := monigo.NewBuilder().
+    WithServiceName("order-service").
+    WithAlertWebhook("https://hooks.slack.com/services/...").
+    Build()
+```
+
+Delivery is `POST` with `Content-Type: application/json`:
+
+```json
+{
+  "service_name": "order-service",
+  "timestamp": "2026-08-28T11:59:20Z",
+  "message": "Service Health Alert: Service usage exceeds allowed limits: CPU Usage 143.20% / 95.00%, ...",
+  "health_score": 42.5
+}
+```
+
+Alerts are dispatched off the metrics collection path, so a slow or unreachable
+endpoint never stalls metric collection. Requests time out after 10 seconds, and a
+minimum of 5 minutes separates deliveries so a flapping service cannot emit an alert
+on every tick. Delivery failures are logged and otherwise ignored.
+
+`Build()` rejects a webhook URL that is not `http://` or `https://`.
 
 ## Function Tracing
 

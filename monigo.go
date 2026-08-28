@@ -22,6 +22,7 @@ import (
 	"github.com/iyashjayesh/monigo/common"
 	"github.com/iyashjayesh/monigo/core"
 	"github.com/iyashjayesh/monigo/exporters"
+	"github.com/iyashjayesh/monigo/internal/alerting"
 	"github.com/iyashjayesh/monigo/internal/logger"
 	"github.com/iyashjayesh/monigo/models"
 	"github.com/iyashjayesh/monigo/timeseries"
@@ -69,6 +70,7 @@ type Monigo struct {
 	Headless                bool      `json:"headless"`
 	SamplingRate            int       `json:"sampling_rate"`
 	StorageType             string    `json:"storage_type"`
+	AlertWebhookURL         string    `json:"alert_webhook_url,omitempty"`
 
 	// OpenTelemetry Configuration
 	OTelEndpoint string            `json:"otel_endpoint,omitempty"`
@@ -158,6 +160,10 @@ func (m *Monigo) initCommon() {
 		MaxMemoryUsage: m.MaxMemoryUsage,
 		MaxGoRoutines:  m.MaxGoRoutines,
 	})
+
+	if m.AlertWebhookURL != "" {
+		alerting.SetWebhookURL(m.AlertWebhookURL)
+	}
 
 	m.ServiceStartTime = time.Now().In(location)
 }

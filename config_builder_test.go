@@ -126,3 +126,37 @@ func TestBuilderThresholdBounds(t *testing.T) {
 		})
 	}
 }
+
+func TestBuilderAlertWebhookValidation(t *testing.T) {
+	tests := []struct {
+		name      string
+		url       string
+		wantPanic bool
+	}{
+		{"https", "https://hooks.example.com/services/abc", false},
+		{"http", "http://localhost:9000/alerts", false},
+		{"unset", "", false},
+		{"no scheme", "hooks.example.com/services/abc", true},
+		{"wrong scheme", "ftp://hooks.example.com/abc", true},
+		{"shell-ish", "; rm -rf /", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				r := recover()
+				if tt.wantPanic && r == nil {
+					t.Errorf("expected Build() to panic for %q", tt.url)
+				}
+				if !tt.wantPanic && r != nil {
+					t.Errorf("expected Build() to accept %q, panicked with: %v", tt.url, r)
+				}
+			}()
+
+			m := NewBuilder().WithServiceName("test").WithAlertWebhook(tt.url).Build()
+			if m.AlertWebhookURL != tt.url {
+				t.Errorf("AlertWebhookURL = %q, want %q", m.AlertWebhookURL, tt.url)
+			}
+		})
+	}
+}

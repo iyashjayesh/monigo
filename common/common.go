@@ -259,6 +259,11 @@ func GetServiceStartTime() time.Time {
 	return serviceInfo.ServiceStartTime
 }
 
+// GetServiceName returns the configured service name.
+func GetServiceName() string {
+	return serviceInfo.ServiceName
+}
+
 // parseDuration parses the duration string.
 func parseDuration(input string) (time.Duration, error) {
 	if strings.HasSuffix(input, "d") {

@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `registry.GetAll()` documented a snapshot copy but shared the `Labels` map with the live registry
 
 ### Added
+- Health breach webhook alerts via `WithAlertWebhook(url)` -- an opt-in `POST` fired when the system or service health score drops below 70. Dispatch is off the collection path, requests time out after 10 seconds, and deliveries are rate limited to one per 5 minutes across both alert types. `Build()` rejects a URL that is not `http://` or `https://`
+- `common.GetServiceName()` -- accessor for the configured service name
 - `core.GetThresholds()` -- thread-safe accessor for the configured health thresholds
 - `Build()` validates `MaxCPUUsage` and `MaxMemoryUsage` are within 0-100 and `MaxGoRoutines` is non-negative
 - Regression tests for every fix above

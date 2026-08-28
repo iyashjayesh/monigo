@@ -3,6 +3,7 @@ package monigo
 import (
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/iyashjayesh/monigo/internal/logger"
 )
@@ -103,6 +104,12 @@ func (b *MonigoBuilder) WithStorageType(storageType string) *MonigoBuilder {
 	return b
 }
 
+// WithAlertWebhook sets the health breach alert webhook URL
+func (b *MonigoBuilder) WithAlertWebhook(url string) *MonigoBuilder {
+	b.config.AlertWebhookURL = url
+	return b
+}
+
 // WithHeadless sets whether the dashboard should be started
 func (b *MonigoBuilder) WithHeadless(headless bool) *MonigoBuilder {
 	b.config.Headless = headless
@@ -147,6 +154,11 @@ func (b *MonigoBuilder) Build() *Monigo {
 	}
 	if b.config.StorageType != "" && b.config.StorageType != "disk" && b.config.StorageType != "memory" {
 		panic("[MoniGo] Build() failed: StorageType must be 'disk' or 'memory'")
+	}
+	if b.config.AlertWebhookURL != "" {
+		if !strings.HasPrefix(b.config.AlertWebhookURL, "http://") && !strings.HasPrefix(b.config.AlertWebhookURL, "https://") {
+			panic("[MoniGo] Build() failed: AlertWebhookURL must start with http:// or https://")
+		}
 	}
 	if b.config.MaxCPUUsage < 0 || b.config.MaxCPUUsage > 100 {
 		panic("[MoniGo] Build() failed: MaxCPUUsage must be between 0 and 100")
