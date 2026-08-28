@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (el) {
                 el.innerHTML = `
                     <div>
-                        <p class="mb-2 text-muted">${label} <span class="info-icon" data-tooltip="${info}">i</span></p>
+                        <p class="mb-2 text-muted">${label.replace(/:\s*$/, '')} <span class="info-icon" data-tooltip="${info}">i</span></p>
                         <h4 class="skeleton-text animate-pulse text-muted">Connecting...</h4>
                     </div>`;
             }
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sName) {
             sName.innerHTML = `
                 <div class="mt-1">
-                    <p class="mb-2 text-muted">Service Name:</p>
+                    <p class="mb-2 text-muted">Service Name</p>
                     <h4 class="skeleton-text animate-pulse text-muted">Connecting...</h4>
                 </div>`;
         }
@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gVer) {
             gVer.innerHTML = `
                 <div class="mt-1">
-                    <p class="mb-2 text-muted">Go Version:</p>
+                    <p class="mb-2 text-muted">Go Version</p>
                     <h4 class="skeleton-text animate-pulse text-muted">Connecting...</h4>
                 </div>`;
         }
@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sStart) {
             sStart.innerHTML = `
                 <div class="mt-1">
-                    <p class="mb-2 text-muted">Service Start Time:</p>
+                    <p class="mb-2 text-muted">Service Start Time</p>
                     <h4 class="skeleton-text animate-pulse text-muted">Connecting...</h4>
                 </div>`;
         }
@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pId) {
             pId.innerHTML = `
                 <div class="mt-1">
-                    <p class="mb-2 text-muted">Process ID:</p>
+                    <p class="mb-2 text-muted">Process ID</p>
                     <h4 class="skeleton-text animate-pulse text-muted">Connecting...</h4>
                 </div>`;
         }
@@ -207,23 +207,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 service_name.innerHTML = `
                     <div class="d-flex align-items-center mb-4 card-total-sale">
                         <div>
-                            <p class="mb-2">Service Name: <h4>${data.service_name}</h4></p>
+                            <p class="mb-2">Service Name <h4>${data.service_name}</h4></p>
                         </div>
                     </div>`;
                 go_version.innerHTML = `
                     <div class="d-flex align-items-center mb-4 card-total-sale">
                         <div>
-                            <p class="mb-2">Go Version: <h4>${data.go_version}</h4></p>
+                            <p class="mb-2">Go Version <h4>${data.go_version}</h4></p>
                         </div>
                     </div>`;
                 service_start_time.innerHTML = `
                  <div>
-                    <p class="mb-2">Service Start Time: <h4>${formattedDate}<br/> ${formattedTime}</h4></p>
+                    <p class="mb-2">Service Start Time <h4>${formattedDate}<br/> ${formattedTime}</h4></p>
                 </div>`;
 
                 process_id.innerHTML = `
                  <div>
-                    <p class="mb-2">Process ID: <h4>${data.process_id}</h4></p>
+                    <p class="mb-2">Process ID <h4>${data.process_id}</h4></p>
                 </div>`;
             });
     }
@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (element) {
             element.innerHTML = `
                 <div>
-                    <p class="mb-2">${label} <span class="info-icon" data-tooltip="${info}">i</span></p>
+                    <p class="mb-2">${label.replace(/:\s*$/, '')} <span class="info-icon" data-tooltip="${info}">i</span></p>
                     <h4>${value}</h4>
                 </div>`;
 
@@ -260,12 +260,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.coreUsageDetailButton.innerHTML = `
                     <div class="d-flex align-items-center mb-1 card-total-sale">
                         <div>
-                            <p class="mb-2">Total Cores: <h4>${obj.total_cores}</h4></p>
+                            <p class="mb-2">Total Cores <h4>${obj.total_cores}</h4></p>
                         </div>
                     </div>
                     <div class="d-flex align-items-center mb-1 card-total-sale">
                         <div>
-                            <p class="mb-2">Total Logical Cores: <h4>${obj.total_logical_cores}</h4></p>
+                            <p class="mb-2">Total Logical Cores <h4>${obj.total_logical_cores}</h4></p>
                         </div>
                     </div>
                     <div class="d-flex align-items-center mb-1 card-total-sale">

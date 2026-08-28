@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Type and density follow the design's scale.** Metric tiles are now an uppercase micro-label over one large tabular number, card titles and body text sit on a six-step scale topping out at 24px rather than the vendored template's defaults, card padding is 16px, and table rows are tighter with a sticky header. Every `font-size` and `border-radius` in the project stylesheet now comes from a token: 12 ad-hoc sizes and 5 ad-hoc radii reduced to 6 and 3
+- Metric labels drop their trailing colons, since an uppercase eyebrow does not take one
 - **The dashboard adopts the new design's palette and collapses the dark theme onto it.** Colours now come from the design system: a cyan accent (`#00B4E6` dark / `#00758F` light) replacing the orange, five surface planes per theme, and five semantic states. Hex literals in real declarations drop from 105 to 2; `body.dark-theme` component rules from 53 to 3. Every text pair clears WCAG AA and every control boundary clears 3:1, verified in a running dashboard in both themes
 - Focus rings restored. The vendored `.btn:focus { outline: none; box-shadow: none }` stripped every focus indicator with no replacement, so tabbing the dashboard moved nothing visually
 - Stack traces and pprof output render in IBM Plex Mono at a fixed size on a recessed surface. The previous rule asked for `'Fira Code'`, which is not shipped and never resolved
