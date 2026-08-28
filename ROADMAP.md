@@ -55,13 +55,19 @@ the same hole.
 | **A. Rename module to `.../v2`** | Import-path change in every example, the README, and for anyone consuming v2 via a `replace` directive | Correct SemVer; `v2.x` tags become installable; the existing `v2.0.0` tag stays broken but is superseded |
 | **B. Renumber this release `v1.3.0`** | The `[2.0.0]` changelog entry becomes historically odd | Installable immediately, zero import churn; abandons the 2.x line as never-published |
 
-**Recommendation: B**, then A later if a genuinely breaking change ever justifies
-a major bump. B is one tag and a changelog note. A is a breaking change for users
-who are, per the proxy, currently zero — but it also forces `/v2` into every
-import path forever for a library whose API is not actually v2-shaped.
+**Decision: B.** The release line is renumbered to `v1.3.0`, the `[2.0.0]`
+changelog entry is annotated as never published, and `CONTRIBUTING.md` now carries
+a Releasing section whose verification step is the one whose absence caused this.
 
-Whichever is chosen, the follow-up is the same: **tag it, verify the proxy serves
-it**, and add a release step to `CONTRIBUTING.md` so this cannot silently recur.
+A remains available later, if a genuinely breaking change ever justifies a major
+bump. It was rejected for now because `/v2` would be permanent in every import
+path for an API that is not v2-shaped, and per the proxy there were no v2
+consumers to preserve.
+
+**Still outstanding: the tag itself.** Renumbering the changelog does not publish
+anything. Someone has to run `git tag -a v1.3.0` and confirm the proxy serves it,
+per the checklist in `CONTRIBUTING.md`. Until that happens `go get` continues to
+serve `v1.2.0`.
 
 ---
 

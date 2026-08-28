@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Unformatted memory values on the metrics API: `total_system_memory_bytes`, `memory_used_by_system_bytes`, `memory_used_by_service_bytes`, `available_memory_bytes`, `stack_memory_usage_bytes`, `gc_pause_duration_ms`. Additive -- the existing formatted string fields are unchanged. Anything doing arithmetic on or plotting these metrics must use the raw fields, since the strings carry a unit suffix
 
-## [2.1.0] - 2026-08-28
+## [1.3.0] - 2026-08-28
 
 ### Security
 - `BasicAuthMiddleware` and `APIKeyMiddleware` now compare credentials with `crypto/subtle.ConstantTimeCompare` -- `!=` short-circuits on the first differing byte and leaks length and prefix information to a timing oracle
@@ -55,6 +55,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Argument marshalling shared between `TraceFunctionWithArgs` and `TraceFunctionWithReturns` instead of duplicated
 
 ## [2.0.0] - 2026-02-10
+
+> **Never published.** This release was tagged `v2.0.0`, but the Go module proxy
+> rejects it: `go.mod` declares `module github.com/iyashjayesh/monigo` with no
+> `/v2` suffix, and Go requires the major version to appear in the module path
+> from v2 onwards. `go get` therefore continued to serve `v1.2.0`, and everything
+> below was unreachable to anyone installing the library.
+>
+> ```
+> $ curl -s https://proxy.golang.org/github.com/iyashjayesh/monigo/@v/v2.0.0.info
+> not found: invalid version: module contains a go.mod file, so module path must
+> match major version ("github.com/iyashjayesh/monigo/v2")
+> ```
+>
+> The release line was renumbered rather than renaming the module: `/v2` would be
+> permanent for an API that is not v2-shaped, and per the proxy there were no v2
+> consumers to preserve. The changes below shipped in `1.3.0`.
 
 ### Breaking Changes
 - Renamed `GetRuningPort()` to `GetRunningPort()`
