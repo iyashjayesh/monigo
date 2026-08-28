@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Memory Distribution pie plotted values of different magnitudes against each other.** The chart parsed a number out of the pre-formatted display strings (`"2.68 MB"`, `"12.93 GB"`), which discards the unit -- so a service using 2.68 MB rendered as 14.3% of the pie instead of 0.02%, a ~700x overstatement of its footprint
+- **Heap Memory Usage chart mixed units under an "MB" axis.** It read `mem_stats_records[].record_value`, a display number whose unit lives in a separate `record_unit` field that the chart ignored. Once heap use crosses 1 GB, `HeapSys` reports in GB while `HeapAlloc` is still in MB, and the taller bar renders shorter. It now reads `raw_mem_stats_records`, which is in one consistent unit
+- **CPU Statistics pie plotted `total_cores` as a slice alongside its own components**, so the chart always summed to twice the real core count. The third slice is now idle cores
+
+### Added
+- Unformatted memory values on the metrics API: `total_system_memory_bytes`, `memory_used_by_system_bytes`, `memory_used_by_service_bytes`, `available_memory_bytes`, `stack_memory_usage_bytes`, `gc_pause_duration_ms`. Additive -- the existing formatted string fields are unchanged. Anything doing arithmetic on or plotting these metrics must use the raw fields, since the strings carry a unit suffix
+
 ## [2.1.0] - 2026-08-28
 
 ### Security

@@ -477,6 +477,31 @@ document.addEventListener('DOMContentLoaded', () => {
     //   })
     // }
 
+    // Formats a byte count for display. Chart *values* are always fed in one
+    // consistent unit; only the label passes through here, so nothing downstream
+    // compares numbers that were formatted at different scales.
+    function formatBytes(bytes) {
+        if (!isFinite(bytes) || bytes < 0) {
+            return '-';
+        }
+        const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        let value = bytes;
+        let i = 0;
+        while (value >= 1024 && i < units.length - 1) {
+            value /= 1024;
+            i++;
+        }
+        return `${value.toFixed(2)} ${units[i]}`;
+    }
+
+    // Reads a raw memory statistic in bytes. The sibling string fields are
+    // pre-formatted with a unit suffix, so parsing a number out of them silently
+    // drops the unit and puts MB and GB on the same axis.
+    function memBytes(memoryStatistics, key) {
+        const value = memoryStatistics ? memoryStatistics[key] : undefined;
+        return typeof value === 'number' && isFinite(value) ? value : 0;
+    }
+
     // KB
     function renderCharts(data) {
         const isDark = document.body.classList.contains('dark-theme');
@@ -609,7 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     },
                     {
-                        name: 'Total Cores',
+                        name: 'Idle Cores',
                         icon: 'rect',
                         itemStyle: {
                             color: '#FFD166'
@@ -636,8 +661,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             itemStyle: { color: '#FF6F61' }
                         },
                         {
-                            value: cpu_statistics.total_cores,
-                            name: 'Total Cores',
+                            // Total cores minus what is in use. Plotting
+                            // total_cores itself made the denominator a slice of
+                            // its own pie, so the chart always summed to twice
+                            // the real core count.
+                            value: Math.max(
+                                0,
+                                (cpu_statistics.total_cores || 0) -
+                                    (cpu_statistics.cores_used_by_service || 0) -
+                                    (cpu_statistics.cores_used_by_system || 0)
+                            ),
+                            name: 'Idle Cores',
                             itemStyle: { color: '#FFD166' }
                         }
                     ],
@@ -662,7 +696,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tooltip: {
                 trigger: 'item',
                 formatter: function (params) {
-                    return `${params.seriesName}<br/>${params.name}: ${params.value} (${params.percent}%)`;
+                    return `${params.seriesName}<br/>${params.name}: ${formatBytes(params.value)} (${params.percent}%)`;
                 }
             },
             legend: {
@@ -685,21 +719,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     label: { color: textColor },
                     data: [
                         {
-                            value: parseFloat(
-                                data.memory_statistics.memory_used_by_service
-                            ),
+                            value: memBytes(data.memory_statistics, 'memory_used_by_service_bytes'),
                             name: 'Memory Used by Service'
                         },
                         {
-                            value: parseFloat(
-                                data.memory_statistics.memory_used_by_system
-                            ),
+                            value: memBytes(data.memory_statistics, 'memory_used_by_system_bytes'),
                             name: 'Memory Used by System'
                         },
                         {
-                            value: parseFloat(
-                                data.memory_statistics.available_memory
-                            ),
+                            value: memBytes(data.memory_statistics, 'available_memory_bytes'),
                             name: 'Available Memory'
                         }
                     ],
@@ -714,23 +742,26 @@ document.addEventListener('DOMContentLoaded', () => {
             ]
         });
 
-        let values = [];
-        data.memory_statistics.mem_stats_records.forEach((record) => {
-            if (record.record_name === 'HeapAlloc') {
-                values.push(record.record_value);
-            } else if (record.record_name === 'HeapSys') {
-                values.push(record.record_value);
-            } else if (record.record_name === 'HeapIdle') {
-                values.push(record.record_value);
-            } else if (record.record_name === 'HeapInuse') {
-                values.push(record.record_value);
-            } else if (record.record_name === 'HeapReleased') {
-                values.push(record.record_value);
-            }
+        // mem_stats_records carries a DISPLAY value with its unit in a separate
+        // record_unit field -- HeapAlloc might be 6.82 "MB" while HeapSys is 1.20
+        // "GB". Reading record_value and ignoring record_unit put both on one "MB"
+        // axis, so HeapSys rendered five times shorter than HeapAlloc while
+        // actually being ~180 times larger.
+        //
+        // raw_mem_stats_records carries the same metrics in a single consistent
+        // unit (base-1024 KB), which is what a chart needs.
+        const rawMemStats = {};
+        (data.memory_statistics.raw_mem_stats_records || []).forEach((record) => {
+            rawMemStats[record.record_name] = record.record_value;
+        });
 
-            if (values.length === 5) {
-                return;
-            }
+        const KB_PER_MB = 1024;
+        const heapKeys = ['heap_alloc', 'heap_sys', 'heap_idle', 'heap_inuse', 'heap_released'];
+        const values = heapKeys.map((key) => {
+            const kb = rawMemStats[key];
+            return typeof kb === 'number' && isFinite(kb)
+                ? Number((kb / KB_PER_MB).toFixed(3))
+                : 0;
         });
 
         // Heap Usage Chart
@@ -740,7 +771,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 text: 'Heap Memory Usage',
                 textStyle: { color: titleColor }
             },
-            tooltip: {},
+            tooltip: {
+                trigger: 'axis',
+                formatter: function (params) {
+                    if (!params || !params.length) {
+                        return '';
+                    }
+                    return `${params[0].name}: ${params[0].value} MB`;
+                }
+            },
             xAxis: {
                 type: 'category',
                 data: [

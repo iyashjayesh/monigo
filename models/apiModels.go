@@ -92,13 +92,18 @@ type MemoryStatistics struct {
 	FreeSwapMemory      string               `json:"free_swap_memory"`
 	MemStatsRecords     []Record             `json:"mem_stats_records"`     // List of memory statistic records.
 	RawMemStatsRecords  []RawMemStatsRecords `json:"raw_mem_stats_records"` // RawMemStatsRecords holds a list of raw memory statistic records.
-	// Raw values for storage
-	TotalSystemMemoryRaw   float64 `json:"-"`
-	MemoryUsedBySystemRaw  float64 `json:"-"`
-	MemoryUsedByServiceRaw float64 `json:"-"`
-	AvailableMemoryRaw     float64 `json:"-"`
-	GCPauseDurationRaw     float64 `json:"-"`
-	StackMemoryUsageRaw    float64 `json:"-"`
+
+	// Unformatted values, in bytes unless noted. The string fields above are
+	// pre-formatted for display and carry a unit suffix ("6.82 MB", "15.2 GB"),
+	// which makes them unsafe to compare or plot: parsing a number out of one
+	// discards the unit, so a value in MB and a value in GB end up on the same
+	// axis. Anything doing arithmetic or drawing a chart must use these instead.
+	TotalSystemMemoryRaw   float64 `json:"total_system_memory_bytes"`
+	MemoryUsedBySystemRaw  float64 `json:"memory_used_by_system_bytes"`
+	MemoryUsedByServiceRaw float64 `json:"memory_used_by_service_bytes"`
+	AvailableMemoryRaw     float64 `json:"available_memory_bytes"`
+	StackMemoryUsageRaw    float64 `json:"stack_memory_usage_bytes"`
+	GCPauseDurationRaw     float64 `json:"gc_pause_duration_ms"`
 }
 
 // ServiceHealth represents the health of the service.
