@@ -76,7 +76,7 @@ func (r *Registry) RecordHistogram(name string, value float64, labels map[string
 	}
 }
 
-// GetAll returns a snapshot copy of all metrics.
+// GetAll returns a snapshot copy of all metrics with deep-copied label maps.
 func (r *Registry) GetAll() []*MetricValue {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -84,6 +84,12 @@ func (r *Registry) GetAll() []*MetricValue {
 	values := make([]*MetricValue, 0, len(r.metrics))
 	for _, v := range r.metrics {
 		cp := *v
+		if v.Labels != nil {
+			cp.Labels = make(map[string]string, len(v.Labels))
+			for k, val := range v.Labels {
+				cp.Labels[k] = val
+			}
+		}
 		values = append(values, &cp)
 	}
 	return values

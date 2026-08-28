@@ -2,7 +2,10 @@ package core
 
 import (
 	"context"
+	"strings"
 	"testing"
+
+	"github.com/iyashjayesh/monigo/models"
 )
 
 func TestTraceFunction(t *testing.T) {
@@ -107,5 +110,133 @@ func TestFunctionTraceDetailsReturnsCopy(t *testing.T) {
 
 	if len(details2) == 0 {
 		t.Error("expected FunctionTraceDetails to return independent copies")
+	}
+}
+
+// ViewFunctionMetrics shells out to `go tool pprof` with a caller-supplied
+// function name and report type. A name beginning with "-" is interpreted as a
+// flag by pprof, and the report type is interpolated straight into the argument
+// list, so both must be rejected before the exec.
+func TestViewFunctionMetricsRejectsUnsafeArguments(t *testing.T) {
+	metrics := &models.FunctionMetrics{
+		CPUProfileFilePath: "testdata/does-not-exist.prof",
+		MemProfileFilePath: "testdata/does-not-exist.prof",
+	}
+
+	unsafeNames := []string{
+		"-output=/tmp/pwned",
+		"-http=:8080",
+		"name; rm -rf /",
+		"name && whoami",
+		"name | cat",
+		"name $(id)",
+		"name `id`",
+		"name\nwhoami",
+	}
+
+	for _, name := range unsafeNames {
+		got := ViewFunctionMetrics(name, "text", metrics)
+		if !strings.Contains(got.FunctionCodeTrace, "Invalid function name") {
+			t.Errorf("name %q: expected the code trace to be rejected, got %q", name, got.FunctionCodeTrace)
+		}
+		if !strings.Contains(got.CoreProfile.CPU, "Invalid function name") {
+			t.Errorf("name %q: expected the CPU profile to be rejected, got %q", name, got.CoreProfile.CPU)
+		}
+	}
+}
+
+func TestViewFunctionMetricsRejectsUnknownReportType(t *testing.T) {
+	metrics := &models.FunctionMetrics{
+		CPUProfileFilePath: "testdata/does-not-exist.prof",
+		MemProfileFilePath: "testdata/does-not-exist.prof",
+	}
+
+	for _, reportType := range []string{"", "svg", "-http=:8080", "web"} {
+		got := ViewFunctionMetrics("SafeName", reportType, metrics)
+		if !strings.Contains(got.CoreProfile.CPU, "Invalid report type") {
+			t.Errorf("reportType %q: expected rejection, got %q", reportType, got.CoreProfile.CPU)
+		}
+	}
+}
+
+func TestViewFunctionMetricsAcceptsSafeArguments(t *testing.T) {
+	metrics := &models.FunctionMetrics{
+		CPUProfileFilePath: "testdata/does-not-exist.prof",
+		MemProfileFilePath: "testdata/does-not-exist.prof",
+	}
+
+	for _, reportType := range []string{"text", "traces", "tree"} {
+		got := ViewFunctionMetrics("main.SafeName", reportType, metrics)
+		if strings.Contains(got.CoreProfile.CPU, "Invalid report type") {
+			t.Errorf("reportType %q was rejected but should be allowed", reportType)
+		}
+		if strings.Contains(got.CoreProfile.CPU, "Invalid function name") {
+			t.Errorf("reportType %q: safe name was rejected", reportType)
+		}
+	}
+}
+
+// A nil argument used to panic: reflect.ValueOf(nil) yields an invalid Value and
+// calling .Type() on it panics. Nillable parameter kinds must accept nil as the
+// zero value; non-nillable kinds must be rejected with a log, not a panic.
+func TestTraceFunctionWithArgs_NilArguments(t *testing.T) {
+	SetSamplingRate(1)
+
+	t.Run("nil into a pointer parameter", func(t *testing.T) {
+		got := "not called"
+		TraceFunctionWithArgs(context.Background(), func(p *int) {
+			if p == nil {
+				got = "nil"
+			}
+		}, nil)
+		if got != "nil" {
+			t.Errorf("expected the function to run with a nil pointer, got %q", got)
+		}
+	})
+
+	t.Run("nil into an interface parameter", func(t *testing.T) {
+		called := false
+		TraceFunctionWithArgs(context.Background(), func(v interface{}) {
+			called = true
+		}, nil)
+		if !called {
+			t.Error("expected the function to run with a nil interface")
+		}
+	})
+
+	t.Run("nil into a slice and map parameter", func(t *testing.T) {
+		called := false
+		TraceFunctionWithArgs(context.Background(), func(s []string, m map[string]int) {
+			called = s == nil && m == nil
+		}, nil, nil)
+		if !called {
+			t.Error("expected the function to run with nil slice and map")
+		}
+	})
+
+	t.Run("nil into a non-nillable parameter is rejected", func(t *testing.T) {
+		called := false
+		TraceFunctionWithArgs(context.Background(), func(n int) { called = true }, nil)
+		if called {
+			t.Error("expected nil to be rejected for an int parameter")
+		}
+	})
+}
+
+func TestTraceFunctionWithReturns_NilArguments(t *testing.T) {
+	SetSamplingRate(1)
+
+	results := TraceFunctionWithReturns(context.Background(), func(p *int) string {
+		if p == nil {
+			return "nil"
+		}
+		return "non-nil"
+	}, nil)
+
+	if len(results) != 1 {
+		t.Fatalf("expected 1 return value, got %d", len(results))
+	}
+	if results[0] != "nil" {
+		t.Errorf("expected %q, got %v", "nil", results[0])
 	}
 }

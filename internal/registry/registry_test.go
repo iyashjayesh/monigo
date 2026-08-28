@@ -84,14 +84,18 @@ func TestDelete(t *testing.T) {
 
 func TestGetAllReturnsSnapshot(t *testing.T) {
 	r := NewRegistry()
-	r.SetGauge("cpu", 42, nil)
+	r.SetGauge("cpu", 42, map[string]string{"host": "localhost"})
 
 	metrics := r.GetAll()
 	metrics[0].Value = 999
+	metrics[0].Labels["host"] = "modified"
 
 	fresh := r.GetAll()
 	if fresh[0].Value != 42 {
 		t.Errorf("GetAll should return a copy; original was modified")
+	}
+	if fresh[0].Labels["host"] != "localhost" {
+		t.Errorf("GetAll should return a deep copy of labels map; original labels map was modified")
 	}
 }
 

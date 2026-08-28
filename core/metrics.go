@@ -15,6 +15,7 @@ import (
 
 var (
 	mu                      sync.Mutex
+	thresholdsMu            sync.RWMutex
 	serviceHealthThresholds models.ServiceHealthThresholds
 )
 
@@ -60,8 +61,17 @@ func getProcessUsage(proc *process.Process, memsStats *mem.VirtualMemoryStat) (f
 	return procCPUPercent, processMemPercent, nil
 }
 
-// SetServiceThresholds sets the service thresholds to calculate the overall service health.
+// GetThresholds returns a copy of the current service health thresholds in a thread-safe manner.
+func GetThresholds() models.ServiceHealthThresholds {
+	thresholdsMu.RLock()
+	defer thresholdsMu.RUnlock()
+	return serviceHealthThresholds
+}
+
+// ConfigureServiceThresholds sets the service thresholds to calculate the overall service health.
 func ConfigureServiceThresholds(thresholdsValues *models.ServiceHealthThresholds) {
+	thresholdsMu.Lock()
+	defer thresholdsMu.Unlock()
 	serviceHealthThresholds = *thresholdsValues
 }
 

@@ -60,6 +60,36 @@ func FunctionTraceDetails() map[string]*models.FunctionMetrics {
 	return result
 }
 
+func buildArgValues(fnType reflect.Type, args []interface{}) ([]reflect.Value, bool) {
+	if len(args) != fnType.NumIn() {
+		logger.Log.Error("function argument count mismatch", "expected", fnType.NumIn(), "got", len(args))
+		return nil, false
+	}
+
+	argValues := make([]reflect.Value, len(args))
+	for i, arg := range args {
+		expectedType := fnType.In(i)
+		if arg == nil {
+			switch expectedType.Kind() {
+			case reflect.Interface, reflect.Ptr, reflect.Slice, reflect.Map, reflect.Chan, reflect.Func:
+				argValues[i] = reflect.Zero(expectedType)
+			default:
+				logger.Log.Error("argument type mismatch: cannot assign nil to non-nullable type", "index", i, "expected", expectedType)
+				return nil, false
+			}
+			continue
+		}
+
+		argValue := reflect.ValueOf(arg)
+		if !argValue.Type().AssignableTo(expectedType) {
+			logger.Log.Error("argument type mismatch", "index", i, "expected", expectedType, "got", argValue.Type())
+			return nil, false
+		}
+		argValues[i] = argValue
+	}
+	return argValues, true
+}
+
 // TraceFunctionWithArgs traces a function with parameters and captures the metrics
 func TraceFunctionWithArgs(_ context.Context, f interface{}, args ...interface{}) {
 	fnValue := reflect.ValueOf(f)
@@ -69,22 +99,9 @@ func TraceFunctionWithArgs(_ context.Context, f interface{}, args ...interface{}
 	}
 
 	fnType := fnValue.Type()
-
-	if len(args) != fnType.NumIn() {
-		logger.Log.Error("function argument count mismatch", "expected", fnType.NumIn(), "got", len(args))
+	argValues, ok := buildArgValues(fnType, args)
+	if !ok {
 		return
-	}
-
-	argValues := make([]reflect.Value, len(args))
-	for i, arg := range args {
-		argValue := reflect.ValueOf(arg)
-		expectedType := fnType.In(i)
-
-		if !argValue.Type().AssignableTo(expectedType) {
-			logger.Log.Error("argument type mismatch", "index", i, "expected", expectedType, "got", argValue.Type())
-			return
-		}
-		argValues[i] = argValue
 	}
 
 	name := generateFunctionName(fnValue, fnType)
@@ -112,22 +129,9 @@ func TraceFunctionWithReturns(_ context.Context, f interface{}, args ...interfac
 	}
 
 	fnType := fnValue.Type()
-
-	if len(args) != fnType.NumIn() {
-		logger.Log.Error("function argument count mismatch", "expected", fnType.NumIn(), "got", len(args))
+	argValues, ok := buildArgValues(fnType, args)
+	if !ok {
 		return nil
-	}
-
-	argValues := make([]reflect.Value, len(args))
-	for i, arg := range args {
-		argValue := reflect.ValueOf(arg)
-		expectedType := fnType.In(i)
-
-		if !argValue.Type().AssignableTo(expectedType) {
-			logger.Log.Error("argument type mismatch", "index", i, "expected", expectedType, "got", argValue.Type())
-			return nil
-		}
-		argValues[i] = argValue
 	}
 
 	name := generateFunctionName(fnValue, fnType)
@@ -291,9 +295,18 @@ func ViewFunctionMetrics(name, reportType string, metrics *models.FunctionMetric
 		}
 	}
 
+	// Validate function name to ensure it doesn't look like a flag or contain shell control characters
+	isNameInvalid := strings.HasPrefix(name, "-") || strings.ContainsAny(name, ";&|$` \t\n")
+
 	executePprof := func(profileFilePath, reportType string) string {
+		if isNameInvalid {
+			return "Error: Invalid function name"
+		}
 		if profileFilePath == "" {
 			return "Error: Profile file path is empty"
+		}
+		if reportType != "text" && reportType != "traces" && reportType != "tree" {
+			return "Error: Invalid report type"
 		}
 		cmd := exec.Command("go", "tool", "pprof", "-"+reportType, profileFilePath)
 		output, err := cmd.CombinedOutput()
@@ -304,7 +317,9 @@ func ViewFunctionMetrics(name, reportType string, metrics *models.FunctionMetric
 	}
 
 	var codeStack string
-	if metrics.CPUProfileFilePath != "" {
+	if isNameInvalid {
+		codeStack = "Error: Invalid function name"
+	} else if metrics.CPUProfileFilePath != "" {
 		codeStackView := exec.Command("go", "tool", "pprof", "-list", name, metrics.CPUProfileFilePath)
 		output, err := codeStackView.CombinedOutput()
 		if err != nil {

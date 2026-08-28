@@ -1,8 +1,10 @@
 package monigo
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"testing"
 	"time"
 )
@@ -249,4 +251,100 @@ func TestCustomAuthFunction(t *testing.T) {
 	if w.Code != http.StatusUnauthorized {
 		t.Errorf("Expected status 401, got %d", w.Code)
 	}
+}
+
+// Credential comparison must be constant-time and must not accept a partial
+// match. These cases previously ran through `!=`, which short-circuits on the
+// first differing byte and leaks length and prefix information.
+func TestBasicAuthMiddlewareRejectsPartialMatches(t *testing.T) {
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	handler := BasicAuthMiddleware("admin", "password")(testHandler)
+
+	cases := []struct{ user, pass string }{
+		{"admin", "passwor"},   // prefix of the password
+		{"admin", "passwords"}, // password plus a byte
+		{"admi", "password"},   // prefix of the username
+		{"admins", "password"}, // username plus a byte
+		{"", ""},
+		{"admin", ""},
+		{"", "password"},
+		{"password", "admin"}, // swapped
+	}
+
+	for _, tc := range cases {
+		req := httptest.NewRequest("GET", "/", nil)
+		req.SetBasicAuth(tc.user, tc.pass)
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusUnauthorized {
+			t.Errorf("user=%q pass=%q: expected 401, got %d", tc.user, tc.pass, w.Code)
+		}
+	}
+}
+
+// A request carrying no credentials at all must still be challenged, so clients
+// know to retry with credentials rather than treating the 401 as terminal.
+func TestBasicAuthMiddlewareChallengesMissingCredentials(t *testing.T) {
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	handler := BasicAuthMiddleware("admin", "password")(testHandler)
+
+	req := httptest.NewRequest("GET", "/", nil)
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected 401, got %d", w.Code)
+	}
+	if got := w.Header().Get("WWW-Authenticate"); got == "" {
+		t.Error("expected a WWW-Authenticate challenge header on a credential-less request")
+	}
+}
+
+func TestAPIKeyMiddlewareRejectsPartialMatches(t *testing.T) {
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	handler := APIKeyMiddleware("secret-key")(testHandler)
+
+	for _, key := range []string{"", "secret-ke", "secret-keys", "s", "SECRET-KEY"} {
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("X-API-Key", key)
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusUnauthorized {
+			t.Errorf("key=%q: expected 401, got %d", key, w.Code)
+		}
+	}
+}
+
+// RateLimitMiddleware spawns a cleanup goroutine. Shutdown must stop it even
+// when the caller never invokes the returned stop function.
+func TestShutdownStopsRateLimiterCleanup(t *testing.T) {
+	before := runtime.NumGoroutine()
+
+	for i := 0; i < 5; i++ {
+		_, _ = RateLimitMiddleware(10, 10*time.Millisecond)
+	}
+
+	m := &Monigo{ServiceName: "test-service"}
+	if err := m.Shutdown(context.Background()); err != nil {
+		t.Fatalf("Shutdown returned error: %v", err)
+	}
+
+	// Give the stopped goroutines a moment to unwind.
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		if runtime.NumGoroutine() <= before+1 {
+			return
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	t.Errorf("rate limiter cleanup goroutines still running after Shutdown: before=%d after=%d",
+		before, runtime.NumGoroutine())
 }

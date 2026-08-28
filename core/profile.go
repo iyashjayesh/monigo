@@ -22,7 +22,9 @@ func StartCPUProfile(filename string) (*os.File, error) {
 // StopCPUProfile stops the current CPU profile and writes it to the specified file.
 func StopCPUProfile(f *os.File) {
 	pprof.StopCPUProfile()
-	f.Close()
+	if f != nil {
+		f.Close()
+	}
 }
 
 // WriteHeapProfile writes the current memory heap profile to the specified file.
@@ -31,6 +33,7 @@ func WriteHeapProfile(filename string) error {
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 	runtime.GC() // Get up-to-date statistics
 	return pprof.WriteHeapProfile(f)
 }

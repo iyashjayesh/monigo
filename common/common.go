@@ -325,6 +325,9 @@ func DefaultIntIfZero(val, def int) int {
 func ConvertToMB(value string) (float64, error) {
 	value = strings.TrimSpace(value)
 	value = strings.Replace(value, " ", "", -1)
+	if len(value) < 3 {
+		return 0, fmt.Errorf("invalid memory value: %q", value)
+	}
 	unit := strings.ToUpper(value[len(value)-2:])
 	val, err := strconv.ParseFloat(value[:len(value)-2], 64)
 	if err != nil {

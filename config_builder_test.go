@@ -93,3 +93,36 @@ func TestBuilderAllOptions(t *testing.T) {
 		t.Errorf("expected '/custom/api', got %q", m.CustomBaseAPIPath)
 	}
 }
+
+func TestBuilderThresholdBounds(t *testing.T) {
+	tests := []struct {
+		name      string
+		configure func(*MonigoBuilder) *MonigoBuilder
+		wantPanic bool
+	}{
+		{"negative CPU", func(b *MonigoBuilder) *MonigoBuilder { return b.WithMaxCPUUsage(-1) }, true},
+		{"CPU above 100", func(b *MonigoBuilder) *MonigoBuilder { return b.WithMaxCPUUsage(101) }, true},
+		{"CPU at 100", func(b *MonigoBuilder) *MonigoBuilder { return b.WithMaxCPUUsage(100) }, false},
+		{"negative memory", func(b *MonigoBuilder) *MonigoBuilder { return b.WithMaxMemoryUsage(-0.5) }, true},
+		{"memory above 100", func(b *MonigoBuilder) *MonigoBuilder { return b.WithMaxMemoryUsage(150) }, true},
+		{"memory at 0", func(b *MonigoBuilder) *MonigoBuilder { return b.WithMaxMemoryUsage(0) }, false},
+		{"negative goroutines", func(b *MonigoBuilder) *MonigoBuilder { return b.WithMaxGoRoutines(-1) }, true},
+		{"goroutines at 0", func(b *MonigoBuilder) *MonigoBuilder { return b.WithMaxGoRoutines(0) }, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				r := recover()
+				if tt.wantPanic && r == nil {
+					t.Error("expected Build() to panic")
+				}
+				if !tt.wantPanic && r != nil {
+					t.Errorf("expected Build() to succeed, panicked with: %v", r)
+				}
+			}()
+
+			tt.configure(NewBuilder().WithServiceName("test")).Build()
+		})
+	}
+}

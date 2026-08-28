@@ -28,3 +28,5 @@ profiles/
 
 .DS_Store
 .idea/
+.gocache/
+.gopath/

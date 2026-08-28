@@ -2,6 +2,7 @@ package monigo
 
 import (
 	"context"
+	"crypto/subtle"
 	"embed"
 	"errors"
 	"fmt"
@@ -181,8 +182,12 @@ func (m *Monigo) setup() error {
 		return fmt.Errorf("[MoniGo] service_name is required, please provide the service name")
 	}
 
+	if m.StorageType != "" {
+		timeseries.SetStorageType(m.StorageType)
+	}
+
 	if err := timeseries.SetDataPointsSyncFrequency(m.DataPointsSyncFrequency); err != nil {
-		return fmt.Errorf("[MoniGo] failed to set data points sync frequency: %v", err)
+		return fmt.Errorf("[MoniGo] failed to set data points sync frequency: %w", err)
 	}
 
 	m.ProcessId = common.GetProcessId()
@@ -213,9 +218,6 @@ func (m *Monigo) setup() error {
 		m.DataRetentionPeriod,
 	)
 
-	if m.StorageType != "" {
-		timeseries.SetStorageType(m.StorageType)
-	}
 	if m.SamplingRate > 0 {
 		core.SetSamplingRate(m.SamplingRate)
 	}
@@ -246,6 +248,7 @@ func (m *Monigo) setup() error {
 // Shutdown performs a graceful cleanup of resources (OTel provider, storage, etc.).
 func (m *Monigo) Shutdown(ctx context.Context) error {
 	var errs []error
+	runCleanups()
 	if m.otelExporter != nil {
 		if err := m.otelExporter.Shutdown(ctx); err != nil {
 			errs = append(errs, fmt.Errorf("otel shutdown: %w", err))
@@ -740,7 +743,14 @@ func BasicAuthMiddleware(username, password string) func(http.Handler) http.Hand
 				return
 			}
 			user, pass, ok := r.BasicAuth()
-			if !ok || user != username || pass != password {
+			if !ok {
+				w.Header().Set("WWW-Authenticate", `Basic realm="MoniGo Dashboard"`)
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+			userMatch := subtle.ConstantTimeCompare([]byte(user), []byte(username)) == 1
+			passMatch := subtle.ConstantTimeCompare([]byte(pass), []byte(password)) == 1
+			if !userMatch || !passMatch {
 				w.Header().Set("WWW-Authenticate", `Basic realm="MoniGo Dashboard"`)
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return
@@ -762,7 +772,7 @@ func APIKeyMiddleware(apiKey string) func(http.Handler) http.Handler {
 			if providedKey == "" {
 				providedKey = r.URL.Query().Get("api_key")
 			}
-			if providedKey != apiKey {
+			if subtle.ConstantTimeCompare([]byte(providedKey), []byte(apiKey)) != 1 {
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return
 			}
@@ -789,6 +799,28 @@ func IPWhitelistMiddleware(allowedIPs []string) func(http.Handler) http.Handler 
 			http.Error(w, "Forbidden", http.StatusForbidden)
 		})
 	}
+}
+
+var (
+	activeCleanups   []func()
+	activeCleanupsMu sync.Mutex
+)
+
+func registerCleanup(f func()) {
+	activeCleanupsMu.Lock()
+	defer activeCleanupsMu.Unlock()
+	activeCleanups = append(activeCleanups, f)
+}
+
+func runCleanups() {
+	activeCleanupsMu.Lock()
+	defer activeCleanupsMu.Unlock()
+	for _, f := range activeCleanups {
+		if f != nil {
+			f()
+		}
+	}
+	activeCleanups = nil
 }
 
 // RateLimitMiddleware creates a simple rate limiting middleware.
@@ -851,6 +883,7 @@ func RateLimitMiddleware(requests int, window time.Duration) (mw func(http.Handl
 	}
 
 	stop = cancel
+	registerCleanup(stop)
 	return
 }
 

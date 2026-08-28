@@ -148,5 +148,14 @@ func (b *MonigoBuilder) Build() *Monigo {
 	if b.config.StorageType != "" && b.config.StorageType != "disk" && b.config.StorageType != "memory" {
 		panic("[MoniGo] Build() failed: StorageType must be 'disk' or 'memory'")
 	}
+	if b.config.MaxCPUUsage < 0 || b.config.MaxCPUUsage > 100 {
+		panic("[MoniGo] Build() failed: MaxCPUUsage must be between 0 and 100")
+	}
+	if b.config.MaxMemoryUsage < 0 || b.config.MaxMemoryUsage > 100 {
+		panic("[MoniGo] Build() failed: MaxMemoryUsage must be between 0 and 100")
+	}
+	if b.config.MaxGoRoutines < 0 {
+		panic("[MoniGo] Build() failed: MaxGoRoutines must be >= 0")
+	}
 	return b.config
 }

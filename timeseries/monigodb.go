@@ -2,7 +2,6 @@ package timeseries
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -38,8 +37,29 @@ func NewInMemoryStorage() *InMemoryStorage {
 func (s *InMemoryStorage) InsertRows(rows []Row) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	retention := common.GetDataRetentionPeriod()
+	cutoff := time.Now().Add(-retention).Unix()
+
 	for _, row := range rows {
-		s.data[row.Metric] = append(s.data[row.Metric], row.DataPoint)
+		if row.DataPoint.Timestamp >= cutoff {
+			s.data[row.Metric] = append(s.data[row.Metric], row.DataPoint)
+		}
+	}
+
+	// Purge expired data points
+	for metric, points := range s.data {
+		var valid []DataPoint
+		for _, p := range points {
+			if p.Timestamp >= cutoff {
+				valid = append(valid, p)
+			}
+		}
+		if len(valid) == 0 {
+			delete(s.data, metric)
+		} else {
+			s.data[metric] = valid
+		}
 	}
 	return nil
 }
@@ -100,12 +120,11 @@ func (s *StorageWrapper) Close() error {
 }
 
 type storageManager struct {
-	storage   Storage
-	ctx       context.Context
-	cancel    context.CancelFunc
-	once      sync.Once
-	closeOnce sync.Once
-	mu        sync.Mutex
+	storage    Storage
+	ctx        context.Context
+	cancel     context.CancelFunc
+	syncCancel context.CancelFunc
+	mu         sync.Mutex
 }
 
 var (
@@ -120,45 +139,56 @@ func SetStorageType(t string) {
 
 // GetStorageInstance initializes and returns a Storage instance.
 func GetStorageInstance() (Storage, error) {
-	var err error
-	manager.once.Do(func() {
-		if storageType == "memory" {
-			manager.storage = NewInMemoryStorage()
-			manager.ctx, manager.cancel = context.WithCancel(context.Background())
-			return
-		}
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
 
-		basePath := common.GetBasePath()
-		storageInstance, initErr := tstorage.NewStorage(
-			tstorage.WithDataPath(filepath.Join(basePath, "data")),
-			tstorage.WithRetention(common.GetDataRetentionPeriod()),
-		)
-		if initErr != nil {
-			err = initErr
-			logger.Log.Error("initializing storage", "error", err)
-			return
-		}
-		manager.storage = &StorageWrapper{storage: storageInstance}
-		// Initialize context and cancel function for goroutines
+	if manager.storage != nil {
+		return manager.storage, nil
+	}
+
+	if storageType == "memory" {
+		manager.storage = NewInMemoryStorage()
 		manager.ctx, manager.cancel = context.WithCancel(context.Background())
-	})
-	return manager.storage, err
+		return manager.storage, nil
+	}
+
+	basePath := common.GetBasePath()
+	storageInstance, initErr := tstorage.NewStorage(
+		tstorage.WithDataPath(filepath.Join(basePath, "data")),
+		tstorage.WithRetention(common.GetDataRetentionPeriod()),
+	)
+	if initErr != nil {
+		logger.Log.Error("initializing storage", "error", initErr)
+		return nil, fmt.Errorf("initializing storage: %w", initErr)
+	}
+	manager.storage = &StorageWrapper{storage: storageInstance}
+	// Initialize context and cancel function for goroutines
+	manager.ctx, manager.cancel = context.WithCancel(context.Background())
+	return manager.storage, nil
 }
 
 // CloseStorage closes the storage instance and stops any running goroutines.
 func CloseStorage() error {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	if manager.syncCancel != nil {
+		manager.syncCancel()
+		manager.syncCancel = nil
+	}
+	if manager.cancel != nil {
+		manager.cancel()
+		manager.cancel = nil
+	}
+
 	var err error
-	manager.closeOnce.Do(func() {
-		if manager.cancel != nil {
-			manager.cancel() // Stop any goroutines
+	if manager.storage != nil {
+		if closeErr := manager.storage.Close(); closeErr != nil {
+			logger.Log.Error("closing storage", "error", closeErr)
+			err = closeErr
 		}
-		if manager.storage != nil {
-			if closeErr := manager.storage.Close(); closeErr != nil {
-				logger.Log.Error("closing storage", "error", closeErr)
-				err = closeErr
-			}
-		}
-	})
+		manager.storage = nil
+	}
 	return err
 }
 
@@ -206,18 +236,27 @@ func SetDataPointsSyncFrequency(frequency ...string) error {
 	// Initializing service metrics once
 	serviceMetrics := core.GetServiceStats(context.Background())
 	if err := StoreServiceMetrics(&serviceMetrics); err != nil {
-		return errors.New("[MoniGo] error storing service metrics, err: " + err.Error())
+		return fmt.Errorf("[MoniGo] error storing service metrics: %w", err)
 	}
+
+	manager.mu.Lock()
+	if manager.syncCancel != nil {
+		manager.syncCancel()
+	}
+
+	var syncCtx context.Context
+	syncCtx, manager.syncCancel = context.WithCancel(manager.ctx)
+	manager.mu.Unlock()
 
 	ticker := time.NewTicker(freqTime)
 	go func() {
 		defer ticker.Stop()
 		for {
 			select {
-			case <-manager.ctx.Done():
+			case <-syncCtx.Done():
 				return
 			case <-ticker.C:
-				serviceMetrics := core.GetServiceStats(manager.ctx)
+				serviceMetrics := core.GetServiceStats(syncCtx)
 				if err := StoreServiceMetrics(&serviceMetrics); err != nil {
 					logger.Log.Error("storing service metrics", "error", err)
 				}

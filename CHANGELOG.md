@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+- `BasicAuthMiddleware` and `APIKeyMiddleware` now compare credentials with `crypto/subtle.ConstantTimeCompare` -- `!=` short-circuits on the first differing byte and leaks length and prefix information to a timing oracle
+- `ViewFunctionMetrics` validates the function name and report type before invoking `go tool pprof` -- a name beginning with `-` was interpreted as a flag by pprof, and the report type was interpolated straight into the argument list
+- `BasicAuthMiddleware` now sends a `WWW-Authenticate` challenge when a request carries no credentials at all
+
+### Fixed
+- **Inverted health score**: `calculateServiceHealth` clamped the score to `100` -- the best possible value -- when usage exceeded every threshold, so a fully degraded service reported as healthy. It now returns `0`, matching `calculateSystemHealth`
+- **Unbounded memory growth**: `InMemoryStorage.InsertRows` ignored the retention period and never evicted, so `WithStorageType("memory")` grew for the life of the process
+- **`WithStorageType` had no effect**: the storage singleton was initialised by `SetDataPointsSyncFrequency` before `SetStorageType` was applied, so `"memory"` silently fell through to disk
+- **Data race** on `serviceHealthThresholds` between `ConfigureServiceThresholds` and the metrics collection goroutine
+- **Panic** in `common.ConvertToMB` on memory strings shorter than three characters, reachable from health calculation; `calculateMemoryUsagePercentage` also guards against a zero total
+- **Panic** in `TraceFunctionWithArgs` / `TraceFunctionWithReturns` when passed a `nil` argument -- `reflect.ValueOf(nil).Type()` panics. Nillable parameter kinds now accept `nil` as the zero value
+- `CloseStorage()` was permanently terminal via `sync.Once`; a subsequent `GetStorageInstance()` returned the closed handle instead of re-initialising
+- Goroutine leak: each call to `SetDataPointsSyncFrequency` started a ticker goroutine without stopping the previous one
+- Goroutine leak: `RateLimitMiddleware`'s cleanup goroutine is now stopped by `Shutdown()`, not only by the caller invoking the returned `stop`
+- File descriptor leak in `WriteHeapProfile`; nil check in `StopCPUProfile`
+- `registry.GetAll()` documented a snapshot copy but shared the `Labels` map with the live registry
+
+### Added
+- `core.GetThresholds()` -- thread-safe accessor for the configured health thresholds
+- `Build()` validates `MaxCPUUsage` and `MaxMemoryUsage` are within 0-100 and `MaxGoRoutines` is non-negative
+- Regression tests for every fix above
+
+### Changed
+- `monigo.gif` re-encoded from 65 MB to 24 MB -- the module zip is downloaded on every `go get`
+- Argument marshalling shared between `TraceFunctionWithArgs` and `TraceFunctionWithReturns` instead of duplicated
+
 ## [2.0.0] - 2026-02-10
 
 ### Breaking Changes

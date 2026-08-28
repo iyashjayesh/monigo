@@ -149,3 +149,100 @@ func TestStoreAndRetrieveMetrics(t *testing.T) {
 	// Cleanup
 	CloseStorage()
 }
+
+// The in-memory backend used to append unconditionally and never evict, so
+// WithStorageType("memory") grew without bound for the life of the process.
+// Retention comes from common.GetDataRetentionPeriod(), set to 7d in init().
+func TestInMemoryStorage_EnforcesRetention(t *testing.T) {
+	s := NewInMemoryStorage()
+	retention := common.GetDataRetentionPeriod()
+
+	now := time.Now()
+	fresh := now.Unix()
+	expired := now.Add(-retention - time.Hour).Unix()
+
+	rows := []Row{
+		{Metric: "cpu_load", DataPoint: DataPoint{Timestamp: expired, Value: 1}},
+		{Metric: "cpu_load", DataPoint: DataPoint{Timestamp: fresh, Value: 2}},
+	}
+	if err := s.InsertRows(rows); err != nil {
+		t.Fatalf("InsertRows error: %v", err)
+	}
+
+	points, err := s.Select("cpu_load", nil, 0, fresh+60)
+	if err != nil {
+		t.Fatalf("Select error: %v", err)
+	}
+	if len(points) != 1 {
+		t.Fatalf("expected the expired point to be dropped, got %d points", len(points))
+	}
+	if points[0].Value != 2 {
+		t.Errorf("expected the fresh point to survive, got value %v", points[0].Value)
+	}
+}
+
+// Points already held are purged once they age past the retention window.
+func TestInMemoryStorage_PurgesExpiredOnInsert(t *testing.T) {
+	s := NewInMemoryStorage()
+	retention := common.GetDataRetentionPeriod()
+
+	// Seed a point that is inside the window at insert time.
+	borderline := time.Now().Add(-retention + 2*time.Hour).Unix()
+	if err := s.InsertRows([]Row{{Metric: "mem_load", DataPoint: DataPoint{Timestamp: borderline, Value: 9}}}); err != nil {
+		t.Fatalf("InsertRows error: %v", err)
+	}
+
+	// Age it out by rewriting its timestamp, then insert again to trigger the purge.
+	s.mu.Lock()
+	s.data["mem_load"][0].Timestamp = time.Now().Add(-retention - time.Hour).Unix()
+	s.mu.Unlock()
+
+	now := time.Now().Unix()
+	if err := s.InsertRows([]Row{{Metric: "cpu_load", DataPoint: DataPoint{Timestamp: now, Value: 1}}}); err != nil {
+		t.Fatalf("InsertRows error: %v", err)
+	}
+
+	points, err := s.Select("mem_load", nil, 0, now+60)
+	if err != nil {
+		t.Fatalf("Select error: %v", err)
+	}
+	if len(points) != 0 {
+		t.Errorf("expected expired metric to be purged, got %d points", len(points))
+	}
+}
+
+// CloseStorage used to be permanently terminal because of sync.Once, so a
+// subsequent GetStorageInstance() handed back a closed handle.
+func TestStorageInstanceIsReinitialisableAfterClose(t *testing.T) {
+	SetStorageType("memory")
+
+	first, err := GetStorageInstance()
+	if err != nil {
+		t.Fatalf("GetStorageInstance error: %v", err)
+	}
+	if first == nil {
+		t.Fatal("expected a storage instance")
+	}
+	if err := CloseStorage(); err != nil {
+		t.Fatalf("CloseStorage error: %v", err)
+	}
+
+	second, err := GetStorageInstance()
+	if err != nil {
+		t.Fatalf("GetStorageInstance after close error: %v", err)
+	}
+	if second == nil {
+		t.Fatal("expected a fresh storage instance after close")
+	}
+	if second == first {
+		t.Error("expected a new instance after CloseStorage, got the closed one back")
+	}
+
+	// A usable instance accepts writes.
+	if err := second.InsertRows([]Row{{Metric: "cpu_load", DataPoint: DataPoint{Timestamp: time.Now().Unix(), Value: 1}}}); err != nil {
+		t.Errorf("re-initialised storage rejected a write: %v", err)
+	}
+	if err := CloseStorage(); err != nil {
+		t.Fatalf("CloseStorage (cleanup) error: %v", err)
+	}
+}
