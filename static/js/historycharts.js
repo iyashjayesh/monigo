@@ -49,23 +49,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return fetch(url, options);
     }
 
-    const refreshHtml = `
-        <div class="loader-container mt-3">
-            <div class="bouncing-dots">
-                <div class="dot"></div>
-                <div class="dot"></div>
-                <div class="dot"></div>
-            </div>
-        </div>`;
-
     const elements = {
         cpuUsageChart: document.getElementById('cpu-usage-chart'),
         goroutinesChart: document.getElementById('goroutines-chart'),
         loadMemoryChart: document.getElementById('load-memory-chart'),
         healthChart: document.getElementById('health-chart')
     };
-
-    Object.values(elements).forEach(el => el && (el.innerHTML = refreshHtml));
 
     // Function to get the local ISO string with timezone offset
     function toLocalISOString(date) {
@@ -151,18 +140,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 if (metricName == "health") {
+                    window.lastHealthData = rawData;
                     renderHealthChart(rawData);
                 }
 
                 if (metricName == "cpu-usage") {
+                    window.lastCpuData = rawData;
                     renderCpuUsageChart(rawData);
                 }
 
                 if (metricName == "goroutines") {
+                    window.lastGoroutinesData = rawData;
                     renderGoroutinesChart(rawData);
                 }
 
                 if (metricName == "load-memory") {
+                    window.lastLoadMemoryData = rawData;
                     renderLoadMemoryChart(rawData);
                 }
             })
@@ -172,22 +165,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderHealthChart(data) {
+        const isDark = document.body.classList.contains('dark-theme');
+        const textColor = isDark ? '#9ca3af' : '#333';
+        const titleColor = isDark ? '#f3f4f6' : '#333';
+        const gridLineColor = isDark ? '#1f2937' : '#eee';
+
         const healthChart = echarts.init(elements.healthChart);
-        const time = data.map(entry => entry.time);
+        const time = data.map(entry => new Date(entry.time).toLocaleTimeString());
         const serviceHealthPercent = data.map(entry => entry.value.service_health_percent);
         const systemHealthPercent = data.map(entry => entry.value.system_health_percent);
 
         const option = {
+            backgroundColor: 'transparent',
             title: {
                 text: 'Health Metrics',
-                left: 'center'
+                left: 'center',
+                textStyle: { color: titleColor }
             },
             tooltip: {
                 trigger: 'axis'
             },
             legend: {
                 data: ['Service Health', 'System Health'],
-                top: 30
+                top: 30,
+                textStyle: { color: textColor }
             },
             grid: {
                 left: '3%',
@@ -198,21 +199,27 @@ document.addEventListener('DOMContentLoaded', () => {
             xAxis: {
                 type: 'category',
                 boundaryGap: false,
-                data: time
+                data: time,
+                axisLabel: { color: textColor },
+                axisLine: { lineStyle: { color: gridLineColor } }
             },
             yAxis: {
-                type: 'value'
+                type: 'value',
+                axisLabel: { color: textColor },
+                splitLine: { lineStyle: { color: gridLineColor } }
             },
             series: [
                 {
                     name: 'Service Health',
                     type: 'line',
-                    data: serviceHealthPercent
+                    data: serviceHealthPercent,
+                    itemStyle: { color: '#10b981' }
                 },
                 {
                     name: 'System Health',
                     type: 'line',
-                    data: systemHealthPercent
+                    data: systemHealthPercent,
+                    itemStyle: { color: '#3b82f6' }
                 }
             ]
         };
@@ -221,23 +228,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderCpuUsageChart(data) {
+        const isDark = document.body.classList.contains('dark-theme');
+        const textColor = isDark ? '#9ca3af' : '#333';
+        const titleColor = isDark ? '#f3f4f6' : '#333';
+        const gridLineColor = isDark ? '#1f2937' : '#eee';
+
         const cpuUsageChart = echarts.init(elements.cpuUsageChart);
-        const time = data.map(entry => entry.time);
+        const time = data.map(entry => new Date(entry.time).toLocaleTimeString());
         const totalCores = data.map(entry => entry.value.total_cores);
         const coresUsedByService = data.map(entry => entry.value.cores_used_by_service);
         const coresUsedBySystem = data.map(entry => entry.value.cores_used_by_system);
 
         const option = {
+            backgroundColor: 'transparent',
             title: {
                 text: 'CPU Usage Metrics',
-                left: 'center'
+                left: 'center',
+                textStyle: { color: titleColor }
             },
             tooltip: {
                 trigger: 'axis'
             },
             legend: {
                 data: ['Total Cores', 'Cores Used by Service', 'Cores Used by System'],
-                top: 30
+                top: 30,
+                textStyle: { color: textColor }
             },
             grid: {
                 left: '3%',
@@ -248,26 +263,33 @@ document.addEventListener('DOMContentLoaded', () => {
             xAxis: {
                 type: 'category',
                 boundaryGap: false,
-                data: time
+                data: time,
+                axisLabel: { color: textColor },
+                axisLine: { lineStyle: { color: gridLineColor } }
             },
             yAxis: {
-                type: 'value'
+                type: 'value',
+                axisLabel: { color: textColor },
+                splitLine: { lineStyle: { color: gridLineColor } }
             },
             series: [
                 {
                     name: 'Total Cores',
                     type: 'line',
-                    data: totalCores
+                    data: totalCores,
+                    itemStyle: { color: '#ff5c35' }
                 },
                 {
                     name: 'Cores Used by Service',
                     type: 'line',
-                    data: coresUsedByService
+                    data: coresUsedByService,
+                    itemStyle: { color: '#00A1E4' }
                 },
                 {
                     name: 'Cores Used by System',
                     type: 'line',
-                    data: coresUsedBySystem
+                    data: coresUsedBySystem,
+                    itemStyle: { color: '#FF6F61' }
                 }
             ]
         };
@@ -276,21 +298,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderGoroutinesChart(data) {
+        const isDark = document.body.classList.contains('dark-theme');
+        const textColor = isDark ? '#9ca3af' : '#333';
+        const titleColor = isDark ? '#f3f4f6' : '#333';
+        const gridLineColor = isDark ? '#1f2937' : '#eee';
+
         const goroutinesChart = echarts.init(elements.goroutinesChart);
-        const time = data.map(entry => entry.time);
+        const time = data.map(entry => new Date(entry.time).toLocaleTimeString());
         const goroutines = data.map(entry => entry.value.goroutines);
 
         const option = {
+            backgroundColor: 'transparent',
             title: {
                 text: 'Goroutines Metrics',
-                left: 'center'
+                left: 'center',
+                textStyle: { color: titleColor }
             },
             tooltip: {
                 trigger: 'axis'
             },
             legend: {
                 data: ['Goroutines'],
-                top: 30
+                top: 30,
+                textStyle: { color: textColor }
             },
             grid: {
                 left: '3%',
@@ -301,16 +331,21 @@ document.addEventListener('DOMContentLoaded', () => {
             xAxis: {
                 type: 'category',
                 boundaryGap: false,
-                data: time
+                data: time,
+                axisLabel: { color: textColor },
+                axisLine: { lineStyle: { color: gridLineColor } }
             },
             yAxis: {
-                type: 'value'
+                type: 'value',
+                axisLabel: { color: textColor },
+                splitLine: { lineStyle: { color: gridLineColor } }
             },
             series: [
                 {
                     name: 'Goroutines',
                     type: 'line',
-                    data: goroutines
+                    data: goroutines,
+                    itemStyle: { color: '#ff5c35' }
                 }
             ]
         };
@@ -319,8 +354,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderLoadMemoryChart(data) {
+        const isDark = document.body.classList.contains('dark-theme');
+        const textColor = isDark ? '#9ca3af' : '#333';
+        const titleColor = isDark ? '#f3f4f6' : '#333';
+        const gridLineColor = isDark ? '#1f2937' : '#eee';
+
         const loadMemoryChart = echarts.init(elements.loadMemoryChart);
-        const time = data.map(entry => entry.time);
+        const time = data.map(entry => new Date(entry.time).toLocaleTimeString());
         const overallLoadOfService = data.map(entry => entry.value.overall_load_of_service);
         const serviceCpuLoad = data.map(entry => entry.value.service_cpu_load);
         const serviceMemoryLoad = data.map(entry => entry.value.service_memory_load);
@@ -328,17 +368,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const systemMemoryLoad = data.map(entry => entry.value.system_memory_load);
 
         const option = {
+            backgroundColor: 'transparent',
             title: {
                 text: 'Load Memory Metrics',
                 left: 'center',
-                padding: [0, 0, 10, 0]
+                padding: [0, 0, 10, 0],
+                textStyle: { color: titleColor }
             },
             tooltip: {
                 trigger: 'axis'
             },
             legend: {
                 data: ['Overall Load of Service', 'Service CPU Load', 'Service Memory Load', 'System CPU Load', 'System Memory Load'],
-                top: 10
+                top: 30,
+                textStyle: { color: textColor }
             },
             grid: {
                 left: '3%',
@@ -349,10 +392,14 @@ document.addEventListener('DOMContentLoaded', () => {
             xAxis: {
                 type: 'category',
                 boundaryGap: false,
-                data: time
+                data: time,
+                axisLabel: { color: textColor },
+                axisLine: { lineStyle: { color: gridLineColor } }
             },
             yAxis: {
-                type: 'value'
+                type: 'value',
+                axisLabel: { color: textColor },
+                splitLine: { lineStyle: { color: gridLineColor } }
             },
             series: [
                 {
@@ -400,5 +447,10 @@ document.addEventListener('DOMContentLoaded', () => {
     updateHistoryChart("cpu-usage");
     updateHistoryChart("goroutines");
     updateHistoryChart("load-memory");
-    updateHistoryChart("health");
+    document.addEventListener('monigoThemeChanged', () => {
+        if (window.lastHealthData) renderHealthChart(window.lastHealthData);
+        if (window.lastCpuData) renderCpuUsageChart(window.lastCpuData);
+        if (window.lastGoroutinesData) renderGoroutinesChart(window.lastGoroutinesData);
+        if (window.lastLoadMemoryData) renderLoadMemoryChart(window.lastLoadMemoryData);
+    });
 });

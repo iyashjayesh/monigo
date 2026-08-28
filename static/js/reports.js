@@ -178,7 +178,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const tableElement = document.createElement('table');
         tableElement.classList.add('data-table', 'table', 'mb-0', 'tbl-server-info');
         const thead = document.createElement('thead');
-        thead.classList.add('bg-white', 'text-uppercase');
+        const isDark = document.body.classList.contains('dark-theme');
+        thead.classList.add(isDark ? 'bg-dark' : 'bg-white', 'text-uppercase');
         const tbody = document.createElement('tbody');
         tbody.classList.add('ligth-body');
         const directHeaders = data.length > 0 ? Object.keys(data[0]).filter(header => header !== 'value') : [];

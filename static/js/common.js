@@ -58,6 +58,64 @@ document.addEventListener('DOMContentLoaded', () => {
         return fetch(url, options);
     }
 
+    // 1. Theme Configuration & Toggle Initialization (Synchronous, prioritized)
+    const savedTheme = localStorage.getItem('monigo-theme') || 'light';
+    
+    // Inject theme toggle button into the correct, visible top right navbar-list
+    const navbarList = document.querySelector('#navbarSupportedContent .navbar-list') || document.querySelector('.navbar-nav.navbar-list');
+    if (navbarList) {
+        const toggleLi = document.createElement('li');
+        toggleLi.className = 'nav-item nav-icon ml-3';
+        
+        const toggleLink = document.createElement('a');
+        toggleLink.id = 'theme-toggle-btn';
+        toggleLink.className = 'cursor-pointer';
+        toggleLink.innerHTML = '<i class="fa fa-moon-o" aria-hidden="true" style="font-size: 16px;"></i>';
+        
+        toggleLi.appendChild(toggleLink);
+        navbarList.appendChild(toggleLi);
+        
+        // Add event listener to toggle theme
+        toggleLink.addEventListener('click', () => {
+            const currentTheme = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        });
+    }
+
+    function setTheme(theme) {
+        if (theme === 'dark') {
+            document.body.classList.add('dark-theme');
+            localStorage.setItem('monigo-theme', 'dark');
+            const icon = document.querySelector('#theme-toggle-btn i');
+            if (icon) {
+                icon.className = 'fa fa-sun-o';
+            }
+        } else {
+            document.body.classList.remove('dark-theme');
+            localStorage.setItem('monigo-theme', 'light');
+            const icon = document.querySelector('#theme-toggle-btn i');
+            if (icon) {
+                icon.className = 'fa fa-moon-o';
+            }
+        }
+        // Emit event to notify other scripts (like charts) to update colors
+        document.dispatchEvent(new CustomEvent('monigoThemeChanged', { detail: { theme } }));
+    }
+
+    // Apply saved theme preference immediately
+    setTheme(savedTheme);
+
+    // 2. Pre-populate all chart containers with a stylized loading spinner
+    document.querySelectorAll('.chart-container').forEach(el => {
+        el.innerHTML = `
+            <div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted" style="min-height: 200px;">
+                <i class="fa fa-refresh fa-spin fa-2x mb-3" style="color: #ff5c35;"></i>
+                <span class="small font-weight-bold">Awaiting MoniGo server connection...</span>
+            </div>
+        `;
+    });
+
     const elements = {
         healthMessage: document.getElementById('health-message'),
     };
@@ -68,20 +126,20 @@ document.addEventListener('DOMContentLoaded', () => {
         authenticatedFetch(`/monigo/api/v1/metrics`)
             .then(response => response.json())
             .then(data => {
-                const {
-                    // core_statistics,
-                    // load_statistics,
-                    // cpu_statistics,
-                    // memory_statistics,
-                    health
-                } = data;
+                const { health } = data;
                 const healthIndicator = document.getElementById('health-indicator');
-                if (health.service_health.healthy) {
-                    healthIndicator.classList.add('healthy');
-                    document.getElementById('health-message').textContent = health.service_health.message;
-                } else {
-                    healthIndicator.classList.add('unhealthy');
-                    document.getElementById('health-message').textContent = health.service_health.message;
+                if (healthIndicator) {
+                    if (health.service_health.healthy) {
+                        healthIndicator.classList.remove('unhealthy');
+                        healthIndicator.classList.add('healthy');
+                    } else {
+                        healthIndicator.classList.remove('healthy');
+                        healthIndicator.classList.add('unhealthy');
+                    }
+                }
+                const healthMsgEl = document.getElementById('health-message');
+                if (healthMsgEl) {
+                    healthMsgEl.textContent = health.service_health.message;
                 }
             })
             .catch(error => {
@@ -89,6 +147,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
-    // on page refresh
+    // Fetch metrics on load
     fetchMetrics();
 });

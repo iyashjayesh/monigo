@@ -96,4 +96,443 @@
     margin-left: 30px;
 }
 
-/* Function Stack View CSS */
+/* --- Premium Styling System & Dark Mode --- */
+
+/* Global Premium Styling Overrides */
+.card {
+    border-radius: 12px !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease !important;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04) !important;
+    border-color: rgba(255, 92, 53, 0.3) !important;
+}
+
+/* Theme Toggle Button Styling */
+#theme-toggle-btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border-radius: 50% !important;
+    width: 38px !important;
+    height: 38px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background-color: #f3f4f6 !important;
+    border: 1px solid #e5e7eb !important;
+    color: #4b5563 !important;
+}
+
+#theme-toggle-btn:hover {
+    transform: scale(1.1) rotate(15deg);
+    background-color: #e5e7eb !important;
+    color: #ff5c35 !important;
+    box-shadow: 0 0 12px rgba(255, 92, 53, 0.25) !important;
+}
+
+/* Modern Progress Bars */
+.iq-progress-bar {
+    height: 7px !important;
+    border-radius: 6px !important;
+    background-color: #f3f4f6 !important;
+    overflow: hidden !important;
+    margin-top: 12px !important;
+    padding: 0 !important;
+}
+
+.iq-progress {
+    height: 100% !important;
+    border-radius: 6px !important;
+    display: block !important;
+    background-color: #ff5c35 !important;
+}
+
+/* Icon Box Polish */
+.iq-icon-box-2 {
+    border-radius: 10px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 44px !important;
+    height: 44px !important;
+    padding: 8px !important;
+    margin-right: 12px !important;
+    transition: background-color 0.2s ease !important;
+}
+
+/* Dark Mode Colors & Styling */
+body.dark-theme {
+    background-color: #0b0f19 !important;
+    color: #f3f4f6 !important;
+}
+
+body.dark-theme .wrapper {
+    background-color: #0b0f19 !important;
+}
+
+body.dark-theme .iq-sidebar {
+    background-color: #111827 !important;
+    border-right: 1px solid #1f2937 !important;
+}
+
+body.dark-theme .iq-sidebar-logo {
+    border-bottom: 1px solid #1f2937 !important;
+    background-color: #111827 !important;
+}
+
+body.dark-theme .iq-sidebar-menu ul li a {
+    color: #9ca3af !important;
+}
+
+body.dark-theme .iq-sidebar-menu ul li a i,
+body.dark-theme .iq-sidebar-menu ul li a svg {
+    color: #9ca3af !important;
+    fill: #9ca3af !important;
+    transition: color 0.2s, fill 0.2s !important;
+}
+
+body.dark-theme .iq-sidebar-menu ul li.active > a,
+body.dark-theme .iq-sidebar-menu ul li a:hover {
+    color: #ff5c35 !important;
+    background-color: #1f2937 !important;
+}
+
+body.dark-theme .iq-sidebar-menu ul li.active > a i,
+body.dark-theme .iq-sidebar-menu ul li.active > a svg,
+body.dark-theme .iq-sidebar-menu ul li a:hover i,
+body.dark-theme .iq-sidebar-menu ul li a:hover svg {
+    color: #ff5c35 !important;
+    fill: #ff5c35 !important;
+}
+
+body.dark-theme .card {
+    background-color: #111827 !important;
+    border: 1px solid #1f2937 !important;
+    color: #f3f4f6 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2) !important;
+}
+
+body.dark-theme .card:hover {
+    box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.6), 0 8px 10px -2px rgba(0, 0, 0, 0.4) !important;
+    border-color: rgba(255, 92, 53, 0.45) !important;
+}
+
+body.dark-theme .card-header,
+body.dark-theme .card-footer {
+    background-color: #1f2937 !important;
+    border-bottom: 1px solid #374151 !important;
+    color: #f3f4f6 !important;
+}
+
+body.dark-theme .iq-top-navbar {
+    background-color: #111827 !important;
+    border-bottom: 1px solid #1f2937 !important;
+}
+
+body.dark-theme .navbar {
+    background-color: #111827 !important;
+}
+
+body.dark-theme .navbar-list {
+    background-color: #1f2937 !important;
+    color: #f3f4f6 !important;
+}
+
+body.dark-theme .text-muted,
+body.dark-theme .dropdown-label {
+    color: #9ca3af !important;
+}
+
+body.dark-theme .table {
+    color: #f3f4f6 !important;
+}
+
+body.dark-theme .table th {
+    border-color: #1f2937 !important;
+    background-color: #1f2937 !important;
+}
+
+body.dark-theme .table td {
+    border-color: #1f2937 !important;
+}
+
+body.dark-theme .table tbody tr:hover {
+    background-color: #1f2937 !important;
+}
+
+body.dark-theme .modal-content {
+    background-color: #111827 !important;
+    color: #f3f4f6 !important;
+    border: 1px solid #1f2937 !important;
+}
+
+body.dark-theme .modal-header {
+    border-bottom: 1px solid #1f2937 !important;
+}
+
+body.dark-theme .modal-footer {
+    border-top: 1px solid #1f2937 !important;
+}
+
+body.dark-theme .dropdown-select {
+    background-color: #1f2937 !important;
+    color: #f3f4f6 !important;
+    border: 1px solid #374151 !important;
+}
+
+body.dark-theme #theme-toggle-btn {
+    background-color: #1f2937 !important;
+    border-color: #374151 !important;
+    color: #f3f4f6 !important;
+}
+
+body.dark-theme #theme-toggle-btn:hover {
+    background-color: #374151 !important;
+    color: #ff5c35 !important;
+}
+
+body.dark-theme .iq-progress-bar {
+    background-color: #1f2937 !important;
+}
+
+body.dark-theme .iq-icon-box-2 {
+    background-color: #1f2937 !important;
+    border: 1px solid #374151 !important;
+}
+
+body.dark-theme .goroutine-card {
+    background-color: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+body.dark-theme pre {
+    background-color: #0b0f19 !important;
+    color: #34d399 !important;
+    border: 1px solid #1f2937 !important;
+    border-radius: 8px !important;
+    padding: 16px !important;
+    font-family: 'Fira Code', 'Courier New', Courier, monospace !important;
+}
+
+body.dark-theme .gauge,
+.gauge {
+    background: none !important;
+    display: block !important;
+    margin: 15px auto !important;
+    width: auto !important;
+    height: auto !important;
+    aspect-ratio: auto !important;
+}
+
+body.dark-theme .gauge::after,
+.gauge::after {
+    display: none !important;
+}
+
+/* Typography polish */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+}
+
+/* Brand Buttons */
+.btn-primary, #download-image-btn, #download-stack-view, #downloadBtn, .sidebar-bottom-btn {
+    background-color: #ff5c35 !important;
+    border-color: #ff5c35 !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 4px 6px -1px rgba(255, 92, 53, 0.15), 0 2px 4px -1px rgba(255, 92, 53, 0.1) !important;
+}
+
+.btn-primary:hover, #download-image-btn:hover, #download-stack-view:hover, #downloadBtn:hover, .sidebar-bottom-btn:hover {
+    background-color: #e04b24 !important;
+    border-color: #e04b24 !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 12px -2px rgba(255, 92, 53, 0.3), 0 4px 6px -2px rgba(255, 92, 53, 0.2) !important;
+}
+
+.sidebar-bottom-btn a {
+    color: #ffffff !important;
+    text-decoration: none !important;
+}
+
+/* GitHub Icon Wrapper Circular Style */
+.navbar-list li.nav-item.nav-icon.dropdown a {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 50% !important;
+    background-color: #f3f4f6 !important;
+    border: 1px solid #e5e7eb !important;
+    color: #4b5563 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+body.dark-theme .navbar-list li.nav-item.nav-icon.dropdown a {
+    background-color: #1f2937 !important;
+    border-color: #374151 !important;
+    color: #f3f4f6 !important;
+}
+
+.navbar-list li.nav-item.nav-icon.dropdown a:hover {
+    transform: scale(1.1);
+    background-color: #e5e7eb !important;
+    color: #ff5c35 !important;
+    box-shadow: 0 0 12px rgba(255, 92, 53, 0.25) !important;
+}
+
+body.dark-theme .navbar-list li.nav-item.nav-icon.dropdown a:hover {
+    background-color: #374151 !important;
+    color: #ff5c35 !important;
+}
+
+.navbar-list li.nav-item.nav-icon.dropdown a i.fa-github {
+    font-size: 18px !important;
+    margin: 0 !important;
+}
+
+/* Countdown Pill Style */
+.add-btn {
+    border-radius: 20px !important;
+    padding: 6px 16px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    background-color: transparent !important;
+    border-color: #e5e7eb !important;
+    color: #4b5563 !important;
+    transition: all 0.2s ease !important;
+}
+
+body.dark-theme .add-btn {
+    border-color: #374151 !important;
+    color: #9ca3af !important;
+}
+
+/* Skeleton Text Animation */
+.skeleton-text {
+    font-size: 1.15rem !important;
+    font-weight: 500 !important;
+    color: #9ca3af !important;
+}
+
+body.dark-theme .skeleton-text {
+    color: #6b7280 !important;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 0.35; }
+}
+
+.animate-pulse {
+    animation: pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Secondary Outlined Buttons for Detailed View */
+.card-body .btn-primary {
+    background-color: transparent !important;
+    border: 1px solid #ff5c35 !important;
+    color: #ff5c35 !important;
+    font-weight: 500 !important;
+    font-size: 13px !important;
+    padding: 6px 14px !important;
+    box-shadow: none !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.card-body .btn-primary:hover {
+    background-color: #ff5c35 !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(255, 92, 53, 0.2) !important;
+}
+
+body.dark-theme .card-body .btn-primary {
+    border-color: #ff5c35 !important;
+    color: #ff5c35 !important;
+}
+
+body.dark-theme .card-body .btn-primary:hover {
+    background-color: #ff5c35 !important;
+    color: #ffffff !important;
+}
+
+/* Sidebar Bottom Card Custom Styling */
+.sidebar-bottom .card.bg-success-light {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+    margin: 15px !important;
+}
+
+.sidebar-bottom .card.bg-success-light h6 {
+    color: #9ca3af !important;
+    font-size: 12px !important;
+    line-height: 1.6 !important;
+    font-weight: 400 !important;
+}
+
+.sidebar-bottom .card.bg-success-light .sidebar-bottom-btn {
+    background-color: #ff5c35 !important;
+    border: none !important;
+    width: 100% !important;
+    border-radius: 8px !important;
+    padding: 8px 12px !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.sidebar-bottom .card.bg-success-light .sidebar-bottom-btn a {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    text-decoration: none !important;
+}
+
+.sidebar-bottom .card.bg-success-light .sidebar-bottom-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(255, 92, 53, 0.3) !important;
+}
+
+/* Remove all static decorative progress bars from metric cards */
+.card-body .iq-progress-bar {
+    display: none !important;
+}
+
+/* Harmonize icon box colors with brand orange */
+.iq-icon-box-2 {
+    background-color: rgba(255, 92, 53, 0.06) !important;
+    border-radius: 10px !important;
+    width: 44px !important;
+    height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+}
+
+body.dark-theme .iq-icon-box-2 {
+    background-color: rgba(255, 92, 53, 0.12) !important;
+}
+
+.iq-icon-box-2 img {
+    max-width: 22px !important;
+    max-height: 22px !important;
+    filter: drop-shadow(0 2px 4px rgba(255, 92, 53, 0.15));
+}
+
+.card:hover .iq-icon-box-2 {
+    transform: scale(1.05);
+    background-color: rgba(255, 92, 53, 0.1) !important;
+}
+
+body.dark-theme .card:hover .iq-icon-box-2 {
+    background-color: rgba(255, 92, 53, 0.18) !important;
+}

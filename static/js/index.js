@@ -106,7 +106,74 @@ document.addEventListener('DOMContentLoaded', () => {
         )
     };
 
-    Object.values(elements).forEach((el) => el && (el.innerHTML = refreshHtml));
+    function setInitialLoadState() {
+        const textElements = {
+            goroutines: ['Go Routines:', 'Number of goroutines that are currently running'],
+            serviceLoad: ['Load:', 'The load average of the system'],
+            cores: ['Cores:', 'Number of CPU cores'],
+            memory: ['Memory:', 'Memory used by the service'],
+            cpuUsage: ['CPU Usage:', 'CPU usage of the service'],
+            uptime: ['Uptime:', 'Uptime of the service']
+        };
+
+        for (const [id, [label, info]] of Object.entries(textElements)) {
+            const el = elements[id];
+            if (el) {
+                el.innerHTML = `
+                    <div>
+                        <p class="mb-2 text-muted">${label} <span class="info-icon" data-tooltip="${info}">i</span></p>
+                        <h4 class="skeleton-text animate-pulse text-muted">Connecting...</h4>
+                    </div>`;
+            }
+        }
+
+        const sName = document.getElementById('service_name');
+        if (sName) {
+            sName.innerHTML = `
+                <div class="mt-1">
+                    <p class="mb-2 text-muted">Service Name:</p>
+                    <h4 class="skeleton-text animate-pulse text-muted">Connecting...</h4>
+                </div>`;
+        }
+        const gVer = document.getElementById('go_version');
+        if (gVer) {
+            gVer.innerHTML = `
+                <div class="mt-1">
+                    <p class="mb-2 text-muted">Go Version:</p>
+                    <h4 class="skeleton-text animate-pulse text-muted">Connecting...</h4>
+                </div>`;
+        }
+        const sStart = document.getElementById('service_start_time');
+        if (sStart) {
+            sStart.innerHTML = `
+                <div class="mt-1">
+                    <p class="mb-2 text-muted">Service Start Time:</p>
+                    <h4 class="skeleton-text animate-pulse text-muted">Connecting...</h4>
+                </div>`;
+        }
+        const pId = document.getElementById('process_id');
+        if (pId) {
+            pId.innerHTML = `
+                <div class="mt-1">
+                    <p class="mb-2 text-muted">Process ID:</p>
+                    <h4 class="skeleton-text animate-pulse text-muted">Connecting...</h4>
+                </div>`;
+        }
+
+        if (elements.serviceHealthTag) {
+            elements.serviceHealthTag.innerHTML = `<span class="badge badge-warning text-muted small py-1 px-2">Service Health: Awaiting...</span>`;
+        }
+        if (elements.systemHealthTag) {
+            elements.systemHealthTag.innerHTML = `<span class="badge badge-warning text-muted small py-1 px-2">System Health: Awaiting...</span>`;
+        }
+
+        // Modal detail buttons get a clean textual connecting message
+        if (elements.memoryDetailButton) elements.memoryDetailButton.innerHTML = '<div class="text-center p-3 text-muted">Awaiting connection...</div>';
+        if (elements.coreUsageDetailButton) elements.coreUsageDetailButton.innerHTML = '<div class="text-center p-3 text-muted">Awaiting connection...</div>';
+        if (elements.loadUsageDetailButton) elements.loadUsageDetailButton.innerHTML = '<div class="text-center p-3 text-muted">Awaiting connection...</div>';
+    }
+
+    setInitialLoadState();
 
     if (GOROUTINES_PAGE) {
         fetchServiceInfo();
@@ -269,6 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     health
                 } = data;
 
+                window.lastMetricsData = data;
                 updateGauge('g1', health);
                 updateElement(
                     elements.goroutines,
@@ -411,6 +479,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // KB
     function renderCharts(data) {
+        const isDark = document.body.classList.contains('dark-theme');
+        const textColor = isDark ? '#9ca3af' : '#333';
+        const titleColor = isDark ? '#f3f4f6' : '#333';
+        const gridLineColor = isDark ? '#1f2937' : '#eee';
+
         const charts = {
             loadChart: echarts.init(elements.loadChart),
             cpuChart: echarts.init(elements.cpuChart),
@@ -421,7 +494,8 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.values(charts).forEach((chart) =>
             chart.setOption({
                 title: {
-                    text: 'Loading...'
+                    text: 'Loading...',
+                    textStyle: { color: titleColor }
                 },
                 tooltip: {}
             })
@@ -431,8 +505,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Load Chart
         charts.loadChart.setOption({
+            backgroundColor: 'transparent',
             title: {
-                text: 'Load Statistics'
+                text: 'Load Statistics',
+                textStyle: { color: titleColor }
             },
             tooltip: {
                 trigger: 'axis',
@@ -461,11 +537,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Total CPU Load',
                     'Service Memory Load',
                     'System Memory Load'
-                ]
+                ],
+                axisLabel: { color: textColor },
+                axisLine: { lineStyle: { color: gridLineColor } }
             },
             yAxis: {
                 type: 'value',
-                max: 100
+                max: 100,
+                axisLabel: { color: textColor },
+                splitLine: { lineStyle: { color: gridLineColor } }
             },
             series: [
                 {
@@ -480,10 +560,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     itemStyle: {
                         color: (params) => {
                             const value = params.value;
-                            if (value > 90) return 'red';
-                            if (value > 80) return 'orange';
-                            if (value > 50) return 'yellow';
-                            return 'green';
+                            if (value > 90) return '#ef4444';
+                            if (value > 80) return '#f97316';
+                            if (value > 50) return '#eab308';
+                            return '#10b981';
                         }
                     },
                     emphasis: {
@@ -499,8 +579,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // CPU Chart
         charts.cpuChart.setOption({
+            backgroundColor: 'transparent',
             title: {
-                text: 'CPU Statistics'
+                text: 'CPU Statistics',
+                textStyle: { color: titleColor }
             },
             tooltip: {
                 trigger: 'item',
@@ -510,6 +592,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 orient: 'horizontal',
                 center: 0,
                 padding: [30, 0, 0, 0],
+                textStyle: { color: textColor },
                 data: [
                     {
                         name: 'Cores Used by Service',
@@ -540,6 +623,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     type: 'pie',
                     radius: '55%',
                     center: ['50%', '60%'],
+                    label: { color: textColor },
                     data: [
                         {
                             value: cpu_statistics.cores_used_by_service,
@@ -570,19 +654,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Memory Pie Chart
         charts.memoryPieChart.setOption({
+            backgroundColor: 'transparent',
             title: {
-                text: 'Memory Distribution'
+                text: 'Memory Distribution',
+                textStyle: { color: titleColor }
             },
             tooltip: {
                 trigger: 'item',
                 formatter: function (params) {
-                    return `${params.seriesName}<br/>${params.name}: ${params.value} (${params.percent}%) []`;
+                    return `${params.seriesName}<br/>${params.name}: ${params.value} (${params.percent}%)`;
                 }
             },
             legend: {
                 orient: 'horizontal',
                 center: 0,
                 padding: [40, 0, 0, 0],
+                textStyle: { color: textColor },
                 data: [
                     'Memory Used by Service',
                     'Memory Used by System',
@@ -595,6 +682,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     type: 'pie',
                     radius: '55%',
                     center: ['50%', '60%'],
+                    label: { color: textColor },
                     data: [
                         {
                             value: parseFloat(
@@ -647,8 +735,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Heap Usage Chart
         charts.heapUsageChart.setOption({
+            backgroundColor: 'transparent',
             title: {
-                text: 'Heap Memory Usage'
+                text: 'Heap Memory Usage',
+                textStyle: { color: titleColor }
             },
             tooltip: {},
             xAxis: {
@@ -659,11 +749,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     'HeapIdle',
                     'HeapInuse',
                     'HeapReleased'
-                ]
+                ],
+                axisLabel: { color: textColor },
+                axisLine: { lineStyle: { color: gridLineColor } }
             },
             yAxis: {
                 type: 'value',
-                name: 'MB'
+                name: 'MB',
+                nameTextStyle: { color: textColor },
+                axisLabel: { color: textColor },
+                splitLine: { lineStyle: { color: gridLineColor } }
             },
             series: [
                 {
@@ -675,7 +770,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         values[2],
                         values[3],
                         values[4]
-                    ]
+                    ],
+                    itemStyle: { color: '#00A1E4' }
                 }
             ]
         });
@@ -812,35 +908,47 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
 
+                const isDark = document.body.classList.contains('dark-theme');
+                const textColor = isDark ? '#9ca3af' : '#333';
+                const titleColor = isDark ? '#f3f4f6' : '#333';
+                const gridLineColor = isDark ? '#1f2937' : '#eee';
+
                 chart.setOption({
+                    backgroundColor: 'transparent',
                     title: {
                         text: getMetricTitle(metricName),
-                        left: 'center'
+                        left: 'center',
+                        textStyle: { color: titleColor }
                     },
                     tooltip: {
                         trigger: 'axis'
                     },
                     legend: {
                         top: 30,
-                        data: Object.keys(seriesData)
+                        data: Object.keys(seriesData),
+                        textStyle: { color: textColor }
                     },
                     xAxis: {
                         type: 'category',
                         boundaryGap: false,
                         data: rawData.map((d) => d.time.toLocaleString()),
                         axisLabel: {
+                            color: textColor,
                             formatter: function (value) {
                                 return value.split(' ')[1]; // Show only time
                             }
-                        }
+                        },
+                        axisLine: { lineStyle: { color: gridLineColor } }
                     },
                     yAxis: {
                         type: 'value',
                         axisLabel: {
+                            color: textColor,
                             formatter: function (value) {
                                 return formatYAxisLabel(metricName, value);
                             }
-                        }
+                        },
+                        splitLine: { lineStyle: { color: gridLineColor } }
                     },
                     series: series
                 });
@@ -928,8 +1036,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const iconSysMsg = health.system_health.icon_msg;
         const iconServMsg = health.service_health.icon_msg;
         const gauge = document.getElementById(gaugeId);
-        const gaugeText = gauge.querySelector('text'); // Correct typo here
-        gaugeText.textContent = `${srevPercentage}%`;
 
         if (elements.healthMessage.textContent === '') {
             elements.healthMessage.textContent = health.service_health.message;
@@ -961,19 +1067,29 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         }
 
-        // Reset the --o property to 0 to restart the animation
-        gauge.style.setProperty('--o', 0);
+        // Render high-fidelity SVG progress ring
+        const circ = 2 * Math.PI * 40;
+        const offset = circ - (srevPercentage / 100) * circ;
+        const isDark = document.body.classList.contains('dark-theme');
+        const bgStroke = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
 
-        // Trigger a reflow to reset the animation (forces a repaint)
-        void gauge.offsetWidth;
-
-        // Set the custom properties for the gauge
-        gauge.style.setProperty('--fill-percentage', srevPercentage); // Use percentage for fill
-        gauge.style.setProperty('--fill-color', fillColorServ); // Use color for fill
-
-        // Now update --o to the target percentage to animate
-        gauge.style.setProperty('--o', srevPercentage);
+        gauge.innerHTML = `
+            <svg class="radial-ring" viewBox="0 0 100 100" style="width: 120px; height: 120px; margin: 0 auto; display: block;">
+                <circle cx="50" cy="50" r="40" fill="transparent" stroke="${bgStroke}" stroke-width="8"></circle>
+                <circle cx="50" cy="50" r="40" fill="transparent" stroke="${fillColorServ}" stroke-width="8" 
+                    stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round" 
+                    transform="rotate(-90 50 50)" style="transition: stroke-dashoffset 0.8s ease-in-out;"></circle>
+                <text x="50" y="56" text-anchor="middle" font-size="16" font-weight="bold" fill="${fillColorServ}">${srevPercentage}%</text>
+            </svg>
+        `;
     }
+
+    document.addEventListener('monigoThemeChanged', () => {
+        if (window.lastMetricsData) {
+            renderCharts(window.lastMetricsData);
+            updateGauge('g1', window.lastMetricsData.health);
+        }
+    });
 });
 
 function getDlBtn(id) {
