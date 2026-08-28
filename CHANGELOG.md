@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-08-28
+
+### Added
+- Design token layer in `static/css/monigo-styles.css`: 122 custom properties covering type, spacing, radius, elevation, five surface planes, four ink tones, five semantic states and an eight-colour chart series palette, in matched light and dark sets. Purely additive -- nothing consumes them yet, and removing both rules from the live stylesheet changes the computed style of zero of 713 sampled elements. Every documented contrast ratio is verified: text pairs clear 4.5:1, control borders and the focus ring clear 3:1
+
 ### Changed
 - **Type and density follow the design's scale.** Metric tiles are now an uppercase micro-label over one large tabular number, card titles and body text sit on a six-step scale topping out at 24px rather than the vendored template's defaults, card padding is 16px, and table rows are tighter with a sticky header. Every `font-size` and `border-radius` in the project stylesheet now comes from a token: 12 ad-hoc sizes and 5 ad-hoc radii reduced to 6 and 3
 - Metric labels drop their trailing colons, since an uppercase eyebrow does not take one
@@ -14,28 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Focus rings restored. The vendored `.btn:focus { outline: none; box-shadow: none }` stripped every focus indicator with no replacement, so tabbing the dashboard moved nothing visually
 - Stack traces and pprof output render in IBM Plex Mono at a fixed size on a recessed surface. The previous rule asked for `'Fira Code'`, which is not shipped and never resolved
 - Table numerics use `tabular-nums`, so live columns stop jittering on each poll
-
-### Changed
 - Cards, tables and muted text now read their colours from the design tokens rather than hardcoded hex literals. Colours shift slightly onto the corrected palette and every affected text pair gains contrast -- dark muted text goes from 5.78:1 to 8.38:1, dark card text from 13.34:1 to 14.98:1
 
-### Added
-- Design token layer in `static/css/monigo-styles.css`: 122 custom properties covering type, spacing, radius, elevation, five surface planes, four ink tones, five semantic states and an eight-colour chart series palette, in matched light and dark sets. Purely additive -- nothing consumes them yet, and removing both rules from the live stylesheet changes the computed style of zero of 713 sampled elements. Every documented contrast ratio is verified: text pairs clear 4.5:1, control borders and the focus ring clear 3:1
-
-### Changed
-- **The embedded dashboard shrank from 17.1 MB to 7.9 MB (-54%), and from 71 files to 46.** Everything under `static/` is compiled into the consuming service's binary by `//go:embed static/*` and downloaded by every `go get`, so this is weight every user carried whether or not they ever opened the dashboard. Removed: `assets/ss/d1-d10.png` (7.6 MB), Product Hunt marketing images, an unused animated logo and dropdown arrow, and a favicon variant set -- 28 files, none referenced by any page, stylesheet, script or document. Note this does not shrink existing clones, since the blobs remain in git history; the module zip is what `go get` downloads
-
-### Fixed
-- **The dashboard no longer requires internet access.** Font Awesome 4.7.0 and html2canvas were loaded from `cdnjs`, and the vendored template CSS pulled a Lato webfont from Google Fonts, so on an airgapped host -- where a lot of production Go services run -- icons were blank boxes and the screenshot feature was dead. All three fetches are gone: icons are an inline SVG sprite, html2canvas is vendored, and the font imports are removed
-- **Mobile navigation was impossible in every network condition.** The sidebar and navbar menu buttons were `<i>` elements carrying `las la-bars` and `ri-menu-*` classes -- Line Awesome and Remix Icon -- and neither font was ever loaded: `font-family: remixicon` appeared in the vendored CSS with no `@font-face` rule and no font file anywhere in `static/`. They rendered as zero-size empty elements, so the sidebar could not be opened below 1300px and the navbar below 992px. Both are now real 22px controls
-- Removed `static/css/core/intro.css` (192 KB), referenced by no page and carrying a third Google Fonts import
-- **Memory Distribution pie plotted values of different magnitudes against each other.** The chart parsed a number out of the pre-formatted display strings (`"2.68 MB"`, `"12.93 GB"`), which discards the unit -- so a service using 2.68 MB rendered as 14.3% of the pie instead of 0.02%, a ~700x overstatement of its footprint
-- **Heap Memory Usage chart mixed units under an "MB" axis.** It read `mem_stats_records[].record_value`, a display number whose unit lives in a separate `record_unit` field that the chart ignored. Once heap use crosses 1 GB, `HeapSys` reports in GB while `HeapAlloc` is still in MB, and the taller bar renders shorter. It now reads `raw_mem_stats_records`, which is in one consistent unit
-- **CPU Statistics pie plotted `total_cores` as a slice alongside its own components**, so the chart always summed to twice the real core count. The third slice is now idle cores
-
-### Added
-- Unformatted memory values on the metrics API: `total_system_memory_bytes`, `memory_used_by_system_bytes`, `memory_used_by_service_bytes`, `available_memory_bytes`, `stack_memory_usage_bytes`, `gc_pause_duration_ms`. Additive -- the existing formatted string fields are unchanged. Anything doing arithmetic on or plotting these metrics must use the raw fields, since the strings carry a unit suffix
-
 ## [1.3.0] - 2026-08-28
+
+> Tagged at `a58a30f`, a branch commit that was subsequently squash-merged, so
+> the tag is not an ancestor of `main`. Its contents are everything through the
+> design token layer -- which is more than this section originally described, so
+> the entries for the offline dashboard, the memory-chart fixes, the payload
+> reduction and the asset guardrails have been folded in here rather than left
+> under Unreleased. Published versions are immutable on the module proxy, so the
+> tag stands; the record is corrected instead.
 
 ### Security
 - `BasicAuthMiddleware` and `APIKeyMiddleware` now compare credentials with `crypto/subtle.ConstantTimeCompare` -- `!=` short-circuits on the first differing byte and leaks length and prefix information to a timing oracle
@@ -55,6 +49,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Goroutine leak: `RateLimitMiddleware`'s cleanup goroutine is now stopped by `Shutdown()`, not only by the caller invoking the returned `stop`
 - File descriptor leak in `WriteHeapProfile`; nil check in `StopCPUProfile`
 - `registry.GetAll()` documented a snapshot copy but shared the `Labels` map with the live registry
+- **The dashboard no longer requires internet access.** Font Awesome 4.7.0 and html2canvas were loaded from `cdnjs`, and the vendored template CSS pulled a Lato webfont from Google Fonts, so on an airgapped host -- where a lot of production Go services run -- icons were blank boxes and the screenshot feature was dead. All three fetches are gone: icons are an inline SVG sprite, html2canvas is vendored, and the font imports are removed
+- **Mobile navigation was impossible in every network condition.** The sidebar and navbar menu buttons were `<i>` elements carrying `las la-bars` and `ri-menu-*` classes -- Line Awesome and Remix Icon -- and neither font was ever loaded: `font-family: remixicon` appeared in the vendored CSS with no `@font-face` rule and no font file anywhere in `static/`. They rendered as zero-size empty elements, so the sidebar could not be opened below 1300px and the navbar below 992px. Both are now real 22px controls
+- Removed `static/css/core/intro.css` (192 KB), referenced by no page and carrying a third Google Fonts import
+- **Memory Distribution pie plotted values of different magnitudes against each other.** The chart parsed a number out of the pre-formatted display strings (`"2.68 MB"`, `"12.93 GB"`), which discards the unit -- so a service using 2.68 MB rendered as 14.3% of the pie instead of 0.02%, a ~700x overstatement of its footprint
+- **Heap Memory Usage chart mixed units under an "MB" axis.** It read `mem_stats_records[].record_value`, a display number whose unit lives in a separate `record_unit` field that the chart ignored. Once heap use crosses 1 GB, `HeapSys` reports in GB while `HeapAlloc` is still in MB, and the taller bar renders shorter. It now reads `raw_mem_stats_records`, which is in one consistent unit
+- **CPU Statistics pie plotted `total_cores` as a slice alongside its own components**, so the chart always summed to twice the real core count. The third slice is now idle cores
 
 ### Added
 - Goroutine leak detection: every collection cycle evaluates all goroutine stacks for stale goroutines (blocked past a threshold, default 24h, configurable via `WithStaleGoroutineThreshold`) and for call stacks growing monotonically across the last 5 cycles. The verdict is carried on `GoRoutinesStatistic.LeakReport` and `ServiceStats.GoroutineLeakReport`, surfaced as a warning panel on the Go Routines Stats page, and raises the alert webhook when configured
@@ -64,10 +64,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `core.GetThresholds()` -- thread-safe accessor for the configured health thresholds
 - `Build()` validates `MaxCPUUsage` and `MaxMemoryUsage` are within 0-100 and `MaxGoRoutines` is non-negative
 - Regression tests for every fix above
+- Unformatted memory values on the metrics API: `total_system_memory_bytes`, `memory_used_by_system_bytes`, `memory_used_by_service_bytes`, `available_memory_bytes`, `stack_memory_usage_bytes`, `gc_pause_duration_ms`. Additive -- the existing formatted string fields are unchanged. Anything doing arithmetic on or plotting these metrics must use the raw fields, since the strings carry a unit suffix
 
 ### Changed
 - `monigo.gif` re-encoded from 65 MB to 24 MB -- the module zip is downloaded on every `go get`
 - Argument marshalling shared between `TraceFunctionWithArgs` and `TraceFunctionWithReturns` instead of duplicated
+- **The embedded dashboard shrank from 17.1 MB to 7.9 MB (-54%), and from 71 files to 46.** Everything under `static/` is compiled into the consuming service's binary by `//go:embed static/*` and downloaded by every `go get`, so this is weight every user carried whether or not they ever opened the dashboard. Removed: `assets/ss/d1-d10.png` (7.6 MB), Product Hunt marketing images, an unused animated logo and dropdown arrow, and a favicon variant set -- 28 files, none referenced by any page, stylesheet, script or document. Note this does not shrink existing clones, since the blobs remain in git history; the module zip is what `go get` downloads
 
 ## [2.0.0] - 2026-02-10
 
