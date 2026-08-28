@@ -154,140 +154,114 @@
                 <div class="p-3"></div>
             </div>
         </div>
-        <div class="iq-top-navbar">
-            <div class="iq-navbar-custom">
-                <nav class="navbar navbar-expand-lg navbar-light p-0">
-                    <div class="iq-navbar-logo d-flex align-items-center justify-content-between">
-                        <svg class="icon wrapper-menu" aria-hidden="true"><use href="#i-menu"></use></svg>
-                        <a href="./index.html" class="header-logo">
-                            <img src="./assets/monigo-icon.png" class="img-fluid rounded-normal light-logo" alt="logo">
-                        </a>
-                    </div>
-                    <div class="iq-search-bar device-search">
-                        <div class="d-flex align-items-center">
-                            <div class="collapse navbar-collapse">
-                                <ul class="card navbar-nav ml-auto navbar-list align-items-center border-radius-20">
-                                    <li class="nav-item nav-icon">
-                                        <div class="health-status p-1">
-                                            <span id="health-indicator" class="health-indicator"></span>
-                                            <span id="health-message" class="health-message"></span>
-                                        </div>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center">
-                        <button class="navbar-toggler" type="button" data-toggle="collapse"
-                            data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
-                            aria-label="Toggle navigation">
-                            <svg class="icon" aria-hidden="true"><use href="#i-menu"></use></svg>
-                        </button>
-                        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                            <ul class="navbar-nav ml-auto navbar-list align-items-center">
-                                <!-- on hover cursor-pointer -->
-                                <svg id="refresh-btn" class="icon mr-2 cursor-pointer" aria-hidden="true"><use href="#i-refresh"></use></svg>
-                                <li class="nav-item nav-icon">
-                                    <a class="btn border add-btn">
-                                        <span id="refresh-countdown">Refreshing in 5m 0s</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item nav-icon dropdown">
-                                    <a href="https://github.com/iyashjayesh/monigo" target="_blank">
-                                        <svg class="icon icon-2x cursor-pointer" aria-hidden="true"><use href="#i-github"></use></svg>
-                                        <span class="bg-primary"></span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </nav>
-            </div>
-        </div>
-        <div class="content-page">
-            <div class="container-fluid">
-                <div class="row">
-                    <div class="col-lg-4">
-                        <div class="card card-transparent card-block card-stretch card-height border-none">
-                            <div class="card-body p-0 mt-lg-2 mt-0">
-                                <h3 class="mb-3">Go Routines Stats</h3>
-                                <p class="mb-0 mr-4">
-                                    Monitor the number of goroutines running in your Go application. This dashboard provides
-                                    real-time insights into goroutine activity and performance.
-                                    <br/><br />
-                                    You can examine the stack trace for each goroutine to identify potential issues or bottlenecks.
-                                    For bug reports or feature requests, please use GitHub issues.
-                                </p>
-                                <div class="num-goroutines mt-5">Total Number of Go routines: <span id="goroutine-count">0</span></div>
-                                
-                            </div>
-                        </div>
-                    </div>
-                    <div id="goroutines-page"></div>
-                    <div class="col-lg-8">
-                        <div class="card card-block card-stretch card-height">
-                            <div class="card-body" style="position: relative;">
-                                <div class="chart-container" id="goroutines-chart"></div>
-                            </div>
-                        </div>
-                    </div>
+<header class="mg-topbar">
+  <button type="button" class="mg-iconbtn mg-topbar-menu" id="mg-topbar-menu"
+          aria-label="Toggle navigation" aria-expanded="false">
+    <svg class="mg-icon" aria-hidden="true" focusable="false"><use href="#i-menu"></use></svg>
+  </button>
 
-                    <!-- Function Metrics  -->
-                    <div class="col-lg-12">
-                        <div class="card card-transparent card-block card-stretch card-height mb-4">
-                            <div class="card-header d-flex align-items-center justify-content-between p-0">
-                                <div class="header-title">
-                                    <h4 class="card-title mb-0">Go Routines Stack View</h4>
-                                </div>
-                                <div class="card-header-toolbar d-flex align-items-center">
-                                    <button id="download-stack-view" type="button" class="btn btn-primary" >
-                                        <svg class="icon" aria-hidden="true"><use href="#i-download"></use></svg>
-                                        Download Stack View
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                        
-                    <div class="col-lg-12">
-                        <div id="goroutine-leak-panel" style="display: none;"></div>
-                        <div id="goroutines-container"></div>
-                    </div>
-                </div>
-                <!-- Page end  -->
-            </div>
-        </div>
+  <div class="mg-topbar-heading">
+    <h1 class="mg-topbar-title" id="mg-page-title">Goroutines</h1>
+    <span class="mg-topbar-subtitle" id="mg-page-subtitle">leak detection</span>
+  </div>
+
+  <div class="mg-service-pill" id="mg-service-pill">
+    <span class="mg-service-dot" id="mg-service-dot" aria-hidden="true"></span>
+    <span class="mg-service-name" id="mg-topbar-state">—</span>
+  </div>
+
+  <div class="mg-topbar-actions">
+    <button type="button" class="mg-live is-live" id="mg-live" aria-pressed="true"
+            aria-label="Toggle live polling">
+      <span class="mg-live-dot" aria-hidden="true"></span>
+      <span class="mg-live-label" id="mg-live-label">LIVE</span>
+    </button>
+
+    <button type="button" class="mg-iconbtn" id="mg-theme-toggle" title="Toggle theme"
+            aria-label="Toggle theme">
+      <svg class="mg-icon" aria-hidden="true" focusable="false"><use href="#i-moon" id="mg-theme-icon"></use></svg>
+    </button>
+  </div>
+</header>
+<main class="mg-main" id="mg-main">
+
+  <!-- Summary row: live count, state breakdown, longest blocked, verdict. -->
+  <section class="mg-gor-summary">
+
+    <article class="mg-card mg-gor-live">
+      <span class="mg-eyebrow">LIVE GOROUTINES</span>
+      <div class="mg-gor-live-row">
+        <span class="mg-gor-count" id="mg-gor-count">—</span>
+        <span class="mg-gor-limit" id="mg-gor-limit"></span>
+        <span class="mg-gor-groups" id="mg-gor-groups"></span>
+      </div>
+      <span class="mg-gor-live-detail" id="mg-gor-live-detail"></span>
+    </article>
+
+    <article class="mg-card">
+      <span class="mg-eyebrow">BY STATE</span>
+      <div class="mg-gor-statebar" id="mg-gor-statebar" role="img"
+           aria-label="Goroutines by runtime state"></div>
+      <ul class="mg-gor-statelist" id="mg-gor-statelist"></ul>
+    </article>
+
+    <article class="mg-card">
+      <span class="mg-eyebrow">LONGEST BLOCKED</span>
+      <ul class="mg-gor-blocked" id="mg-gor-blocked"></ul>
+      <span class="mg-gor-threshold" id="mg-gor-threshold"></span>
+    </article>
+
+    <article class="mg-card mg-gor-verdict" id="mg-gor-verdict">
+      <div class="mg-gor-verdict-head">
+        <svg class="mg-icon" aria-hidden="true" focusable="false">
+          <use href="#i-check-circle" id="mg-gor-verdict-icon"></use>
+        </svg>
+        <span class="mg-gor-verdict-title" id="mg-gor-verdict-title">—</span>
+      </div>
+      <span class="mg-gor-verdict-msg" id="mg-gor-verdict-msg"></span>
+      <button type="button" class="mg-gor-snapshot" id="mg-gor-snapshot">
+        <svg class="mg-icon" aria-hidden="true" focusable="false"><use href="#i-download"></use></svg>
+        Download stacks
+      </button>
+    </article>
+  </section>
+
+  <!-- Group table. Rows expand to the shared call stack. -->
+  <section class="mg-card mg-gor-tablewrap">
+    <div class="mg-gor-table" role="table" aria-label="Goroutine groups">
+      <div class="mg-gor-thead" role="row">
+        <span role="columnheader">SIGNATURE</span>
+        <span role="columnheader">TOP FRAME</span>
+        <span role="columnheader">STATE</span>
+        <span role="columnheader" class="mg-num">COUNT</span>
+        <span role="columnheader" class="mg-num">BLOCKED</span>
+        <span role="columnheader" class="mg-num">GROWTH</span>
+      </div>
+      <div id="mg-gor-rows"></div>
+    </div>
+    <p class="mg-gor-truncated" id="mg-gor-truncated" hidden></p>
+  </section>
+
+  <template id="mg-gor-row-tpl">
+    <div class="mg-gor-group">
+      <button type="button" class="mg-gor-row" role="row" aria-expanded="false">
+        <span class="mg-gor-sig" role="cell"></span>
+        <span class="mg-gor-frame" role="cell"></span>
+        <span class="mg-gor-state" role="cell"></span>
+        <span class="mg-gor-n mg-num" role="cell"></span>
+        <span class="mg-gor-blockedcell mg-num" role="cell"></span>
+        <span class="mg-gor-growth mg-num" role="cell"></span>
+      </button>
+      <pre class="mg-gor-stack" hidden></pre>
+    </div>
+  </template>
+</main>
+
     </div>
     <!-- Wrapper End-->
-    <footer class="iq-footer">
-        <div class="container-fluid">
-            <div class="card">
-                <div class="card-body">
-                    <div class="text-center">
-                        <span class="mr-1">
-                            <script>document.write(new Date().getFullYear())</script>©
-                        </span>
-                        <a href="https://github.com/iyashjayesh/monigo/releases/tag/v1.0.0" target="_blank" class="">Moni<strong><em>GO</em></strong> v1.0.0</a>
-                    </div>
-                    
-                    <!-- <div class="row">
-                        <div class="col-lg-6">
-                            <ul class="list-inline mb-0">
-                                <li class="list-inline-item"><a href="../backend/privacy-policy.html">Privacy Policy</a>
-                                </li>
-                                <li class="list-inline-item"><a href="../backend/terms-of-service.html">Terms of Use</a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="col-lg-6 text-right">
-                            <span class="mr-1">
-                                <script>document.write(new Date().getFullYear())</script>©
-                            <a href="https://github.com/iyashjayesh/monigo/releases/tag/v1.0.0" target="_blank" class="">Moni<strong><em>GO</em></strong> v1.0.0</a>.
-                        </div>
-                    </div> -->
-                </div>
-            </div>
-        </div>
+    <footer class="mg-footer">
+        <span id="mg-footer-year"></span> &copy;
+        <a href="https://github.com/iyashjayesh/monigo/releases" target="_blank" rel="noopener">MoniGo</a>
     </footer>
     <!-- Backend Bundle JavaScript -->
     <script src="./js/core/backend-bundle.min.js"></script>
@@ -295,10 +269,7 @@
 
     <!-- Main JavaScript -->
     <!-- <script src="./js/core//main.js" defer></script> -->
-    <script src="./js/index.js" defer></script>
-    <script src="./js/refresh.js"></script>
-    <script src="./js/common.js"></script>
-    <script src="./js/goroutines.js" defer></script>
-    <script src="./js/echarts.min.js"></script>
+    <script src="./js/common.js" defer></script>
+    <script src="./js/goroutines-view.js" defer></script>
 
 </html>

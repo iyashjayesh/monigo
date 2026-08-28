@@ -32,6 +32,13 @@ const (
 	// maxSuspiciousGroups caps how many offending groups a report carries, so a
 	// pathological process cannot produce an unbounded API response.
 	maxSuspiciousGroups = 20
+
+	// maxGroups caps the full group list the report carries for the dashboard.
+	// Each entry embeds a call stack, so this is the difference between a few
+	// KB and a multi-megabyte response on a service with thousands of distinct
+	// stacks. Groups are sorted worst-first, so a truncated list still leads
+	// with everything worth looking at.
+	maxGroups = 60
 )
 
 // goroutineHeaderPattern matches the header line the runtime writes for each
@@ -224,6 +231,7 @@ func buildReport(total int, groups map[string]*models.GoroutineGroup) *models.Go
 	}
 
 	var suspicious []models.GoroutineGroup
+	all := make([]models.GoroutineGroup, 0, len(groups))
 	for sig, g := range groups {
 		entry := *g
 		entry.Growth, entry.Growing = growthFor(sig)
@@ -238,28 +246,41 @@ func buildReport(total int, groups map[string]*models.GoroutineGroup) *models.Go
 		if entry.Stale || entry.Growing {
 			suspicious = append(suspicious, entry)
 		}
+		all = append(all, entry)
 	}
 
 	// Worst first: longest-blocked, then fastest-growing, then largest. The
 	// signature tie-breaker keeps ordering deterministic for equal groups.
-	sort.Slice(suspicious, func(i, j int) bool {
-		a, b := suspicious[i], suspicious[j]
-		if a.BlockedMinutes != b.BlockedMinutes {
-			return a.BlockedMinutes > b.BlockedMinutes
+	worstFirst := func(list []models.GoroutineGroup) func(i, j int) bool {
+		return func(i, j int) bool {
+			a, b := list[i], list[j]
+			if a.BlockedMinutes != b.BlockedMinutes {
+				return a.BlockedMinutes > b.BlockedMinutes
+			}
+			if a.Growth != b.Growth {
+				return a.Growth > b.Growth
+			}
+			if a.Count != b.Count {
+				return a.Count > b.Count
+			}
+			return a.Signature < b.Signature
 		}
-		if a.Growth != b.Growth {
-			return a.Growth > b.Growth
-		}
-		if a.Count != b.Count {
-			return a.Count > b.Count
-		}
-		return a.Signature < b.Signature
-	})
+	}
+	sort.Slice(suspicious, worstFirst(suspicious))
+	sort.Slice(all, worstFirst(all))
 
 	if len(suspicious) > maxSuspiciousGroups {
 		suspicious = suspicious[:maxSuspiciousGroups]
 	}
 	report.SuspiciousGroups = suspicious
+
+	// GroupsTotal is set before truncating, so it reports what exists rather
+	// than what survived the cap.
+	report.GroupsTotal = len(all)
+	if len(all) > maxGroups {
+		all = all[:maxGroups]
+	}
+	report.Groups = all
 	report.LeakSuspected = report.StaleGoroutines > 0 || report.GrowingGroups > 0
 	report.Message = describeReport(report, threshold)
 

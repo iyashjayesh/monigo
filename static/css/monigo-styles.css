@@ -1777,3 +1777,298 @@ body {
         margin-left: 0;
     }
 }
+
+/* --- Goroutines board ------------------------------------------------------
+
+   Summary row plus an expandable group table. Tones are semantic and separate
+   from the accent: the accent identifies MoniGo, --warn and --ok say whether
+   something needs attention, and the two must not be confused in an
+   observability UI.
+   -------------------------------------------------------------------------- */
+
+.mg-gor-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+    gap: var(--s-4);
+}
+
+.mg-gor-live-row {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    white-space: nowrap;
+}
+
+.mg-gor-count {
+    font: var(--t-stat-w) var(--t-stat) / var(--t-stat-lh) var(--font-mono);
+    letter-spacing: -.03em;
+    font-variant-numeric: tabular-nums;
+}
+
+.mg-gor-limit,
+.mg-gor-groups {
+    font-size: var(--t-meta);
+    color: var(--ink-subtle);
+}
+
+.mg-gor-groups {
+    margin-left: auto;
+    font-family: var(--font-mono);
+}
+
+/* Semantic tones. Applied to text, swatches and bar segments alike, so one
+   class carries the meaning wherever it lands. */
+.mg-tone-ok    { color: var(--ok-text); }
+.mg-tone-warn  { color: var(--warn-text); }
+.mg-tone-info  { color: var(--accent); }
+.mg-tone-dim   { color: var(--ink-subtle); }
+
+.mg-gor-statebar {
+    display: flex;
+    height: 7px;
+    gap: 2px;
+    border-radius: var(--r-sm);
+    overflow: hidden;
+}
+
+.mg-gor-seg {
+    display: block;
+    background: currentColor;
+    min-width: 2px;
+}
+
+.mg-gor-statelist,
+.mg-gor-blocked {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    font: 500 var(--t-meta) / 1.4 var(--font-mono);
+}
+
+.mg-gor-statelist li,
+.mg-gor-blocked li {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+}
+
+.mg-gor-swatch {
+    width: 6px;
+    height: 6px;
+    border-radius: 2px;
+    background: currentColor;
+    display: block;
+    flex: none;
+}
+
+.mg-gor-statename,
+.mg-gor-blockedname {
+    color: var(--ink-muted);
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mg-gor-statecount,
+.mg-gor-blockedtime {
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+}
+
+.mg-gor-threshold {
+    margin-top: auto;
+    font: 400 var(--t-micro) var(--font-mono);
+    color: var(--ink-subtle);
+}
+
+.mg-gor-emptyline {
+    color: var(--ink-subtle);
+    font: 400 var(--t-meta) / 1.5 var(--font-sans);
+    text-wrap: pretty;
+}
+
+/* Verdict card. Neutral until there is something to say -- a permanently
+   amber panel stops meaning anything. */
+.mg-gor-verdict {
+    gap: 9px;
+}
+
+.mg-gor-verdict.is-suspect {
+    background: var(--warn-tint);
+    border-color: color-mix(in srgb, var(--warn-fill) 36%, transparent);
+}
+
+.mg-gor-verdict-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--ok-text);
+}
+
+.mg-gor-verdict.is-suspect .mg-gor-verdict-head {
+    color: var(--warn-text);
+}
+
+.mg-gor-verdict-title {
+    font-weight: 600;
+    font-size: 12.5px;
+}
+
+.mg-gor-verdict-msg {
+    font-size: var(--t-meta);
+    line-height: 1.55;
+    color: var(--ink-muted);
+    text-wrap: pretty;
+}
+
+.mg-gor-snapshot {
+    margin-top: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 11px;
+    border: 1px solid var(--hairline-strong);
+    border-radius: 7px;
+    background: transparent;
+    color: var(--ink-muted);
+    font: 500 var(--t-meta) var(--font-mono);
+    cursor: pointer;
+}
+
+.mg-gor-verdict.is-suspect .mg-gor-snapshot {
+    border-color: color-mix(in srgb, var(--warn-fill) 45%, transparent);
+    color: var(--warn-text);
+}
+
+.mg-gor-snapshot:hover {
+    background: var(--surface-2);
+}
+
+.mg-gor-snapshot .mg-icon {
+    width: 14px;
+    height: 14px;
+    flex: none;
+}
+
+/* Group table ------------------------------------------------------------- */
+
+.mg-gor-tablewrap {
+    padding: 0;
+    overflow: auto;
+}
+
+.mg-gor-thead,
+.mg-gor-row {
+    display: grid;
+    grid-template-columns: 104px minmax(0, 1fr) 130px 70px 90px 90px;
+    gap: var(--s-4);
+    align-items: center;
+}
+
+.mg-gor-table {
+    min-width: 760px;
+}
+
+.mg-gor-thead {
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--hairline);
+    background: var(--surface-2);
+    font: 500 9.5px var(--font-mono);
+    letter-spacing: .1em;
+    /*
+     * --ink-subtle is tuned against --pan and measures 4.44:1 on the lighter
+     * --surface-2 this header sits on -- under the floor for 9.5px text.
+     * Same trap as the footer; --ink-muted clears it on both grounds.
+     */
+    color: var(--ink-muted);
+}
+
+.mg-gor-group {
+    border-bottom: 1px solid var(--hairline);
+}
+
+.mg-gor-row {
+    width: 100%;
+    padding: 11px 18px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    color: var(--ink);
+    font: inherit;
+}
+
+.mg-gor-row:hover {
+    background: var(--surface-2);
+}
+
+.mg-gor-row:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+
+.mg-gor-row.is-suspect {
+    background: color-mix(in srgb, var(--warn-fill) 7%, transparent);
+}
+
+.mg-gor-sig {
+    font: 500 var(--t-meta) var(--font-mono);
+    color: var(--ink-subtle);
+}
+
+.mg-gor-frame {
+    font: 500 var(--t-code) var(--font-mono);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mg-gor-state {
+    font: 500 var(--t-meta) var(--font-mono);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mg-gor-n,
+.mg-gor-blockedcell,
+.mg-gor-growth {
+    font: 500 var(--t-code) var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.mg-gor-n {
+    font-weight: 600;
+}
+
+.mg-gor-stack {
+    margin: 0;
+    padding: 14px 18px 16px 34px;
+    background: var(--inset);
+    border-top: 1px solid var(--hairline);
+    font: 400 var(--t-meta) / 1.7 var(--font-mono);
+    color: var(--ink-muted);
+    overflow-x: auto;
+}
+
+.mg-gor-truncated {
+    margin: 0;
+    padding: 11px 18px;
+    font: 400 var(--t-meta) var(--font-sans);
+    color: var(--ink-subtle);
+}
+
+.mg-gor-live-detail {
+    font: 500 var(--t-meta) var(--font-mono);
+}
+
+.mg-gor-morestates {
+    color: var(--ink-subtle);
+    font: 400 var(--t-micro) var(--font-mono);
+}

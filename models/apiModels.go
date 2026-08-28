@@ -183,6 +183,17 @@ type GoroutineLeakReport struct {
 	SnapshotsRequired int `json:"snapshots_required"`
 	// SuspiciousGroups holds the offending groups, worst first.
 	SuspiciousGroups []GoroutineGroup `json:"suspicious_groups,omitempty"`
+	// Groups holds every distinct call stack, worst first, whether or not it
+	// is suspicious. The dashboard needs all of them to break goroutines down
+	// by state and to rank them by blocked time; a report that carried only
+	// the offenders could not answer "what are the other 4000 doing".
+	//
+	// Capped, so a service with thousands of distinct stacks does not turn one
+	// poll into a multi-megabyte response. GroupsTotal is the uncapped count,
+	// so the UI can say how many it is not showing rather than implying the
+	// list is complete.
+	Groups      []GoroutineGroup `json:"groups,omitempty"`
+	GroupsTotal int              `json:"groups_total"`
 }
 
 // FunctionTraceDetails represents the function trace details.
