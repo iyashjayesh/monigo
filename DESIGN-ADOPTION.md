@@ -105,6 +105,7 @@ into a CSS milestone.
 | `NET SENT` / `NET RECV` / `STACK` / `SWAP FREE` | present |
 | Goroutines: `LIVE GOROUTINES`, `BY STATE`, `LONGEST BLOCKED` | `#51` collects all of it |
 | Leak table: `SIGNATURE / TOP FRAME / STATE / COUNT / BLOCKED / GROWTH` | exactly `models.GoroutineGroup` |
+| `BY STATE` / `LONGEST BLOCKED` | needed a small Go addition after all: the report carried only *suspicious* groups, and a breakdown by state cannot be computed from the offenders alone. `GoroutineLeakReport.Groups` now carries every distinct stack, capped at 60 with `GroupsTotal` uncapped. |
 | `2 stale groups, 1 growing across 6 of 6 retained snapshots` | `GoroutineLeakReport` verbatim |
 | Disconnected / stale states | frontend only |
 | `STORAGE` footer (`412 MB / 1.0 GB retained`, `disk · 7d`) | retention config + `common.GetDirSize` |
@@ -130,6 +131,46 @@ into a CSS milestone.
 Milestones A and B are done and unaffected. C1 and C2 are merged and survive —
 the token layer's *structure* was right, and only the values change. What
 follows replaces C3–C9.
+
+### Status
+
+| | Milestone | State |
+| --- | --- | --- |
+| D1 | Token values retargeted | done |
+| D2 | Type and density | done |
+| D3 | Shell and Overview | **done** — `feat/design-overview` |
+| D4 | Goroutines page | **done** |
+| D5 | States: disconnected, stale, empty | **done** — folded into each page's renderer |
+| D6 | Reports and Exporters | **Reports done**; Exporters still needs the Go status surface |
+
+Verified across all four pages, both themes: **566 text elements, zero
+contrast failures.**
+
+---
+
+### Token corrections found while building — take these back to the canvas
+
+Three values in §2 are wrong in the export and are corrected in the shipped
+CSS. These are on top of the three from §1.
+
+| Token | Export | Shipped | Why |
+| --- | --- | --- | --- |
+| `--ink-subtle` light | `#6B7686` | `#657080` | 4.60:1 on the white panel but **4.22 on `--canvas`** and 4.37 on `--surface-2`/`--inset`. It had been patched at three separate call sites before the pattern was clear. |
+| `--ink-subtle` dark | `#778292` | `#798494` | 4.75:1 on `--pan` but **4.44 on `--surface-2`**, which table headers sit on. |
+
+The lesson generalises: **a tone tuned against one surface is not safe on the
+others.** The design has four grounds (`--surface-1`, `--canvas`, `--surface-2`,
+`--inset`); a text token has to clear 4.5:1 on the darkest of them in light and
+the lightest in dark, not just on the panel it was sampled against. Both values
+above were tuned along their own hue, so the tonal ordering still holds:
+`--ink` > `--ink-muted` > `--ink-subtle`.
+
+A guardrail now covers the adjacent failure mode: `TestStylesheetsDefineEveryTokenTheyUse` fails the build on a `var(--x)` this stylesheet never defines.
+An undefined custom property does not error — the browser drops the declaration
+and the element silently keeps its inherited value — which is how the footer
+briefly shipped using the design file's token names instead of the CSS's.
+
+---
 
 ### D1 · Retarget the token values to the design
 
@@ -191,34 +232,25 @@ riding along in a UI PR.
 
 ---
 
-## 5. Open bug blocking D1
+## 5. The sidebar-in-dark-mode bug — resolved
 
-`refactor/collapse-dark-theme` is uncommitted and has one unresolved defect.
+`.iq-sidebar` rendered white in dark mode even though the token resolved
+correctly on the element and my override carried `!important`.
 
-**The sidebar renders white in dark mode.** The diagnostics contradict each
-other:
+**Resolved:** the vendored template sets the shorthand
+(`.iq-sidebar { background: #ffffff }`), and a `background-color` longhand with
+`!important` does not beat a later shorthand in that cascade position. Matching
+the shorthand form fixed it, and all four pages now render correctly in dark
+mode — verified in the browser, not inferred.
 
-```
-sidebarComputedBg            rgb(255, 255, 255)   <- wrong
---surface-1 on that element  #14171d              <- token resolves correctly
-my rule    background-color: var(--surface-1) !important
-           ...and the only !important among the 3 matching rules
-```
+The exact precedence mechanism was never established, only the fix. That is
+worth knowing if it recurs on another vendored selector: **match the property
+form the vendored rule uses**, rather than assuming `!important` on a longhand
+is enough.
 
-The same shape appears on the outline button: the token reads `#ff8560` on the
-element while the computed colour is `#c2410c`, the *light* value.
-
-Two hypotheses remain untested: a rule inside an `@media` block, which the first
-CSSOM scan skipped because it did not recurse; or a `var()` resolution subtlety.
-The scan that would settle it timed out against the 534 KB vendored stylesheets
-and needs narrowing to `monigo-styles.css` plus the specific selectors.
-
-Verified good on that branch: dark component rules **51 → 2**, and the light
-theme fully correct — skeleton text 2.54:1 → 5.43:1, filled buttons
-3.07:1 → 5.78:1, active sidebar link 3.07:1 → 5.18:1.
-
-This bug is about rule precedence, not colour values, so adopting the design's
-palette does not avoid it.
+Also fixed on that branch: dark component rules 51 → 2, and the light theme's
+skeleton text 2.54:1 → 5.43:1, filled buttons 3.07:1 → 5.78:1, active sidebar
+link 3.07:1 → 5.18:1.
 
 ---
 
@@ -241,6 +273,14 @@ CDN delivery and was too broad.
 
 Recommendation: **Plex Mono only**, as the best ratio of fidelity to bytes — with
 full Plex a reasonable call if the design's exact look matters more than 230 KB.
+
+**What ships today:** `--font-sans` and `--font-mono` name IBM Plex first, but
+**no font file is bundled and there is no `@font-face` rule**, so every page
+falls through to the system stack. That is a deliberate hold, not an oversight —
+the decision above is still open — but it means the drawn result is *not* pixel-
+identical to the design, and the density was checked against the fallback
+metrics rather than Plex's. Bundling the face later will shift spacing slightly
+and the density pass should be repeated then.
 
 The accent question from the first review is settled by the design: cyan
 `#00B4E6` dark / `#00758F` light. Worth noting it also removes a real problem —

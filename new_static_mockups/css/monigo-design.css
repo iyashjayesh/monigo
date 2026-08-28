@@ -1,0 +1,342 @@
+/* MoniGo — design v2 token layer + components
+ *
+ * Drop-in for static/css/. Loaded INSTEAD of monigo-styles.css on the pages
+ * that have been migrated; the two can coexist while the migration is partial
+ * because every selector here is namespaced under .mg- or [data-theme].
+ *
+ * Values are the canvas design's, with the three defects found in review
+ * corrected at source (--onacc literal, --dim2 raised to 4.75:1 dark,
+ * --line2 raised past the 3:1 non-text floor in both themes).
+ *
+ * Theme mechanism is body[data-theme="light"], per DESIGN-ADOPTION.md D1.
+ * The localStorage key stays 'monigo-theme'.
+ */
+
+:root {
+  --acc:   #00B4E6;
+  --onacc: #04121A;
+  --ok:    #5FD39B;
+  --warn:  #FFA24B;
+  --bad:   #FF6B7A;
+  --vio:   #8B7BF7;
+
+  --bg:    #080B10;
+  --pan:   #0F141B;
+  --pan2:  #151B24;
+  --in:    #0B0F15;
+  --line:  #1D2531;   /* divider — 1.20:1, deliberately faint */
+  --line2: #526683;   /* control boundary — 3.16:1 */
+  --txt:   #E7EBF1;   /* 15.45 */
+  --dim:   #8892A2;   /*  5.88 */
+  --dim2:  #778292;   /*  4.75 */
+
+  /* radii: three steps, not the twelve the canvas drifted into */
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 10px;
+
+  /* type: documented scale, 10–16, no display tier */
+  --t-micro: 9.5px;
+  --t-mono-s: 11px;
+  --t-mono: 11.5px;
+  --t-body-s: 12px;
+  --t-body: 12.5px;
+  --t-strong: 13px;
+  --t-title: 14px;
+  --t-stat: 22px;
+  --t-stat-lg: 26px;
+
+  --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          'Helvetica Neue', Arial, sans-serif;
+}
+
+body[data-theme="light"] {
+  --acc:   #00758F;   /* 5.36 on --pan */
+  --onacc: #FFFFFF;
+  --ok:    #0F7A4F;   /* 5.35 */
+  --warn:  #A15600;   /* 5.41 */
+  --bad:   #C0273C;   /* 5.84 */
+  --vio:   #5B49D6;   /* 6.40 */
+
+  --bg:    #F3F5F9;
+  --pan:   #FFFFFF;
+  --pan2:  #F7F9FC;
+  --in:    #F7F9FC;
+  --line:  #E3E8EF;
+  --line2: #8191AB;   /* 3.20:1 */
+  --txt:   #0E141B;
+  --dim:   #5B6674;   /* 5.85 */
+  --dim2:  #6B7686;   /* 4.66 */
+}
+
+/* Plex Mono only — the §6 recommendation. Stack traces and pprof output are
+ * the primary content of two pages, which is where a mono face earns bytes.
+ * Self-hosted so an airgapped host resolves it; if the files are absent the
+ * stack in --mono falls through with no visual break. */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('../assets/fonts/IBMPlexMono-Regular.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('../assets/fonts/IBMPlexMono-Medium.woff2') format('woff2');
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('../assets/fonts/IBMPlexMono-SemiBold.woff2') format('woff2');
+  font-weight: 600; font-style: normal; font-display: swap;
+}
+
+* { box-sizing: border-box; }
+
+body.mg {
+  margin: 0;
+  background: var(--bg);
+  color: var(--txt);
+  font-family: var(--sans);
+  font-size: var(--t-strong);
+  -webkit-font-smoothing: antialiased;
+}
+
+body.mg a { color: var(--acc); text-decoration: none; }
+body.mg a:hover { text-decoration: underline; }
+
+.mg ::-webkit-scrollbar { width: 9px; height: 9px; }
+.mg ::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 9px; }
+.mg ::-webkit-scrollbar-track { background: transparent; }
+
+/* Every live number is tabular so columns stop jittering on each poll. */
+.mg-num, .mg-stat, .mg-mono { font-variant-numeric: tabular-nums; }
+
+@keyframes mg-pulse { 0%,100% { opacity: 1 } 50% { opacity: .25 } }
+@keyframes mg-spin  { to { transform: rotate(360deg) } }
+@keyframes mg-shim  { 0%,100% { opacity: .35 } 50% { opacity: .7 } }
+
+/* ---------------------------------------------------------------- layout */
+
+.mg-app { display: flex; height: 100vh; min-height: 640px; overflow: hidden; }
+
+.mg-rail {
+  width: 226px; flex: none; background: var(--pan);
+  border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.mg-rail__brand {
+  height: 53px; flex: none; padding: 0 16px;
+  display: flex; align-items: center; gap: 9px;
+  border-bottom: 1px solid var(--line);
+}
+.mg-rail__brand img { height: 18px; width: auto; display: block; }
+.mg-version {
+  margin-left: auto; font: 500 var(--t-micro)/1 var(--mono); letter-spacing: .08em;
+  color: var(--dim2); background: var(--pan2); border: 1px solid var(--line);
+  padding: 4px 6px; border-radius: var(--r-sm);
+}
+
+.mg-svc {
+  padding: 12px 16px; display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.mg-svc__avatar {
+  width: 26px; height: 26px; flex: none; border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--acc) 16%, transparent);
+  display: grid; place-items: center;
+  font: 600 var(--t-mono-s) var(--mono); color: var(--acc); text-transform: lowercase;
+}
+.mg-svc__id { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.mg-svc__name {
+  font: 500 var(--t-body-s) var(--mono);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.mg-svc__meta { font: 400 10px var(--mono); color: var(--dim2); }
+.mg-dot {
+  margin-left: auto; width: 6px; height: 6px; flex: none; border-radius: 50%;
+  background: var(--ok); animation: mg-pulse 2.4s infinite;
+}
+.mg-dot.is-stale { background: var(--warn); }
+.mg-dot.is-down  { background: var(--bad); animation: mg-pulse 1.4s infinite; }
+
+.mg-navhead {
+  padding: 14px 12px 6px; font: 500 var(--t-micro)/1 var(--mono);
+  letter-spacing: .12em; color: var(--dim2);
+}
+.mg-nav { display: flex; flex-direction: column; gap: 1px; padding: 0 10px; }
+.mg-nav a {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+  border-radius: var(--r-md); font-weight: 500; font-size: var(--t-strong);
+  color: var(--dim); text-decoration: none;
+}
+.mg-nav a:hover { background: var(--pan2); color: var(--txt); text-decoration: none; }
+.mg-nav a.is-active {
+  background: color-mix(in srgb, var(--acc) 15%, transparent);
+  color: var(--acc); box-shadow: inset 2px 0 0 var(--acc);
+}
+.mg-nav svg { width: 15px; height: 15px; flex: none; }
+.mg-badge { margin-left: auto; font: 500 10px var(--mono); color: var(--dim2); }
+.mg-badge:empty { display: none; }
+
+.mg-rail__foot {
+  margin-top: auto; padding: 14px; border-top: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.mg-rail__foot .mg-row {
+  display: flex; align-items: center; justify-content: space-between;
+  font: 500 10px var(--mono);
+}
+
+.mg-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+.mg-top {
+  height: 53px; flex: none; border-bottom: 1px solid var(--line);
+  background: var(--pan); display: flex; align-items: center; gap: 14px; padding: 0 18px;
+}
+.mg-top__title { font-weight: 600; font-size: var(--t-title); white-space: nowrap; }
+.mg-top__sub { font: 400 var(--t-mono) var(--mono); color: var(--dim2); white-space: nowrap; }
+.mg-top__right { margin-left: auto; display: flex; align-items: center; gap: 9px; }
+
+.mg-live {
+  display: flex; align-items: center; gap: 7px; padding: 5px 10px;
+  border-radius: var(--r-md); cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--ok) 34%, transparent);
+  background: color-mix(in srgb, var(--ok) 13%, transparent);
+  color: var(--ok); font: 500 var(--t-mono) var(--mono);
+}
+.mg-live i {
+  width: 6px; height: 6px; border-radius: 50%; background: currentColor;
+  animation: mg-pulse 1.6s infinite; display: block;
+}
+.mg-live.is-paused {
+  background: var(--pan2); color: var(--dim); border-color: var(--line2);
+}
+.mg-live.is-paused i { animation: none; }
+
+.mg-iconbtn {
+  width: 31px; height: 31px; display: grid; place-items: center;
+  border: 1px solid var(--line2); background: var(--pan2);
+  border-radius: var(--r-md); cursor: pointer; color: var(--dim);
+}
+.mg-iconbtn:hover { color: var(--txt); }
+
+.mg-content { flex: 1; overflow-y: auto; padding: 18px; }
+.mg-stack { display: flex; flex-direction: column; gap: 14px; max-width: 1560px; }
+
+/* ---------------------------------------------------------------- panels */
+
+.mg-panel {
+  background: var(--pan); border: 1px solid var(--line);
+  border-radius: var(--r-lg); overflow: hidden;
+}
+.mg-panel__head {
+  display: flex; align-items: center; gap: 12px; padding: 13px 18px;
+  border-bottom: 1px solid var(--line); font-weight: 600; font-size: var(--t-strong);
+}
+.mg-panel__body { padding: 16px 18px; }
+
+.mg-grid { display: grid; gap: 14px; }
+.mg-grid--4 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
+.mg-grid--2 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); }
+
+.mg-tile {
+  background: var(--pan); border: 1px solid var(--line); border-radius: var(--r-lg);
+  padding: 14px 15px 0; display: flex; flex-direction: column; gap: 3px; overflow: hidden;
+}
+.mg-tile--plain { padding: 14px 15px; }
+.mg-label {
+  font: 500 var(--t-micro) var(--mono); letter-spacing: .11em; color: var(--dim2);
+  text-transform: uppercase;
+}
+.mg-statline { display: flex; align-items: baseline; gap: 7px; white-space: nowrap; }
+.mg-stat {
+  font: 600 var(--t-stat-lg) var(--mono); letter-spacing: -.03em; color: var(--txt);
+}
+.mg-stat--sm { font-size: var(--t-stat); }
+.mg-unit { font-size: var(--t-body-s); color: var(--dim2); }
+.mg-trail { margin-left: auto; font: 500 var(--t-mono-s) var(--mono); color: var(--dim); }
+.mg-spark { width: calc(100% + 30px); height: 44px; margin: 6px -15px 0; display: block; }
+
+.mg-bar { height: 5px; border-radius: 3px; background: var(--pan2); overflow: hidden; }
+.mg-bar > span { display: block; height: 100%; border-radius: 3px; background: var(--acc); }
+
+/* ---------------------------------------------------------------- tables */
+
+.mg-table { width: 100%; }
+.mg-tr {
+  display: grid; gap: 14px; align-items: center; padding: 11px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.mg-tr--head {
+  padding: 10px 18px; background: var(--pan2);
+  font: 500 var(--t-micro) var(--mono); letter-spacing: .1em; color: var(--dim2);
+  text-transform: uppercase;
+}
+.mg-tr--click { cursor: pointer; }
+.mg-tr--click:hover { background: var(--pan2); }
+.mg-cell { font: 500 var(--t-body-s) var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mg-cell--r { text-align: right; }
+.mg-cell--dim { color: var(--dim); }
+.mg-cell--micro { font: 400 var(--t-mono-s) var(--mono); color: var(--dim2); }
+
+.mg-pre {
+  margin: 0; padding: 14px 18px; background: var(--in);
+  font: 400 var(--t-mono-s)/1.7 var(--mono); color: var(--dim);
+  overflow-x: auto; border-top: 1px solid var(--line);
+}
+
+/* ---------------------------------------------------------- state colours */
+
+.is-ok   { color: var(--ok); }
+.is-warn { color: var(--warn); }
+.is-bad  { color: var(--bad); }
+.is-dim  { color: var(--dim); }
+
+.mg-note {
+  display: flex; align-items: center; gap: 10px; padding: 9px 18px;
+  font-size: var(--t-body); border-bottom: 1px solid transparent;
+}
+.mg-note--bad {
+  background: color-mix(in srgb, var(--bad) 10%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--bad) 34%, transparent);
+  color: var(--bad);
+}
+.mg-note--warn {
+  background: color-mix(in srgb, var(--warn) 9%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--warn) 34%, transparent);
+  color: var(--warn);
+}
+.mg-note__act {
+  margin-left: auto; font: 500 var(--t-mono-s) var(--mono);
+  padding: 3px 9px; border: 1px solid currentColor; border-radius: var(--r-sm);
+  cursor: pointer; background: none; color: inherit;
+}
+
+.mg-btn {
+  padding: 7px 12px; border-radius: var(--r-md); cursor: pointer;
+  font: 600 var(--t-mono) var(--mono); border: 1px solid transparent;
+  background: var(--acc); color: var(--onacc);
+}
+.mg-btn--ghost {
+  background: var(--pan); color: var(--txt); border-color: var(--line2); font-weight: 500;
+}
+
+.mg-card--warn {
+  background: color-mix(in srgb, var(--warn) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warn) 36%, transparent);
+  border-radius: var(--r-lg); padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 9px;
+}
+
+/* Skeletons: a value that has not arrived reads as absent, never as zero. */
+.mg-skel { animation: mg-shim 1.6s infinite; color: var(--dim2); }
+
+/* Staleness: the whole content region dims while a poll is failing, so the
+ * numbers cannot be mistaken for current ones. */
+.mg-content.is-stale .mg-tile,
+.mg-content.is-stale .mg-panel { opacity: .55; }
+
+.mg-empty {
+  padding: 34px 18px; text-align: center; color: var(--dim);
+  font-size: var(--t-body); line-height: 1.65;
+}

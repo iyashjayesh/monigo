@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MoniGo — Overview</title>
+<link rel="icon" href="assets/favicon.ico">
+<link rel="stylesheet" href="css/monigo-design.css">
+</head>
+<body class="mg" data-theme="dark">
+<div class="mg-app">
+
+  <nav class="mg-rail">
+    <div class="mg-rail__brand">
+      <img src="assets/monigo-icon.png" alt="MoniGo">
+      <span class="mg-version">v2.0.0</span>
+    </div>
+    <div class="mg-svc">
+      <div class="mg-svc__avatar" id="mg-avatar">··</div>
+      <div class="mg-svc__id">
+        <span class="mg-svc__name" id="mg-service-name">connecting…</span>
+        <span class="mg-svc__meta" id="mg-service-meta"></span>
+      </div>
+      <span class="mg-dot" id="mg-status-dot"></span>
+    </div>
+
+    <div class="mg-navhead">Monitor</div>
+    <div class="mg-nav">
+      <a href="index.html">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.8" y="1.8" width="5" height="5" rx="1"></rect><rect x="9.2" y="1.8" width="5" height="5" rx="1"></rect><rect x="1.8" y="9.2" width="5" height="5" rx="1"></rect><rect x="9.2" y="9.2" width="5" height="5" rx="1"></rect></svg>
+        <span>Overview</span>
+      </a>
+      <a href="functions.html">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5.5 3h-1a1.6 1.6 0 0 0-1.6 1.6v1.7c0 .8-.6 1.4-1.4 1.4.8 0 1.4.6 1.4 1.4v1.7A1.6 1.6 0 0 0 4.5 13h1"></path><path d="M10.5 3h1a1.6 1.6 0 0 1 1.6 1.6v1.7c0 .8.6 1.4 1.4 1.4-.8 0-1.4.6-1.4 1.4v1.7a1.6 1.6 0 0 1-1.6 1.6h-1"></path></svg>
+        <span>Functions</span>
+        <span class="mg-badge" id="mg-count-functions"></span>
+      </a>
+      <a href="goroutines.html">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.1"></circle><path d="M8 1.4v2.3M8 12.3v2.3M1.4 8h2.3M12.3 8h2.3M3.4 3.4l1.6 1.6M11 11l1.6 1.6M12.6 3.4L11 5M5 11l-1.6 1.6"></path></svg>
+        <span>Goroutines</span>
+        <span class="mg-badge" id="mg-count-goroutines"></span>
+      </a>
+      <a href="reports.html">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.2 2.2h6l3.6 3.6v8a.6.6 0 0 1-.6.6H3.2a.6.6 0 0 1-.6-.6V2.8a.6.6 0 0 1 .6-.6z"></path><path d="M9 2.4V6h3.6M5.2 9.4h5.6M5.2 11.6h3.4"></path></svg>
+        <span>Reports</span>
+      </a>
+    </div>
+
+    <div class="mg-rail__foot">
+      <div class="mg-row">
+        <span style="color:var(--dim2);letter-spacing:.1em">STORAGE</span>
+        <span style="color:var(--dim)" id="mg-storage-mode"></span>
+      </div>
+      <div style="font:400 10.5px var(--mono);color:var(--dim2)" id="mg-storage-value"></div>
+    </div>
+  </nav>
+
+  <div class="mg-main">
+    <header class="mg-top">
+      <span class="mg-top__title">Overview</span>
+      <span class="mg-top__sub" id="mg-asof"></span>
+      <div class="mg-top__right">
+        <div class="mg-live" id="mg-live"><i></i><span>LIVE</span></div>
+        <div class="mg-iconbtn" id="mg-theme" title="Toggle theme">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M13.2 9.4A5.6 5.6 0 0 1 6.6 2.8a5.6 5.6 0 1 0 6.6 6.6z"></path></svg>
+        </div>
+      </div>
+    </header>
+
+    <div id="mg-banner" hidden></div>
+    <div id="mg-leak" hidden></div>
+
+    <main class="mg-content" id="mg-content">
+      <div class="mg-stack">
+
+        <div class="mg-grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))">
+          <div class="mg-tile mg-tile--plain" style="flex-direction:row;gap:16px;align-items:center">
+            <div style="position:relative;width:88px;height:88px;flex:none">
+              <svg width="88" height="88" viewBox="0 0 88 88">
+                <circle cx="44" cy="44" r="37" fill="none" stroke="var(--line)" stroke-width="8"></circle>
+                <circle id="mg-health-ring" cx="44" cy="44" r="37" fill="none" stroke="var(--ok)" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 233" transform="rotate(-90 44 44)"></circle>
+              </svg>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                <span class="mg-num" style="font:600 21px var(--mono)" id="mg-health-pct">—</span>
+                <span class="mg-label">Service</span>
+              </div>
+            </div>
+            <div style="min-width:0;display:flex;flex-direction:column;gap:6px">
+              <span id="mg-health-verdict">—</span>
+              <span style="font-size:var(--t-mono);line-height:1.5;color:var(--dim);text-wrap:pretty" id="mg-health-detail"></span>
+            </div>
+          </div>
+
+          <div class="mg-tile mg-tile--plain" style="gap:12px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <span class="mg-label">System health</span>
+              <span id="mg-sys-verdict" style="margin-left:auto">—</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:9px" id="mg-sys-bars"></div>
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px 22px;margin-top:2px">
+              <div><div class="mg-label">Uptime</div><div class="mg-num" style="font:500 var(--t-body-s) var(--mono)" id="mg-uptime">—</div></div>
+              <div><div class="mg-label">Cores</div><div class="mg-num" style="font:500 var(--t-body-s) var(--mono)" id="mg-cores">—</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mg-grid mg-grid--4">
+          <div class="mg-tile">
+            <span class="mg-label">Service CPU load</span>
+            <div class="mg-statline"><span class="mg-stat" id="mg-cpu">—</span><span class="mg-unit">%</span><span class="mg-trail mg-num" id="mg-cpu-delta"></span></div>
+            <div id="mg-cpu-spark"></div>
+          </div>
+          <div class="mg-tile">
+            <span class="mg-label">Heap in use</span>
+            <div class="mg-statline"><span class="mg-stat" id="mg-heap">—</span><span class="mg-unit">MB</span><span class="mg-trail" id="mg-heap-of"></span></div>
+            <div id="mg-heap-spark"></div>
+          </div>
+          <div class="mg-tile">
+            <span class="mg-label">Goroutines</span>
+            <div class="mg-statline"><span class="mg-stat" id="mg-gor">—</span></div>
+            <div id="mg-gor-spark"></div>
+          </div>
+          <div class="mg-tile">
+            <span class="mg-label">GC pause</span>
+            <div class="mg-statline"><span class="mg-stat" id="mg-gc">—</span><span class="mg-unit">ms</span><span class="mg-trail" id="mg-gc-cycles"></span></div>
+            <div id="mg-gc-spark"></div>
+          </div>
+        </div>
+
+        <div class="mg-grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr))">
+          <div class="mg-panel">
+            <div class="mg-panel__head">
+              <span>Runtime load</span>
+              <div style="display:flex;gap:14px;margin-left:auto;font:500 var(--t-mono-s) var(--mono);color:var(--dim)">
+                <span style="display:flex;align-items:center;gap:6px"><i style="width:9px;height:2.5px;background:var(--acc);display:block"></i>service cpu</span>
+                <span style="display:flex;align-items:center;gap:6px"><i style="width:9px;height:2.5px;background:var(--vio);display:block"></i>heap inuse</span>
+                <span style="display:flex;align-items:center;gap:6px"><i style="width:9px;height:2.5px;background:var(--warn);display:block"></i>goroutines</span>
+              </div>
+            </div>
+            <div class="mg-panel__body" id="mg-chart"><div class="mg-empty mg-skel">loading history…</div></div>
+          </div>
+
+          <div class="mg-panel">
+            <div class="mg-panel__head">Heap composition</div>
+            <div class="mg-panel__body" style="display:flex;flex-direction:column;gap:13px">
+              <div style="display:flex;height:9px;border-radius:5px;overflow:hidden;gap:2px" id="mg-heap-bar"></div>
+              <div style="display:flex;flex-direction:column;gap:9px;font:500 var(--t-mono) var(--mono)" id="mg-heap-legend"></div>
+              <div style="height:1px;background:var(--line)"></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div><div class="mg-label">Net sent</div><div class="mg-num" style="font:500 var(--t-strong) var(--mono)" id="mg-net-sent">—</div></div>
+                <div><div class="mg-label">Net recv</div><div class="mg-num" style="font:500 var(--t-strong) var(--mono)" id="mg-net-recv">—</div></div>
+                <div><div class="mg-label">Stack</div><div class="mg-num" style="font:500 var(--t-strong) var(--mono)" id="mg-stack-mem">—</div></div>
+                <div><div class="mg-label">Swap free</div><div class="mg-num" style="font:500 var(--t-strong) var(--mono)" id="mg-swap-free">—</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="js/mg-core.js"></script>
+<script src="js/mg-overview.js"></script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MoniGo — Goroutines</title>
+<link rel="icon" href="assets/favicon.ico">
+<link rel="stylesheet" href="css/monigo-design.css">
+</head>
+<body class="mg" data-theme="dark">
+<div class="mg-app">
+
+  <nav class="mg-rail">
+    <div class="mg-rail__brand">
+      <img src="assets/monigo-icon.png" alt="MoniGo">
+      <span class="mg-version">v2.0.0</span>
+    </div>
+    <div class="mg-svc">
+      <div class="mg-svc__avatar" id="mg-avatar">··</div>
+      <div class="mg-svc__id">
+        <span class="mg-svc__name" id="mg-service-name">connecting…</span>
+        <span class="mg-svc__meta" id="mg-service-meta"></span>
+      </div>
+      <span class="mg-dot" id="mg-status-dot"></span>
+    </div>
+
+    <div class="mg-navhead">Monitor</div>
+    <div class="mg-nav">
+      <a href="_preview-overview.html">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.8" y="1.8" width="5" height="5" rx="1"></rect><rect x="9.2" y="1.8" width="5" height="5" rx="1"></rect><rect x="1.8" y="9.2" width="5" height="5" rx="1"></rect><rect x="9.2" y="9.2" width="5" height="5" rx="1"></rect></svg>
+        <span>Overview</span>
+      </a>
+      <a href="_preview-functions.html">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5.5 3h-1a1.6 1.6 0 0 0-1.6 1.6v1.7c0 .8-.6 1.4-1.4 1.4.8 0 1.4.6 1.4 1.4v1.7A1.6 1.6 0 0 0 4.5 13h1"></path><path d="M10.5 3h1a1.6 1.6 0 0 1 1.6 1.6v1.7c0 .8.6 1.4 1.4 1.4-.8 0-1.4.6-1.4 1.4v1.7a1.6 1.6 0 0 1-1.6 1.6h-1"></path></svg>
+        <span>Functions</span>
+        <span class="mg-badge" id="mg-count-functions"></span>
+      </a>
+      <a href="_preview-goroutines.html">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.1"></circle><path d="M8 1.4v2.3M8 12.3v2.3M1.4 8h2.3M12.3 8h2.3M3.4 3.4l1.6 1.6M11 11l1.6 1.6M12.6 3.4L11 5M5 11l-1.6 1.6"></path></svg>
+        <span>Goroutines</span>
+        <span class="mg-badge" id="mg-count-goroutines"></span>
+      </a>
+      <a href="reports.html">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.2 2.2h6l3.6 3.6v8a.6.6 0 0 1-.6.6H3.2a.6.6 0 0 1-.6-.6V2.8a.6.6 0 0 1 .6-.6z"></path><path d="M9 2.4V6h3.6M5.2 9.4h5.6M5.2 11.6h3.4"></path></svg>
+        <span>Reports</span>
+      </a>
+    </div>
+
+    <div class="mg-rail__foot">
+      <div class="mg-row">
+        <span style="color:var(--dim2);letter-spacing:.1em">STORAGE</span>
+        <span style="color:var(--dim)" id="mg-storage-mode"></span>
+      </div>
+      <div style="font:400 10.5px var(--mono);color:var(--dim2)" id="mg-storage-value"></div>
+    </div>
+  </nav>
+
+  <div class="mg-main">
+    <header class="mg-top">
+      <span class="mg-top__title">Goroutines</span>
+      <span class="mg-top__sub" id="mg-asof"></span>
+      <div class="mg-top__right">
+        <div class="mg-live" id="mg-live"><i></i><span>LIVE</span></div>
+        <div class="mg-iconbtn" id="mg-theme" title="Toggle theme">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M13.2 9.4A5.6 5.6 0 0 1 6.6 2.8a5.6 5.6 0 1 0 6.6 6.6z"></path></svg>
+        </div>
+      </div>
+    </header>
+
+    <div id="mg-banner" hidden></div>
+
+    <main class="mg-content" id="mg-content">
+      <div class="mg-stack">
+
+        <div class="mg-grid mg-grid--4">
+          <div class="mg-tile mg-tile--plain">
+            <span class="mg-label">Live goroutines</span>
+            <div class="mg-statline">
+              <span class="mg-stat" id="mg-gor-total">—</span>
+              <span class="mg-trail" id="mg-gor-groups"></span>
+            </div>
+          </div>
+
+          <div class="mg-tile mg-tile--plain" style="gap:10px">
+            <span class="mg-label">By state</span>
+            <div style="display:flex;height:7px;border-radius:4px;overflow:hidden;gap:2px" id="mg-state-bar"></div>
+            <div style="display:flex;flex-direction:column;gap:7px;font:500 var(--t-mono-s) var(--mono)" id="mg-state-legend"></div>
+          </div>
+
+          <div class="mg-tile mg-tile--plain" style="gap:11px">
+            <span class="mg-label">Longest blocked</span>
+            <div style="display:flex;flex-direction:column;gap:9px" id="mg-blocked"></div>
+            <span class="mg-cell--micro" style="margin-top:auto" id="mg-threshold"></span>
+          </div>
+
+          <div class="mg-card--warn" id="mg-verdict" hidden></div>
+        </div>
+
+        <div class="mg-panel">
+          <div class="mg-tr mg-tr--head" style="grid-template-columns:104px 1fr 130px 70px 90px 90px">
+            <span>Signature</span><span>Top frame</span><span>State</span>
+            <span class="mg-cell--r">Count</span><span class="mg-cell--r">Blocked</span><span class="mg-cell--r">Growth</span>
+          </div>
+          <div id="mg-gor-rows"><div class="mg-empty mg-skel">loading…</div></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="js/mg-mock.js"></script>
+<script src="js/mg-core.js"></script>
+<script src="js/mg-goroutines.js"></script>
+</body>
+</html>
