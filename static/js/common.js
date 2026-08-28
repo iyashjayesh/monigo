@@ -70,7 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const toggleLink = document.createElement('a');
         toggleLink.id = 'theme-toggle-btn';
         toggleLink.className = 'cursor-pointer';
-        toggleLink.innerHTML = '<i class="fa fa-moon-o" aria-hidden="true" style="font-size: 16px;"></i>';
+        toggleLink.innerHTML =
+            '<svg class="icon" aria-hidden="true" style="width:16px;height:16px;"><use href="#i-moon"></use></svg>';
         
         toggleLi.appendChild(toggleLink);
         navbarList.appendChild(toggleLi);
@@ -87,16 +88,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (theme === 'dark') {
             document.body.classList.add('dark-theme');
             localStorage.setItem('monigo-theme', 'dark');
-            const icon = document.querySelector('#theme-toggle-btn i');
+            const icon = document.querySelector('#theme-toggle-btn use');
             if (icon) {
-                icon.className = 'fa fa-sun-o';
+                icon.setAttribute('href', '#i-sun');
             }
         } else {
             document.body.classList.remove('dark-theme');
             localStorage.setItem('monigo-theme', 'light');
-            const icon = document.querySelector('#theme-toggle-btn i');
+            const icon = document.querySelector('#theme-toggle-btn use');
             if (icon) {
-                icon.className = 'fa fa-moon-o';
+                icon.setAttribute('href', '#i-moon');
             }
         }
         // Emit event to notify other scripts (like charts) to update colors
@@ -110,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.chart-container').forEach(el => {
         el.innerHTML = `
             <div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted" style="min-height: 200px;">
-                <i class="fa fa-refresh fa-spin fa-2x mb-3" style="color: #ff5c35;"></i>
+                <svg class="icon icon-2x icon-spin mb-3" aria-hidden="true" style="color: #ff5c35;"><use href="#i-refresh"></use></svg>
                 <span class="small font-weight-bold">Awaiting MoniGo server connection...</span>
             </div>
         `;

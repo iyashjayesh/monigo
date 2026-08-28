@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const warming = report.snapshots_retained < report.snapshots_required;
             panel.innerHTML = `
                 <div class="leak-status leak-status-ok">
-                    <i class="fa fa-check-circle" aria-hidden="true"></i>
+                    <svg class="icon" aria-hidden="true"><use href="#i-check-circle"></use></svg>
                     <span><strong>No leak detected.</strong> ${escapeHtml(report.message)}</span>
                     ${warming ? `<span class="leak-meta">growth tracking ${report.snapshots_retained}/${report.snapshots_required}</span>` : ''}
                 </div>`;
@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
         panel.style.display = 'block';
         panel.innerHTML = `
             <div class="leak-status leak-status-warn">
-                <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+                <svg class="icon" aria-hidden="true"><use href="#i-alert-triangle"></use></svg>
                 <span><strong>Leak warning.</strong> ${escapeHtml(report.message)}</span>
             </div>
             <div class="leak-groups">${groups}</div>`;
@@ -326,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     headerDiv.style.userSelect = 'none';
                     headerDiv.innerHTML = `
                         <h6 class="mb-0">
-                            <i class="fa fa-chevron-right mr-2 transition-transform" style="transition: transform 0.2s;"></i>
+                            <svg class="icon mr-2 transition-transform" aria-hidden="true" style="transition: transform 0.2s;"><use href="#i-chevron-right"></use></svg>
                             <strong>${group.count} Goroutines</strong> in state [${group.state}]
                         </h6>
                         <span class="badge badge-primary">${group.count}</span>
@@ -341,7 +341,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     headerDiv.addEventListener('click', () => {
                         const isHidden = bodyDiv.classList.contains('d-none');
-                        const icon = headerDiv.querySelector('i');
+                        // Selects the chevron by its class rather than by tag: it is an
+                        // inline <svg> now that the icon font is gone.
+                        const icon = headerDiv.querySelector('.transition-transform');
                         if (isHidden) {
                             bodyDiv.classList.remove('d-none');
                             icon.style.transform = 'rotate(90deg)';

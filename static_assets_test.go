@@ -41,17 +41,16 @@ func stripComments(content, ext string) string {
 	return htmlCommentPattern.ReplaceAllString(content, "")
 }
 
-// knownExternalResources are the remote fetches that exist today. Every one
-// breaks the dashboard on an airgapped host, which is where a lot of production
-// Go services run. This list must only ever shrink: a new entry means a new
-// network dependency, and the test below fails until it is added deliberately.
+// knownExternalResources are remote fetches the dashboard is permitted to make.
 //
-// Removing these is tracked in DEVELOPMENT-PLAN.md milestone B3.
-var knownExternalResources = map[string]string{
-	"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css": "Font Awesome 4.7.0, for 8 glyphs; replaced by an inline SVG sprite in B3",
-	"https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js":        "html2canvas, for the screenshot buttons; vendor or drop in B3",
-	"https://fonts.googleapis.com/css2":                                                  "Lato webfont pulled by the vendored template CSS; drop in B3",
-}
+// It is empty, and should stay that way: the dashboard is served from inside a
+// consuming service's binary and must render on an airgapped host. Anything
+// added here is a page that breaks on a machine with no route to the internet.
+//
+// It previously held three entries -- Font Awesome and html2canvas from cdnjs,
+// and a Lato webfont the vendored template CSS pulled from Google Fonts. All
+// three were removed when the inline icon sprite replaced Font Awesome.
+var knownExternalResources = map[string]string{}
 
 // maxEmbeddedBytes caps the total size of the embedded dashboard. Every byte
 // ships inside every consuming binary and is downloaded by every `go get`, so

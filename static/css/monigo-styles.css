@@ -658,3 +658,58 @@ body.dark-theme .leak-group-head {
 body.dark-theme .leak-stack {
     color: #cbd5e1;
 }
+
+/* --- Inline icon sprite ---------------------------------------------------
+   Replaces Font Awesome 4.7.0, which was fetched from cdnjs and so rendered
+   nothing on an airgapped host. Stroke icons inherit currentColor, so they
+   follow the theme with no dark-mode overrides of their own. */
+.icon {
+    width: 1em;
+    height: 1em;
+    display: inline-block;
+    vertical-align: -0.125em;
+    flex-shrink: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.icon-2x {
+    width: 2em;
+    height: 2em;
+}
+
+/* The GitHub mark is a filled path; it sets its own fill/stroke on the symbol,
+   but this keeps it correct if the symbol is ever restyled. */
+.icon use[href="#i-github"] {
+    fill: currentColor;
+    stroke: none;
+}
+
+.icon-spin {
+    animation: monigo-icon-spin 1.6s linear infinite;
+}
+
+@keyframes monigo-icon-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .icon-spin {
+        animation: none;
+    }
+}
+
+/* The sidebar and navbar menu buttons were <i> elements backed by icon fonts
+   that were never loaded, so they had zero size and could not be clicked --
+   navigation was unreachable below 1300px in every network condition. */
+.wrapper-menu.icon,
+.navbar-toggler .icon {
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+}
