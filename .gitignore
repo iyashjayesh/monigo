@@ -30,3 +30,6 @@ profiles/
 .idea/
 .gocache/
 .gopath/
+
+# Design canvas exports (large self-unpacking bundles, not source)
+MoniGo Dashboard*.html

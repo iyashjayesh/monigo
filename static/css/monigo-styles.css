@@ -2,71 +2,62 @@
    Design tokens
    ==========================================================================
 
-   One place where every colour, size and spacing value in the dashboard is
-   named. Nothing below consumes these yet -- this block is purely additive and
-   changes no rendering. Rules are migrated onto it one component at a time.
+   Values are the dashboard design's, mapped onto MoniGo's semantic token names
+   so existing rules keep working. Source: `MoniGo Dashboard (fixed).html`;
+   mapping and rationale in DESIGN-ADOPTION.md.
 
-   Why this exists, measured before it was written:
+   Light stays the default theme, as it is today -- `common.js` reads
+   `monigo-theme` from localStorage and falls back to light. The design is
+   dark-first, so flipping the default is a deliberate decision, not something
+   to inherit from a stylesheet edit. It is a one-line change if wanted.
 
-     105  hardcoded hex literals in this file (22 distinct)
-     203  !important declarations
-      51  body.dark-theme selectors, ~440 lines of overrides
-       2  CSS custom properties
+   Every text pair clears WCAG AA (4.5:1); every control boundary and the focus
+   ring clear 3:1. Ratios are stated inline and were computed against the
+   surface each colour actually sits on.
 
-   Eight values account for 82 of the 105 literals, and every one maps 1:1 onto
-   a token below. The !important count is the symptom: they exist because there
-   was no cascade layer to win with, so each new rule had to out-shout the
-   vendored template instead of redefining a shared value.
-
-   Constraints these were chosen under:
-     - System fonts only. Every byte ships inside the consuming service's
-       binary, and a CDN font does not resolve on an airgapped host.
-     - Light and dark are equals. The dark theme is not an inversion; each
-       value is picked for its own ground.
-     - Every text pair clears WCAG AA (4.5:1), and every control boundary and
-       focus ring clears 3:1. Ratios are stated inline and were computed, not
-       estimated. Five values were adjusted upward from their reference because
-       the reference failed.
-
-   Direction and full rationale: ROADMAP.md, Track 2.
+   Three values differ from the design export because the export failed its own
+   floors -- see DESIGN-ADOPTION.md section 1:
+     --ink-subtle (dark)      #59626F 2.99:1 -> #778292 4.75:1  (90 usages)
+     --hairline-strong (both) 1.68/1.88      -> 3.16/3.20
+     --accent-on-fill (dark)  a self-referential custom property -> #04121A
    ========================================================================== */
 
 :root {
-    /* -- Type. System stacks only: no webfont, no external fetch. ---------- */
-    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text",
-        "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
-        "Liberation Mono", monospace;
+    /* -- Type ------------------------------------------------------------- */
+    --font-sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont,
+        "Segoe UI Variable Text", "Segoe UI", Roboto, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, "SF Mono",
+        Menlo, Consolas, monospace;
 
-    /* Six sizes, each with one job. Sizes and line-heights are even numbers so
-       text aligns to the same grid as everything else. */
-    --t-micro: 11px;
-    --t-micro-lh: 16px;
-    --t-micro-w: 600;
-    /* uppercase labels, stat-tile captions */
-    --t-meta: 12px;
+    /* The design runs 10-16px across nine steps with no display tier, which is
+       denser than a marketing-derived scale and correct for an operator
+       reading a screen full of numbers. Reduced here to six named steps. */
+    --t-micro: 10px;
+    --t-micro-lh: 14px;
+    --t-micro-w: 500;
+    /* uppercase eyebrows: SERVICE CPU LOAD, MONITOR, PID */
+    --t-meta: 11.5px;
     --t-meta-lh: 16px;
     --t-meta-w: 400;
     /* units, timestamps, axis ticks, legends */
-    --t-code: 13px;
-    --t-code-lh: 20px;
+    --t-code: 12px;
+    --t-code-lh: 19px;
     --t-code-w: 400;
-    /* MONO ONLY: stack traces, pprof output */
-    --t-body: 14px;
-    --t-body-lh: 20px;
+    /* MONO ONLY: stack traces, pprof output, values */
+    --t-body: 13px;
+    --t-body-lh: 19px;
     --t-body-w: 400;
     /* default UI text and every table cell */
-    --t-head: 18px;
-    --t-head-lh: 24px;
+    --t-head: 15px;
+    --t-head-lh: 21px;
     --t-head-w: 600;
-    /* card titles and page headings */
-    --t-stat: 30px;
-    --t-stat-lh: 32px;
-    --t-stat-w: 700;
+    /* card titles, page headings */
+    --t-stat: 24px;
+    --t-stat-lh: 28px;
+    --t-stat-w: 600;
     /* the one big number per metric tile */
 
-    /* -- Space. 8px grid with two finer steps. Stops at 32px: there is no hero
-       and no marketing rhythm on an operator dashboard. ------------------- */
+    /* -- Space. 8px grid, two finer steps, stops at 32px. ------------------ */
     --s-1: 2px;
     --s-2: 4px;
     --s-3: 8px;
@@ -75,188 +66,178 @@
     --s-6: 24px;
     --s-7: 32px;
 
-    /* -- Radius. Three steps, no pills. ---------------------------------- */
-    --r-sm: 4px;
+    /* -- Radius. The design uses 12 distinct radii; disciplined to three. -- */
+    --r-sm: 5px;
     /* badges, chips, inline code */
-    --r-md: 6px;
-    /* buttons, inputs, list rows */
-    --r-lg: 10px;
+    --r-md: 8px;
+    /* buttons, inputs, list rows, code blocks */
+    --r-lg: 12px;
     /* cards, panels, modals */
 
-    /* -- Elevation. Light mode only; the dark block replaces these with
-       borders, because a shadow on a near-black ground is grey haze that
-       carries no information. --------------------------------------------- */
-    --sh-1: 0 1px 2px rgba(16, 24, 40, .05);
-    --sh-2: 0 1px 3px rgba(16, 24, 40, .06), 0 4px 12px -4px rgba(16, 24, 40, .08);
-    --sh-3: 0 12px 32px -8px rgba(16, 24, 40, .16);
+    /* -- Elevation. Dark replaces these with borders below. --------------- */
+    --sh-1: 0 1px 2px rgba(8, 11, 16, .05);
+    --sh-2: 0 1px 3px rgba(8, 11, 16, .06), 0 4px 12px -4px rgba(8, 11, 16, .08);
+    --sh-3: 0 12px 32px -8px rgba(8, 11, 16, .16);
 
-    /* -- Surfaces (light). Five planes: page, card, nested, raised, rule. -- */
-    --canvas: #f5f6f7;
-    --surface-1: #ffffff;
-    --surface-2: #fafbfc;
-    --surface-3: #f1f3f5;
+    /* ================== LIGHT THEME (default) ========================== */
 
-    --hairline: #dfe1e5;
-    /* card borders, table outlines, chart gridlines */
-    --hairline-soft: #ebedf0;
-    /* in-card row dividers only */
-    --hairline-strong: #898f98;
-    /* control borders -- 3.26:1 on white, clears the 3:1 non-text floor */
+    /* Surfaces. bg < inset == surface-2/3 < surface-1 in this theme: cards are
+       the brightest plane and the page recedes behind them. */
+    --canvas: #F3F5F9;
+    --surface-1: #FFFFFF;
+    --surface-2: #F7F9FC;
+    --surface-3: #F7F9FC;
+    --inset: #F7F9FC;
+    /* code wells, recessed panels */
 
-    /* -- Ink (light). Ratios are against --surface-1 / worst plane. ------- */
-    --ink: #16181d;
-    /* 17.76:1 */
-    --ink-muted: #565b64;
-    /* 6.83:1 -- secondary labels, table headers */
-    --ink-subtle: #646a76;
-    /* 5.43:1, 4.88:1 on --surface-3 -- units, timestamps, axes */
-    --ink-disabled: #9aa1ab;
-    /* 2.61:1 -- DISABLED AND PLACEHOLDER ONLY, never readable text */
+    --hairline: #E3E8EF;
+    /* dividers, table rules, chart gridlines -- deliberately sub-3:1 */
+    --hairline-soft: #EDF0F5;
+    /* in-card row dividers, quieter than the card edge */
+    --hairline-strong: #8191AB;
+    /* 3.20:1 -- control borders. A 1.9:1 border is an input you cannot find */
 
-    /* -- Accent. Identity, never state. It appears on the wordmark, the active
-       nav rail, and at most one filled button per view. It is deliberately
-       absent from the chart palette: orange beside amber-warning is the worst
-       misread available to an observability UI. --------------------------- */
-    --accent: #ff5c35;
-    --accent-press: #e04b24;
-    --accent-text: #c2410c;
-    /* 5.18:1 -- orange as text or a link */
-    --accent-on-fill: #16181d;
-    /* 5.78:1 on --accent; white would be 3.07:1 and fails */
-    --accent-tint: rgba(255, 92, 53, .08);
+    --ink: #0E141B;
+    /* 18.51:1 */
+    --ink-muted: #5B6674;
+    /* 5.84:1 -- secondary labels, table headers */
+    --ink-subtle: #6B7686;
+    /* 4.60:1 -- units, timestamps, axes, eyebrows */
+    --ink-disabled: #A3ACBA;
+    /* 2.35:1 -- DISABLED AND PLACEHOLDER ONLY, never readable text */
 
-    --focus: #3b82f6;
-    /* 3.68:1 on white, 4.88:1 on dark -- one ring works in both themes */
+    --accent: #00758F;
+    /* 5.33:1 as text */
+    --accent-press: #005E73;
+    --accent-text: #00758F;
+    --accent-on-fill: #FFFFFF;
+    /* 5.33:1 on --accent */
+    --accent-tint: color-mix(in srgb, var(--accent) 10%, transparent);
 
-    /* -- Status. Five states, not three: Prometheus and Datadog both treat
-       unknown/no-data as first class, and a dashboard that cannot say "I don't
-       know" says "fine" instead. Each state has a fill, a text tone and a
-       tint. Critical is crimson rather than pure red so it separates from both
-       amber-warning and the vermilion chart series. ----------------------- */
-    --ok-fill: #1b855e;
-    --ok-text: #0a6b4a;
-    /* 6.53:1 */
-    --ok-tint: #e6f4ee;
-    --warn-fill: #ff9900;
-    --warn-text: #8f4b06;
-    /* 6.61:1 */
-    --warn-tint: #fff3e0;
-    --crit-fill: #d10e5c;
-    --crit-text: #b3054a;
-    /* 6.91:1 */
-    --crit-tint: #fdeaf1;
-    --info-fill: #1f62e0;
-    --info-text: #1a56c9;
-    /* 6.52:1 */
-    --info-tint: #e8effc;
-    --unknown-fill: #6b7280;
-    --unknown-text: #4b5563;
-    /* 7.56:1 */
-    --unknown-tint: #eef0f2;
+    --focus: #00758F;
+    /* the accent doubles as the focus ring; 3.20:1 against white */
 
-    /* -- Chart chrome. Never a series colour. ---------------------------- */
-    --grid-line: #e8eaed;
-    --axis-line: #dfe1e5;
-    --thr-line: #b3054a;
-    /* threshold lines drawn above the data */
+    /* Status. Five states: an observability dashboard that cannot say
+       "no data" says "fine" instead. */
+    --ok-fill: #0F7A4F;
+    --ok-text: #0F7A4F;
+    /* 5.36:1 */
+    --ok-tint: color-mix(in srgb, var(--ok-fill) 12%, transparent);
+    --warn-fill: #A15600;
+    --warn-text: #A15600;
+    /* 5.46:1 */
+    --warn-tint: color-mix(in srgb, var(--warn-fill) 12%, transparent);
+    --crit-fill: #C0273C;
+    --crit-text: #C0273C;
+    /* 5.84:1 */
+    --crit-tint: color-mix(in srgb, var(--crit-fill) 12%, transparent);
+    --info-fill: #5B49D6;
+    --info-text: #5B49D6;
+    /* 6.23:1 */
+    --info-tint: color-mix(in srgb, var(--info-fill) 12%, transparent);
+    --unknown-fill: #6B7686;
+    --unknown-text: #5B6674;
+    /* 5.84:1 */
+    --unknown-tint: color-mix(in srgb, var(--unknown-fill) 12%, transparent);
 
-    /* -- Chart series. Ordered, from the Okabe-Ito colour-universal set,
-       retuned so each clears 3:1 as a 2px line on both grounds. 1-6 are the
-       palette; 7-8 are extension. Past six series, change representation --
-       a top-N table or a flame graph -- rather than adding a ninth colour.
+    /* Chart chrome. Never a series colour. */
+    --grid-line: #E9EDF3;
+    --axis-line: #E3E8EF;
+    --thr-line: #C0273C;
 
-       No green in slots 1-3: teal sits where green would, so a chart can never
-       accidentally signal "healthy". Green belongs to status alone. -------- */
-    --series-1: #0b6bcb;
-    /* blue        4.88:1 */
-    --series-2: #b5341f;
-    /* vermilion   5.58:1 */
-    --series-3: #00857a;
-    /* teal        4.19:1 */
-    --series-4: #b2620a;
-    /* amber       4.18:1 */
-    --series-5: #8b3fa8;
-    /* red-violet  5.75:1 */
-    --series-6: #4d5560;
-    /* slate       6.97:1 */
-    --series-7: #5c7a1e;
-    /* olive-lime  4.56:1 */
-    --series-8: #b0367a;
-    /* pink        5.31:1 */
+    /* Chart series. The design's own hues, ordered. No green in the first
+       three: teal sits where green would, so a chart cannot accidentally
+       signal "healthy". Green belongs to status alone. */
+    --series-1: #00758F;
+    /* cyan-teal   5.33:1 */
+    --series-2: #5B49D6;
+    /* violet      6.23:1 */
+    --series-3: #A15600;
+    /* amber       5.46:1 */
+    --series-4: #C0273C;
+    /* crimson     5.84:1 */
+    --series-5: #0F7A4F;
+    /* green       5.36:1 */
+    --series-6: #5B6674;
+    /* slate       5.84:1 */
 }
 
 body.dark-theme {
-    /* Five planes again, ~1.07-1.13:1 apart. The steps are small on purpose:
-       large jumps read as separate windows rather than one instrument. */
-    --canvas: #0d0f13;
-    --surface-1: #14171d;
-    --surface-2: #1b1f27;
-    --surface-3: #242933;
+    /* Surfaces. Note the ordering inverts: canvas < inset < surface-1 <
+       surface-2/3. The page is the darkest plane and cards lift off it. */
+    --canvas: #080B10;
+    --surface-1: #0F141B;
+    --surface-2: #151B24;
+    --surface-3: #151B24;
+    --inset: #0B0F15;
 
-    --hairline: #2c323d;
-    /* adjusted up from the reference, which read 1.26:1 and vanished at 3am */
-    --hairline-soft: #1e232b;
-    --hairline-strong: #5d6675;
-    /* 3.10:1 -- a 1.57:1 border is an input the operator cannot find */
+    --hairline: #1D2531;
+    --hairline-soft: #161D27;
+    --hairline-strong: #526683;
+    /* 3.16:1 -- control borders */
 
-    --ink: #f2f4f7;
-    /* 16.29:1 */
-    --ink-muted: #b3b9c4;
-    /* 9.11:1 -- replaces today's #9ca3af */
-    --ink-subtle: #8b929e;
-    /* 5.73:1, 4.65:1 on --surface-3 -- adjusted up; the reference's #888888
-       was 4.38:1 on the raised plane and failed */
-    --ink-disabled: #5d646f;
-    /* 3.01:1 -- disabled and decorative only */
+    --ink: #E7EBF1;
+    /* 15.45:1 */
+    --ink-muted: #8892A2;
+    /* 5.88:1 */
+    --ink-subtle: #778292;
+    /* 4.75:1 -- raised from the export's #59626F, which was 2.99:1 across
+       90 usages: nav headers, `pid ... · go...`, retention footer */
+    --ink-disabled: #4A5361;
+    /* 2.24:1 -- disabled and decorative only */
 
-    --accent: #ff5c35;
-    --accent-press: #ff7a58;
-    --accent-text: #ff8560;
-    /* 7.50:1 */
-    --accent-on-fill: #16181d;
-    /* 5.78:1 -- still dark-on-orange */
-    --accent-tint: rgba(255, 92, 53, .14);
+    --accent: #00B4E6;
+    /* 7.63:1 as text */
+    --accent-press: #33C3EB;
+    --accent-text: #00B4E6;
+    --accent-on-fill: #04121A;
+    /* 7.84:1 on --accent. The export had `--onacc: var(--onacc)`, a
+       self-reference, so every accent button inherited --ink at 2.02:1 */
+    --accent-tint: color-mix(in srgb, var(--accent) 14%, transparent);
 
-    --focus: #3b82f6;
-    /* 4.88:1 */
+    --focus: #00B4E6;
+    /* 7.63:1 against --surface-1 */
 
-    --ok-fill: #1a7f4b;
-    --ok-text: #5ecf94;
-    /* 9.25:1 */
-    --ok-tint: #12241c;
-    --warn-fill: #b3620a;
-    --warn-text: #fbad37;
-    /* 9.52:1 */
-    --warn-tint: #2a1f0d;
-    --crit-fill: #a5063f;
-    --crit-text: #ff5286;
-    /* 5.81:1 -- 4.72:1 on --surface-3, so keep crit text off hovered rows */
-    --crit-tint: #2b0f1a;
-    --info-fill: #3d71d9;
-    --info-text: #6e9fff;
-    /* 6.89:1 */
-    --info-tint: #111a2e;
-    --unknown-fill: #4b5563;
-    --unknown-text: #98a0ac;
-    /* 6.80:1 */
-    --unknown-tint: #1e222a;
+    --ok-fill: #5FD39B;
+    --ok-text: #5FD39B;
+    /* 9.93:1 */
+    --ok-tint: color-mix(in srgb, var(--ok-fill) 14%, transparent);
+    --warn-fill: #FFA24B;
+    --warn-text: #FFA24B;
+    /* 9.26:1 */
+    --warn-tint: color-mix(in srgb, var(--warn-fill) 13%, transparent);
+    --crit-fill: #FF6B7A;
+    --crit-text: #FF6B7A;
+    /* 6.72:1 */
+    --crit-tint: color-mix(in srgb, var(--crit-fill) 10%, transparent);
+    --info-fill: #8B7BF7;
+    --info-text: #8B7BF7;
+    /* 5.52:1 */
+    --info-tint: color-mix(in srgb, var(--info-fill) 12%, transparent);
+    --unknown-fill: #778292;
+    --unknown-text: #8892A2;
+    /* 5.88:1 */
+    --unknown-tint: color-mix(in srgb, var(--unknown-fill) 14%, transparent);
 
-    --grid-line: #22272f;
-    --axis-line: #2c323d;
-    --thr-line: #ff5286;
+    --grid-line: #171E28;
+    --axis-line: #1D2531;
+    --thr-line: #FF6B7A;
 
-    /* Same hues, lifted for the dark ground, so a series keeps its identity
-       when the operator flips theme mid-incident. */
-    --series-1: #5aa9f0;
-    --series-2: #f2775c;
-    --series-3: #2fb8a8;
-    --series-4: #e8a33d;
-    --series-5: #c78bea;
-    --series-6: #9aa2ae;
-    --series-7: #a8cc4f;
-    --series-8: #f07bb0;
+    --series-1: #00B4E6;
+    /* cyan       7.63:1 */
+    --series-2: #8B7BF7;
+    /* violet     5.52:1 */
+    --series-3: #FFA24B;
+    /* amber      9.26:1 */
+    --series-4: #FF6B7A;
+    /* crimson    6.72:1 */
+    --series-5: #5FD39B;
+    /* green      9.93:1 */
+    --series-6: #8892A2;
+    /* slate      5.88:1 */
 
-    /* Borders, not shadows. */
+    /* Depth from hairlines, not shadows: a drop shadow on a near-black ground
+       is grey haze carrying no information. */
     --sh-1: none;
     --sh-2: 0 0 0 1px var(--hairline-strong), 0 8px 24px -8px rgba(0, 0, 0, .7);
     --sh-3: 0 0 0 1px var(--hairline-strong), 0 16px 40px -12px rgba(0, 0, 0, .8);
@@ -277,7 +258,7 @@ body.dark-theme {
 .dot {
     width: 10px;
     height: 10px;
-    background-color: #FF5C35;
+    background: var(--accent);
     border-radius: 70%;
     animation: bounce 1.5s infinite;
 }
@@ -343,10 +324,10 @@ body.dark-theme {
 }
 
 .dropdown-select {
-    border: 1px solid #ddd;
+    border: 1px solid var(--hairline-strong);
     border-radius: 10px;
     padding: 0.4rem;
-    background-color: #fff;
+    background: var(--surface-1);
     font-size: 1rem;
     cursor: pointer;
 }
@@ -373,7 +354,7 @@ body.dark-theme {
 .card:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04) !important;
-    border-color: rgba(255, 92, 53, 0.3) !important;
+    border-color: color-mix(in srgb, var(--accent) 30%, transparent) !important;
 }
 
 /* Theme Toggle Button Styling */
@@ -386,23 +367,23 @@ body.dark-theme {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    background-color: #f3f4f6 !important;
-    border: 1px solid #e5e7eb !important;
-    color: #4b5563 !important;
+    background: var(--surface-2) !important;
+    border: 1px solid var(--hairline-strong) !important;
+    color: var(--ink-muted) !important;
 }
 
 #theme-toggle-btn:hover {
     transform: scale(1.1) rotate(15deg);
-    background-color: #e5e7eb !important;
-    color: #ff5c35 !important;
-    box-shadow: 0 0 12px rgba(255, 92, 53, 0.25) !important;
+    background: var(--surface-3) !important;
+    color: var(--accent) !important;
+    box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 25%, transparent) !important;
 }
 
 /* Modern Progress Bars */
 .iq-progress-bar {
     height: 7px !important;
     border-radius: 6px !important;
-    background-color: #f3f4f6 !important;
+    background: var(--surface-2) !important;
     overflow: hidden !important;
     margin-top: 12px !important;
     padding: 0 !important;
@@ -412,7 +393,7 @@ body.dark-theme {
     height: 100% !important;
     border-radius: 6px !important;
     display: block !important;
-    background-color: #ff5c35 !important;
+    background-color: var(--accent) !important;
 }
 
 /* Icon Box Polish */
@@ -428,163 +409,286 @@ body.dark-theme {
     transition: background-color 0.2s ease !important;
 }
 
-/* Dark Mode Colors & Styling */
-body.dark-theme {
-    background-color: #0b0f19 !important;
-    color: #f3f4f6 !important;
-}
+/* --- Component colours ----------------------------------------------------
 
-body.dark-theme .wrapper {
-    background-color: #0b0f19 !important;
-}
+   Each rule states its colour once, from a token. The dark theme comes from the
+   token redefinitions above, not from a parallel set of overrides -- which is
+   why the ~170-line `body.dark-theme` block that used to live here is now two
+   structural exceptions.
 
-body.dark-theme .iq-sidebar {
-    background-color: #111827 !important;
-    border-right: 1px solid #1f2937 !important;
-}
+   These rules sit after the partial ones above deliberately: same specificity,
+   later wins, so this is the single place a component's colour is decided.
 
-body.dark-theme .iq-sidebar-logo {
-    border-bottom: 1px solid #1f2937 !important;
-    background-color: #111827 !important;
-}
+   Note `background` rather than `background-color` on the shell surfaces: the
+   vendored template sets the shorthand (`.iq-sidebar { background: #ffffff }`
+   in both backend.css and backend-plugin.min.css), and matching its form keeps
+   the cascade unambiguous.
+   -------------------------------------------------------------------------- */
 
-body.dark-theme .iq-sidebar-menu ul li a {
-    color: #9ca3af !important;
-}
-
-body.dark-theme .iq-sidebar-menu ul li a i,
-body.dark-theme .iq-sidebar-menu ul li a svg {
-    color: #9ca3af !important;
-    fill: #9ca3af !important;
-    transition: color 0.2s, fill 0.2s !important;
-}
-
-body.dark-theme .iq-sidebar-menu ul li.active > a,
-body.dark-theme .iq-sidebar-menu ul li a:hover {
-    color: #ff5c35 !important;
-    background-color: #1f2937 !important;
-}
-
-body.dark-theme .iq-sidebar-menu ul li.active > a i,
-body.dark-theme .iq-sidebar-menu ul li.active > a svg,
-body.dark-theme .iq-sidebar-menu ul li a:hover i,
-body.dark-theme .iq-sidebar-menu ul li a:hover svg {
-    color: #ff5c35 !important;
-    fill: #ff5c35 !important;
-}
-
-body.dark-theme .card {
-    background-color: var(--surface-1) !important;
-    border: 1px solid var(--hairline) !important;
+body {
+    background: var(--canvas) !important;
     color: var(--ink) !important;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2) !important;
+    font-family: var(--font-sans) !important;
 }
 
-body.dark-theme .card:hover {
-    box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.6), 0 8px 10px -2px rgba(0, 0, 0, 0.4) !important;
-    border-color: rgba(255, 92, 53, 0.45) !important;
+.wrapper {
+    background: var(--canvas) !important;
 }
 
-body.dark-theme .card-header,
-body.dark-theme .card-footer {
-    background-color: var(--surface-2) !important;
+/* Sidebar ---------------------------------------------------------------- */
+
+.iq-sidebar {
+    background: var(--surface-1) !important;
+    border-right: 1px solid var(--hairline) !important;
+}
+
+.iq-sidebar-logo {
+    background: var(--surface-1) !important;
+    border-bottom: 1px solid var(--hairline) !important;
+}
+
+.iq-sidebar-menu ul li a {
+    color: var(--ink-muted) !important;
+}
+
+.iq-sidebar-menu ul li a i,
+.iq-sidebar-menu ul li a svg {
+    color: var(--ink-muted) !important;
+    fill: var(--ink-muted) !important;
+    transition: color .2s, fill .2s !important;
+}
+
+.iq-sidebar-menu ul li.active > a,
+.iq-sidebar-menu ul li a:hover {
+    /* --accent, which is already the darkened variant in light theme
+       (#00758F, 5.33:1). The design's bright cyan is dark-theme only. */
+    color: var(--accent) !important;
+    background: var(--surface-3) !important;
+}
+
+.iq-sidebar-menu ul li.active > a i,
+.iq-sidebar-menu ul li.active > a svg,
+.iq-sidebar-menu ul li a:hover i,
+.iq-sidebar-menu ul li a:hover svg {
+    color: var(--accent) !important;
+    fill: var(--accent) !important;
+}
+
+/* Cards ------------------------------------------------------------------
+
+   Depth from a hairline and a barely-lifted surface. In dark mode --sh-1 is
+   `none`, and the hover lift is gone: a 20-tile grid that bounces as the
+   pointer crosses it is noise, not feedback. ---------------------------- */
+
+.card {
+    background: var(--surface-1) !important;
+    color: var(--ink) !important;
+    border: 1px solid var(--hairline) !important;
+    border-radius: var(--r-lg) !important;
+    box-shadow: var(--sh-1) !important;
+    transition: border-color .2s ease !important;
+}
+
+.card:hover {
+    border-color: var(--hairline-strong) !important;
+}
+
+.card-header,
+.card-footer {
+    background: var(--surface-2) !important;
     border-bottom: 1px solid var(--hairline) !important;
     color: var(--ink) !important;
 }
 
-body.dark-theme .iq-top-navbar {
-    background-color: #111827 !important;
-    border-bottom: 1px solid #1f2937 !important;
+/* Top bar ---------------------------------------------------------------- */
+
+.iq-top-navbar {
+    background: var(--surface-1) !important;
+    border-bottom: 1px solid var(--hairline) !important;
 }
 
-body.dark-theme .navbar {
-    background-color: #111827 !important;
+.navbar {
+    background: var(--surface-1) !important;
 }
 
-body.dark-theme .navbar-list {
-    background-color: #1f2937 !important;
-    color: #f3f4f6 !important;
-}
-
-body.dark-theme .text-muted,
-body.dark-theme .dropdown-label {
-    color: var(--ink-muted) !important;
-}
-
-body.dark-theme .table {
+.navbar-list {
+    background: var(--surface-2) !important;
     color: var(--ink) !important;
 }
 
-body.dark-theme .table th {
+/* Text tones -------------------------------------------------------------- */
+
+.text-muted,
+.dropdown-label {
+    color: var(--ink-muted) !important;
+}
+
+/* Tables ------------------------------------------------------------------ */
+
+.table {
+    color: var(--ink) !important;
+}
+
+.table th {
     border-color: var(--hairline) !important;
-    background-color: var(--surface-3) !important;
+    background: var(--surface-3) !important;
+    color: var(--ink-subtle) !important;
+    font-size: var(--t-micro) !important;
+    font-weight: var(--t-micro-w) !important;
+    letter-spacing: .08em !important;
 }
 
-body.dark-theme .table td {
-    /* A quieter rule than the table's own edge, so rows read as rows. */
+.table td {
+    /* Quieter than the table's own edge, so rows read as rows. */
     border-color: var(--hairline-soft) !important;
+    font-size: var(--t-body) !important;
 }
 
-body.dark-theme .table tbody tr:hover {
-    background-color: var(--surface-3) !important;
+.table tbody tr:hover {
+    background: var(--surface-3) !important;
 }
 
-body.dark-theme .modal-content {
-    background-color: #111827 !important;
-    color: #f3f4f6 !important;
-    border: 1px solid #1f2937 !important;
+/* Numeric columns must not jitter as values update on each poll. */
+.table td,
+.metric-value,
+.stat-value {
+    font-variant-numeric: tabular-nums;
 }
 
-body.dark-theme .modal-header {
-    border-bottom: 1px solid #1f2937 !important;
+/* Modals ------------------------------------------------------------------ */
+
+.modal-content {
+    background: var(--surface-1) !important;
+    color: var(--ink) !important;
+    border: 1px solid var(--hairline) !important;
 }
 
-body.dark-theme .modal-footer {
-    border-top: 1px solid #1f2937 !important;
+.modal-header {
+    border-bottom: 1px solid var(--hairline) !important;
 }
 
-body.dark-theme .dropdown-select {
-    background-color: #1f2937 !important;
-    color: #f3f4f6 !important;
-    border: 1px solid #374151 !important;
+.modal-footer {
+    border-top: 1px solid var(--hairline) !important;
 }
 
-body.dark-theme #theme-toggle-btn {
-    background-color: #1f2937 !important;
-    border-color: #374151 !important;
-    color: #f3f4f6 !important;
+/* Controls ----------------------------------------------------------------
+
+   Boundaries use --hairline-strong, which clears the 3:1 non-text floor in
+   both themes. --hairline is for dividers only. ------------------------- */
+
+.dropdown-select {
+    background: var(--surface-2) !important;
+    color: var(--ink) !important;
+    border: 1px solid var(--hairline-strong) !important;
 }
 
-body.dark-theme #theme-toggle-btn:hover {
-    background-color: #374151 !important;
-    color: #ff5c35 !important;
+#theme-toggle-btn {
+    background: var(--surface-2) !important;
+    border-color: var(--hairline-strong) !important;
+    color: var(--ink) !important;
 }
 
-body.dark-theme .iq-progress-bar {
-    background-color: #1f2937 !important;
+#theme-toggle-btn:hover {
+    background: var(--surface-3) !important;
+    color: var(--accent) !important;
 }
 
-body.dark-theme .iq-icon-box-2 {
-    background-color: #1f2937 !important;
-    border: 1px solid #374151 !important;
+.navbar-list li.nav-item.nav-icon.dropdown a {
+    background: var(--surface-2) !important;
+    border-color: var(--hairline-strong) !important;
+    color: var(--ink) !important;
 }
 
-body.dark-theme .goroutine-card {
-    background-color: #1f2937 !important;
-    border-color: #374151 !important;
+.navbar-list li.nav-item.nav-icon.dropdown a:hover {
+    background: var(--surface-3) !important;
+    color: var(--accent) !important;
 }
 
-body.dark-theme pre {
-    background-color: #0b0f19 !important;
-    color: #34d399 !important;
-    border: 1px solid #1f2937 !important;
-    border-radius: 8px !important;
-    padding: 16px !important;
-    font-family: 'Fira Code', 'Courier New', Courier, monospace !important;
+.add-btn {
+    border-color: var(--hairline-strong) !important;
+    color: var(--ink-muted) !important;
 }
+
+/* Focus. The vendored `.btn:focus { outline: none; box-shadow: none }` strips
+   every focus ring with no replacement, so tabbing the dashboard today moves
+   nothing visually. ----------------------------------------------------- */
+
+.btn:focus-visible,
+.dropdown-select:focus-visible,
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible {
+    outline: 2px solid var(--focus) !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 4px var(--accent-tint) !important;
+}
+
+/* Surfaces inside cards --------------------------------------------------- */
+
+.iq-progress-bar {
+    background: var(--surface-3) !important;
+}
+
+.goroutine-card {
+    background: var(--surface-2) !important;
+    border-color: var(--hairline) !important;
+}
+
+/* Code and stack traces ---------------------------------------------------
+
+   Stack traces and pprof output are the primary content of two of the four
+   pages, so they are set for reading: full-strength ink on a recessed surface,
+   fixed size, never wrapped. The previous rule asked for 'Fira Code', which is
+   not shipped and never resolved. -------------------------------------- */
+
+pre {
+    background: var(--inset) !important;
+    color: var(--ink) !important;
+    border: 1px solid var(--hairline) !important;
+    border-radius: var(--r-md) !important;
+    padding: var(--s-5) !important;
+    font-family: var(--font-mono) !important;
+    font-size: var(--t-code) !important;
+    line-height: var(--t-code-lh) !important;
+}
+
+/* Placeholder text -------------------------------------------------------- */
+
+.skeleton-text {
+    color: var(--ink-subtle) !important;
+}
+
+/* Brand buttons ---------------------------------------------------------- */
+
+.card-body .btn-primary {
+    border-color: var(--accent) !important;
+    color: var(--accent-text) !important;
+}
+
+.card-body .btn-primary:hover {
+    background: var(--accent) !important;
+    color: var(--accent-on-fill) !important;
+}
+
+.iq-icon-box-2 {
+    background: var(--accent-tint) !important;
+    border: 1px solid var(--hairline) !important;
+}
+
+.card:hover .iq-icon-box-2 {
+    background: var(--accent-tint) !important;
+}
+
+/* --- Dark theme: structural exceptions only -------------------------------
+
+   Everything above is theme-agnostic. What remains changes a *property*
+   rather than a value, which a token cannot express.
+   -------------------------------------------------------------------------- */
 
 body.dark-theme .gauge,
 .gauge {
+    /* Neutralises the vendored CSS-drawn gauge that the SVG ring replaced.
+       Dead weight, to be removed with the redundant health encodings. */
     background: none !important;
     display: block !important;
     margin: 15px auto !important;
@@ -600,30 +704,29 @@ body.dark-theme .gauge::after,
 
 /* Typography polish */
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    font-family: var(--font-sans) !important;
 }
 
 /* Brand Buttons */
 .btn-primary, #download-image-btn, #download-stack-view, #downloadBtn, .sidebar-bottom-btn {
-    background-color: #ff5c35 !important;
-    border-color: #ff5c35 !important;
-    color: #ffffff !important;
-    border-radius: 8px !important;
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: var(--accent-on-fill) !important;
+    border-radius: var(--r-md) !important;
     font-weight: 600 !important;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    box-shadow: 0 4px 6px -1px rgba(255, 92, 53, 0.15), 0 2px 4px -1px rgba(255, 92, 53, 0.1) !important;
+    box-shadow: 0 4px 6px -1px color-mix(in srgb, var(--accent) 15%, transparent), 0 2px 4px -1px color-mix(in srgb, var(--accent) 10%, transparent) !important;
 }
 
 .btn-primary:hover, #download-image-btn:hover, #download-stack-view:hover, #downloadBtn:hover, .sidebar-bottom-btn:hover {
-    background-color: #e04b24 !important;
-    border-color: #e04b24 !important;
-    color: #ffffff !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 6px 12px -2px rgba(255, 92, 53, 0.3), 0 4px 6px -2px rgba(255, 92, 53, 0.2) !important;
+    background: var(--accent-press) !important;
+    border-color: var(--accent-press) !important;
+    color: var(--accent-on-fill) !important;
+    box-shadow: 0 6px 12px -2px color-mix(in srgb, var(--accent) 30%, transparent), 0 4px 6px -2px color-mix(in srgb, var(--accent) 20%, transparent) !important;
 }
 
 .sidebar-bottom-btn a {
-    color: #ffffff !important;
+    color: var(--accent-on-fill) !important;
     text-decoration: none !important;
 }
 
@@ -635,28 +738,17 @@ body {
     width: 38px !important;
     height: 38px !important;
     border-radius: 50% !important;
-    background-color: #f3f4f6 !important;
-    border: 1px solid #e5e7eb !important;
-    color: #4b5563 !important;
+    background: var(--surface-2) !important;
+    border: 1px solid var(--hairline-strong) !important;
+    color: var(--ink-muted) !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-body.dark-theme .navbar-list li.nav-item.nav-icon.dropdown a {
-    background-color: #1f2937 !important;
-    border-color: #374151 !important;
-    color: #f3f4f6 !important;
 }
 
 .navbar-list li.nav-item.nav-icon.dropdown a:hover {
     transform: scale(1.1);
-    background-color: #e5e7eb !important;
-    color: #ff5c35 !important;
-    box-shadow: 0 0 12px rgba(255, 92, 53, 0.25) !important;
-}
-
-body.dark-theme .navbar-list li.nav-item.nav-icon.dropdown a:hover {
-    background-color: #374151 !important;
-    color: #ff5c35 !important;
+    background: var(--surface-3) !important;
+    color: var(--accent) !important;
+    box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 25%, transparent) !important;
 }
 
 .navbar-list li.nav-item.nav-icon.dropdown a i.fa-github {
@@ -671,25 +763,16 @@ body.dark-theme .navbar-list li.nav-item.nav-icon.dropdown a:hover {
     font-size: 13px !important;
     font-weight: 500 !important;
     background-color: transparent !important;
-    border-color: #e5e7eb !important;
-    color: #4b5563 !important;
+    border-color: var(--hairline-strong) !important;
+    color: var(--ink-muted) !important;
     transition: all 0.2s ease !important;
-}
-
-body.dark-theme .add-btn {
-    border-color: #374151 !important;
-    color: #9ca3af !important;
 }
 
 /* Skeleton Text Animation */
 .skeleton-text {
-    font-size: 1.15rem !important;
+    font-size: var(--t-head) !important;
     font-weight: 500 !important;
-    color: #9ca3af !important;
-}
-
-body.dark-theme .skeleton-text {
-    color: #6b7280 !important;
+    color: var(--ink-subtle) !important;
 }
 
 @keyframes pulse {
@@ -703,9 +786,9 @@ body.dark-theme .skeleton-text {
 
 /* Secondary Outlined Buttons for Detailed View */
 .card-body .btn-primary {
-    background-color: transparent !important;
-    border: 1px solid #ff5c35 !important;
-    color: #ff5c35 !important;
+    background: transparent !important;
+    border: 1px solid var(--accent) !important;
+    color: var(--accent-text) !important;
     font-weight: 500 !important;
     font-size: 13px !important;
     padding: 6px 14px !important;
@@ -714,20 +797,8 @@ body.dark-theme .skeleton-text {
 }
 
 .card-body .btn-primary:hover {
-    background-color: #ff5c35 !important;
-    color: #ffffff !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(255, 92, 53, 0.2) !important;
-}
-
-body.dark-theme .card-body .btn-primary {
-    border-color: #ff5c35 !important;
-    color: #ff5c35 !important;
-}
-
-body.dark-theme .card-body .btn-primary:hover {
-    background-color: #ff5c35 !important;
-    color: #ffffff !important;
+    background: var(--accent) !important;
+    color: var(--accent-on-fill) !important;
 }
 
 /* Sidebar Bottom Card Custom Styling */
@@ -739,14 +810,14 @@ body.dark-theme .card-body .btn-primary:hover {
 }
 
 .sidebar-bottom .card.bg-success-light h6 {
-    color: #9ca3af !important;
+    color: var(--ink-subtle) !important;
     font-size: 12px !important;
     line-height: 1.6 !important;
     font-weight: 400 !important;
 }
 
 .sidebar-bottom .card.bg-success-light .sidebar-bottom-btn {
-    background-color: #ff5c35 !important;
+    background-color: var(--accent) !important;
     border: none !important;
     width: 100% !important;
     border-radius: 8px !important;
@@ -755,7 +826,7 @@ body.dark-theme .card-body .btn-primary:hover {
 }
 
 .sidebar-bottom .card.bg-success-light .sidebar-bottom-btn a {
-    color: #ffffff !important;
+    color: var(--accent-on-fill) !important;
     font-weight: 600 !important;
     font-size: 13px !important;
     text-decoration: none !important;
@@ -763,7 +834,7 @@ body.dark-theme .card-body .btn-primary:hover {
 
 .sidebar-bottom .card.bg-success-light .sidebar-bottom-btn:hover {
     transform: translateY(-1px) !important;
-    box-shadow: 0 4px 12px rgba(255, 92, 53, 0.3) !important;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent) !important;
 }
 
 /* Remove all static decorative progress bars from metric cards */
@@ -773,7 +844,7 @@ body.dark-theme .card-body .btn-primary:hover {
 
 /* Harmonize icon box colors with brand orange */
 .iq-icon-box-2 {
-    background-color: rgba(255, 92, 53, 0.06) !important;
+    background-color: color-mix(in srgb, var(--accent) 6%, transparent) !important;
     border-radius: 10px !important;
     width: 44px !important;
     height: 44px !important;
@@ -783,23 +854,15 @@ body.dark-theme .card-body .btn-primary:hover {
     transition: all 0.2s ease !important;
 }
 
-body.dark-theme .iq-icon-box-2 {
-    background-color: rgba(255, 92, 53, 0.12) !important;
-}
-
 .iq-icon-box-2 img {
     max-width: 22px !important;
     max-height: 22px !important;
-    filter: drop-shadow(0 2px 4px rgba(255, 92, 53, 0.15));
+    filter: drop-shadow(0 2px 4px color-mix(in srgb, var(--accent) 15%, transparent));
 }
 
 .card:hover .iq-icon-box-2 {
     transform: scale(1.05);
-    background-color: rgba(255, 92, 53, 0.1) !important;
-}
-
-body.dark-theme .card:hover .iq-icon-box-2 {
-    background-color: rgba(255, 92, 53, 0.18) !important;
+    background-color: color-mix(in srgb, var(--accent) 10%, transparent) !important;
 }
 
 /* --- Goroutine Leak Detection Panel --- */
@@ -825,15 +888,15 @@ body.dark-theme .card:hover .iq-icon-box-2 {
 }
 
 .leak-status-ok {
-    background: rgba(16, 185, 129, 0.08);
-    border-color: rgba(16, 185, 129, 0.25);
-    color: #047857;
+    background: var(--ok-tint);
+    border-color: var(--ok-fill);
+    color: var(--ok-text);
 }
 
 .leak-status-warn {
-    background: rgba(249, 115, 22, 0.08);
-    border-color: rgba(249, 115, 22, 0.3);
-    color: #b45309;
+    background: var(--warn-tint);
+    border-color: var(--warn-fill);
+    color: var(--warn-text);
 }
 
 .leak-meta {
@@ -847,8 +910,8 @@ body.dark-theme .card:hover .iq-icon-box-2 {
 }
 
 .leak-group {
-    border: 1px solid rgba(148, 163, 184, 0.25);
-    border-radius: 10px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-lg);
     margin-bottom: 10px;
     overflow: hidden;
 }
@@ -859,13 +922,14 @@ body.dark-theme .card:hover .iq-icon-box-2 {
     gap: 10px;
     flex-wrap: wrap;
     padding: 10px 14px;
-    background: rgba(148, 163, 184, 0.08);
-    font-size: 13px;
+    background: var(--surface-3);
+    color: var(--ink);
+    font-size: var(--t-body);
 }
 
 .leak-badge {
-    background: #f97316;
-    color: #fff;
+    background: var(--warn-fill);
+    color: var(--accent-on-fill);
     border-radius: 20px;
     padding: 2px 10px;
     font-size: 12px;
@@ -896,32 +960,6 @@ body.dark-theme .card:hover .iq-icon-box-2 {
     background: transparent;
     border: 0;
     white-space: pre;
-}
-
-/* Dark theme */
-body.dark-theme .leak-status-ok {
-    background: rgba(16, 185, 129, 0.12);
-    border-color: rgba(16, 185, 129, 0.35);
-    color: #6ee7b7;
-}
-
-body.dark-theme .leak-status-warn {
-    background: rgba(249, 115, 22, 0.12);
-    border-color: rgba(249, 115, 22, 0.4);
-    color: #fdba74;
-}
-
-body.dark-theme .leak-group {
-    border-color: rgba(148, 163, 184, 0.2);
-}
-
-body.dark-theme .leak-group-head {
-    background: rgba(148, 163, 184, 0.1);
-    color: #e5e7eb;
-}
-
-body.dark-theme .leak-stack {
-    color: #cbd5e1;
 }
 
 /* --- Inline icon sprite ---------------------------------------------------

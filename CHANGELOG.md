@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **The dashboard adopts the new design's palette and collapses the dark theme onto it.** Colours now come from the design system: a cyan accent (`#00B4E6` dark / `#00758F` light) replacing the orange, five surface planes per theme, and five semantic states. Hex literals in real declarations drop from 105 to 2; `body.dark-theme` component rules from 53 to 3. Every text pair clears WCAG AA and every control boundary clears 3:1, verified in a running dashboard in both themes
+- Focus rings restored. The vendored `.btn:focus { outline: none; box-shadow: none }` stripped every focus indicator with no replacement, so tabbing the dashboard moved nothing visually
+- Stack traces and pprof output render in IBM Plex Mono at a fixed size on a recessed surface. The previous rule asked for `'Fira Code'`, which is not shipped and never resolved
+- Table numerics use `tabular-nums`, so live columns stop jittering on each poll
+
+### Changed
 - Cards, tables and muted text now read their colours from the design tokens rather than hardcoded hex literals. Colours shift slightly onto the corrected palette and every affected text pair gains contrast -- dark muted text goes from 5.78:1 to 8.38:1, dark card text from 13.34:1 to 14.98:1
 
 ### Added
