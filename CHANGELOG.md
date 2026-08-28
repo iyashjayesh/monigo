@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **The sidebar gains the design's shell**: a service identity block (name, PID, Go version and a connection dot), a `MONITOR` section label above the navigation, live counts on the Function Metrics and Go Routines items, and a storage footer showing the backend, retention window and on-disk footprint. All of it is chrome -- true of the instrument rather than of any one page -- so every page shows it and no page fetches it twice
+- `/service-info` exposes `retention_period`, `storage_type` and `storage_on_disk`. `storage_on_disk` is omitted for the in-memory backend, since reporting `0 B` there would read as "nothing stored" rather than "not applicable"
+- `common.GetRetentionPeriodString()` and `timeseries.GetStorageType()`
+
 ## [1.4.0] - 2026-08-28
 
 ### Added

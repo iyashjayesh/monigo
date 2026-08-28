@@ -307,3 +307,46 @@ func TestServiceMetricsExposesRawHeapRecords(t *testing.T) {
 		}
 	}
 }
+
+// The dashboard chrome shows retention and storage footprint in the sidebar,
+// because they are properties of the instrument rather than of any one metric.
+// Both are omitted when unset rather than reported as zero, since "not
+// configured" and "zero" are different states.
+func TestServiceInfoExposesStorageFootprint(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/monigo/api/v1/service-info", nil)
+	w := httptest.NewRecorder()
+	GetServiceInfoAPI(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+
+	var info map[string]interface{}
+	if err := json.NewDecoder(w.Body).Decode(&info); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	// The fields the sidebar identity block reads.
+	for _, field := range []string{"service_name", "process_id", "go_version"} {
+		if _, ok := info[field]; !ok {
+			t.Errorf("service-info is missing %q, which the sidebar identity needs", field)
+		}
+	}
+
+	// storage_type is always known: it defaults to "disk".
+	st, ok := info["storage_type"].(string)
+	if !ok || st == "" {
+		t.Errorf("storage_type = %v, want a non-empty string", info["storage_type"])
+	}
+	if st != "disk" && st != "memory" {
+		t.Errorf("storage_type = %q, want \"disk\" or \"memory\"", st)
+	}
+
+	// The on-disk figure is only meaningful for the disk backend; reporting
+	// "0 B" for the in-memory one would read as "nothing stored".
+	if st == "memory" {
+		if v, present := info["storage_on_disk"]; present {
+			t.Errorf("storage_on_disk = %v for the memory backend; it should be omitted", v)
+		}
+	}
+}

@@ -10,6 +10,14 @@ type ServiceInfo struct {
 	ServiceStartTime time.Time `json:"service_start_time"`
 	GoVersion        string    `json:"go_version"`
 	ProcessId        int32     `json:"process_id"`
+
+	// Storage footprint. Retention and where the data lives are properties of
+	// the instrument rather than of any one metric, so the dashboard shows them
+	// in its chrome. Both are omitted when unset rather than reported as zero,
+	// since "0s retention" and "not configured" are different states.
+	RetentionPeriod string `json:"retention_period,omitempty"`
+	StorageType     string `json:"storage_type,omitempty"`
+	StorageOnDisk   string `json:"storage_on_disk,omitempty"`
 }
 
 // ServiceHealthThresholds is the struct to store the service health thresholds

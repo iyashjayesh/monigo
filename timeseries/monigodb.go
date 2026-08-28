@@ -137,6 +137,11 @@ func SetStorageType(t string) {
 	storageType = t
 }
 
+// GetStorageType returns the configured storage backend, "disk" or "memory".
+func GetStorageType() string {
+	return storageType
+}
+
 // GetStorageInstance initializes and returns a Storage instance.
 func GetStorageInstance() (Storage, error) {
 	manager.mu.Lock()

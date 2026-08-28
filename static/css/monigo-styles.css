@@ -1125,3 +1125,170 @@ body {
     height: 22px;
     cursor: pointer;
 }
+
+/* --- Shell: sidebar identity, grouped navigation, storage footer ------------
+
+   The design puts three things in the sidebar that the template did not have:
+   what service you are looking at, section labels above the navigation, and
+   the retention footprint. All three are chrome -- true of the whole
+   instrument rather than of any one page -- so they live here rather than on
+   the Overview.
+
+   The template's own hooks are untouched: .iq-sidebar, .iq-sidebar-logo,
+   .data-scrollbar, #iq-sidebar-toggle and .wrapper-menu all still work, so the
+   mobile toggle and scroll behaviour survive.
+   -------------------------------------------------------------------------- */
+
+.iq-sidebar {
+    width: 226px !important;
+}
+
+/* Service identity ------------------------------------------------------- */
+
+.mg-identity {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    padding: var(--s-4) var(--s-5);
+    border-bottom: 1px solid var(--hairline);
+}
+
+.mg-identity-avatar {
+    width: 26px;
+    height: 26px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: var(--r-sm);
+    background: var(--accent-tint);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: var(--t-micro);
+    font-weight: 600;
+    text-transform: lowercase;
+}
+
+.mg-identity-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.25;
+}
+
+.mg-identity-name {
+    font-size: var(--t-body);
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mg-identity-meta {
+    font-family: var(--font-mono);
+    font-size: var(--t-micro);
+    color: var(--ink-subtle);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Connected until proven otherwise; common.js flips it on a failed poll. */
+.mg-identity-dot {
+    width: 6px;
+    height: 6px;
+    flex: none;
+    margin-left: auto;
+    border-radius: 50%;
+    background: var(--ok-fill);
+}
+
+.mg-identity-dot.is-stale {
+    background: var(--warn-fill);
+}
+
+.mg-identity-dot.is-down {
+    background: var(--crit-fill);
+}
+
+/* Grouped navigation ----------------------------------------------------- */
+
+.mg-navlabel {
+    padding: var(--s-5) var(--s-5) var(--s-2);
+    font-family: var(--font-mono);
+    font-size: var(--t-micro);
+    font-weight: var(--t-micro-w);
+    letter-spacing: .12em;
+    color: var(--ink-subtle);
+    list-style: none;
+}
+
+.mg-badge {
+    margin-left: auto;
+    padding: 1px var(--s-2);
+    border-radius: var(--r-sm);
+    background: var(--surface-3);
+    color: var(--ink-subtle);
+    font-family: var(--font-mono);
+    font-size: var(--t-micro);
+    line-height: 16px;
+    font-variant-numeric: tabular-nums;
+}
+
+.iq-sidebar-menu ul li.active > a .mg-badge {
+    background: var(--accent-tint);
+    color: var(--accent);
+}
+
+/* The nav link is a flex row so the badge can sit hard right. The icons need
+   an explicit basis: without it a flex row collapses an <svg> with no intrinsic
+   width to 1px, which is what happened to the goroutines icon. */
+.iq-sidebar-menu ul li a {
+    display: flex !important;
+    align-items: center;
+    gap: var(--s-2);
+}
+
+.iq-sidebar-menu ul li a > svg {
+    flex: none;
+    width: 20px;
+    height: 20px;
+}
+
+/* The label takes the slack so the badge lands hard right. Growing the label
+   is cleaner than `margin-left: auto` on the badge, which the vendored rules
+   override. */
+.iq-sidebar-menu ul li a > .ml-4 {
+    flex: 1 1 auto;
+    margin-left: var(--s-2) !important;
+}
+
+/* A badge with nothing in it is noise. */
+.mg-badge:empty {
+    display: none;
+}
+
+/* Storage footer --------------------------------------------------------- */
+
+.mg-storage {
+    margin: var(--s-5) var(--s-5) var(--s-3);
+    padding-top: var(--s-4);
+    border-top: 1px solid var(--hairline);
+}
+
+.mg-storage-head {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: var(--t-micro);
+    letter-spacing: .12em;
+    color: var(--ink-subtle);
+    margin-bottom: var(--s-2);
+}
+
+.mg-storage-value {
+    font-family: var(--font-mono);
+    font-size: var(--t-meta);
+    color: var(--ink-muted);
+    font-variant-numeric: tabular-nums;
+}

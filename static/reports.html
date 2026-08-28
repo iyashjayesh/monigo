@@ -52,9 +52,22 @@
                     <svg class="icon wrapper-menu" aria-hidden="true"><use href="#i-menu"></use></svg>
                 </div>
             </div>
+            <!-- Service identity. The design puts what you are looking at above
+                 the navigation, so the page answers "which service is this?"
+                 without a round trip. Populated by common.js. -->
+            <div class="mg-identity">
+                <div class="mg-identity-avatar" id="mg-avatar">--</div>
+                <div class="mg-identity-text">
+                    <span class="mg-identity-name" id="mg-service-name">&nbsp;</span>
+                    <span class="mg-identity-meta" id="mg-service-meta">&nbsp;</span>
+                </div>
+                <span class="mg-identity-dot" id="mg-status-dot" title="Connected"></span>
+            </div>
+
             <div class="data-scrollbar" data-scroll="1">
                 <nav class="iq-sidebar-menu">
                     <ul id="iq-sidebar-toggle" class="iq-menu">
+                        <li class="mg-navlabel">MONITOR</li>
                         <li class=" ">
                             <a href="./index.html" class="svg-icon">
                                 <svg class="svg-icon" id="p-dash1" width="20" height="20"
@@ -80,7 +93,7 @@
                                     <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
                                     <line x1="12" y1="22.08" x2="12" y2="12"></line>
                                 </svg>
-                                <span class="ml-4">Function Metrics</span>
+                                <span class="ml-4">Function Metrics</span><span class="mg-badge" id="mg-count-functions"></span>
                             </a>
                         </li>
                         <li class=" ">
@@ -95,7 +108,7 @@
                                     <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
                                     <line x1="12" y1="22.08" x2="12" y2="12"></line>
                                 </svg>
-                                <span class="ml-4">Go Routines Stats</span>
+                                <span class="ml-4">Go Routines Stats</span><span class="mg-badge" id="mg-count-goroutines"></span>
                             </a>
                         </li>
                         <li class="active">
@@ -117,6 +130,13 @@
                         </li>
                     </ul>
                 </nav>
+                <div class="mg-storage">
+                    <div class="mg-storage-head">
+                        <span>STORAGE</span>
+                        <span id="mg-storage-mode">&nbsp;</span>
+                    </div>
+                    <div class="mg-storage-value" id="mg-storage-value">&nbsp;</div>
+                </div>
                 <div id="sidebar-bottom" class="position-relative sidebar-bottom">
                     <div class="card border-none border-radius-20 p-2 bg-success-light">
                         <div class="card-body">

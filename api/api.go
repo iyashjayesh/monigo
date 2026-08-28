@@ -30,8 +30,17 @@ func GetServiceInfoAPI(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+	info := common.GetServiceInfo()
+	info.RetentionPeriod = common.GetRetentionPeriodString()
+	info.StorageType = timeseries.GetStorageType()
+	if info.StorageType == "disk" {
+		// Only meaningful for the disk backend; the in-memory one has no
+		// footprint to report and reporting 0 B would read as "nothing stored".
+		info.StorageOnDisk = common.GetDirSize(common.GetBasePath())
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(common.GetServiceInfo()); err != nil {
+	if err := json.NewEncoder(w).Encode(info); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
 }

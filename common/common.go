@@ -4,8 +4,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"github.com/iyashjayesh/monigo/internal/logger"
+	"io"
 	"math"
 	"os"
 	"path/filepath"
@@ -20,7 +20,7 @@ import (
 const monigoFolder string = "monigo"
 
 var (
-	serviceInfo      models.ServiceInfo
+	serviceInfo     models.ServiceInfo
 	retentionPeriod string
 )
 
@@ -262,6 +262,13 @@ func GetServiceStartTime() time.Time {
 // GetServiceName returns the configured service name.
 func GetServiceName() string {
 	return serviceInfo.ServiceName
+}
+
+// GetRetentionPeriodString returns the retention period exactly as configured,
+// e.g. "7d". GetDataRetentionPeriod parses the same value into a duration; this
+// is for display, where "7d" reads better than "168h0m0s".
+func GetRetentionPeriodString() string {
+	return retentionPeriod
 }
 
 // parseDuration parses the duration string.
