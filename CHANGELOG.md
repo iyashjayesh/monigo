@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Design token layer in `static/css/monigo-styles.css`: 122 custom properties covering type, spacing, radius, elevation, five surface planes, four ink tones, five semantic states and an eight-colour chart series palette, in matched light and dark sets. Purely additive -- nothing consumes them yet, and removing both rules from the live stylesheet changes the computed style of zero of 713 sampled elements. Every documented contrast ratio is verified: text pairs clear 4.5:1, control borders and the focus ring clear 3:1
+
 ### Changed
 - **The embedded dashboard shrank from 17.1 MB to 7.9 MB (-54%), and from 71 files to 46.** Everything under `static/` is compiled into the consuming service's binary by `//go:embed static/*` and downloaded by every `go get`, so this is weight every user carried whether or not they ever opened the dashboard. Removed: `assets/ss/d1-d10.png` (7.6 MB), Product Hunt marketing images, an unused animated logo and dropdown arrow, and a favicon variant set -- 28 files, none referenced by any page, stylesheet, script or document. Note this does not shrink existing clones, since the blobs remain in git history; the module zip is what `go get` downloads
 
@@ -14,8 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **The dashboard no longer requires internet access.** Font Awesome 4.7.0 and html2canvas were loaded from `cdnjs`, and the vendored template CSS pulled a Lato webfont from Google Fonts, so on an airgapped host -- where a lot of production Go services run -- icons were blank boxes and the screenshot feature was dead. All three fetches are gone: icons are an inline SVG sprite, html2canvas is vendored, and the font imports are removed
 - **Mobile navigation was impossible in every network condition.** The sidebar and navbar menu buttons were `<i>` elements carrying `las la-bars` and `ri-menu-*` classes -- Line Awesome and Remix Icon -- and neither font was ever loaded: `font-family: remixicon` appeared in the vendored CSS with no `@font-face` rule and no font file anywhere in `static/`. They rendered as zero-size empty elements, so the sidebar could not be opened below 1300px and the navbar below 992px. Both are now real 22px controls
 - Removed `static/css/core/intro.css` (192 KB), referenced by no page and carrying a third Google Fonts import
-
-### Fixed
 - **Memory Distribution pie plotted values of different magnitudes against each other.** The chart parsed a number out of the pre-formatted display strings (`"2.68 MB"`, `"12.93 GB"`), which discards the unit -- so a service using 2.68 MB rendered as 14.3% of the pie instead of 0.02%, a ~700x overstatement of its footprint
 - **Heap Memory Usage chart mixed units under an "MB" axis.** It read `mem_stats_records[].record_value`, a display number whose unit lives in a separate `record_unit` field that the chart ignored. Once heap use crosses 1 GB, `HeapSys` reports in GB while `HeapAlloc` is still in MB, and the taller bar renders shorter. It now reads `raw_mem_stats_records`, which is in one consistent unit
 - **CPU Statistics pie plotted `total_cores` as a slice alongside its own components**, so the chart always summed to twice the real core count. The third slice is now idle cores

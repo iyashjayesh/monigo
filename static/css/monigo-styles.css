@@ -1,3 +1,267 @@
+/* ==========================================================================
+   Design tokens
+   ==========================================================================
+
+   One place where every colour, size and spacing value in the dashboard is
+   named. Nothing below consumes these yet -- this block is purely additive and
+   changes no rendering. Rules are migrated onto it one component at a time.
+
+   Why this exists, measured before it was written:
+
+     105  hardcoded hex literals in this file (22 distinct)
+     203  !important declarations
+      51  body.dark-theme selectors, ~440 lines of overrides
+       2  CSS custom properties
+
+   Eight values account for 82 of the 105 literals, and every one maps 1:1 onto
+   a token below. The !important count is the symptom: they exist because there
+   was no cascade layer to win with, so each new rule had to out-shout the
+   vendored template instead of redefining a shared value.
+
+   Constraints these were chosen under:
+     - System fonts only. Every byte ships inside the consuming service's
+       binary, and a CDN font does not resolve on an airgapped host.
+     - Light and dark are equals. The dark theme is not an inversion; each
+       value is picked for its own ground.
+     - Every text pair clears WCAG AA (4.5:1), and every control boundary and
+       focus ring clears 3:1. Ratios are stated inline and were computed, not
+       estimated. Five values were adjusted upward from their reference because
+       the reference failed.
+
+   Direction and full rationale: ROADMAP.md, Track 2.
+   ========================================================================== */
+
+:root {
+    /* -- Type. System stacks only: no webfont, no external fetch. ---------- */
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text",
+        "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+        "Liberation Mono", monospace;
+
+    /* Six sizes, each with one job. Sizes and line-heights are even numbers so
+       text aligns to the same grid as everything else. */
+    --t-micro: 11px;
+    --t-micro-lh: 16px;
+    --t-micro-w: 600;
+    /* uppercase labels, stat-tile captions */
+    --t-meta: 12px;
+    --t-meta-lh: 16px;
+    --t-meta-w: 400;
+    /* units, timestamps, axis ticks, legends */
+    --t-code: 13px;
+    --t-code-lh: 20px;
+    --t-code-w: 400;
+    /* MONO ONLY: stack traces, pprof output */
+    --t-body: 14px;
+    --t-body-lh: 20px;
+    --t-body-w: 400;
+    /* default UI text and every table cell */
+    --t-head: 18px;
+    --t-head-lh: 24px;
+    --t-head-w: 600;
+    /* card titles and page headings */
+    --t-stat: 30px;
+    --t-stat-lh: 32px;
+    --t-stat-w: 700;
+    /* the one big number per metric tile */
+
+    /* -- Space. 8px grid with two finer steps. Stops at 32px: there is no hero
+       and no marketing rhythm on an operator dashboard. ------------------- */
+    --s-1: 2px;
+    --s-2: 4px;
+    --s-3: 8px;
+    --s-4: 12px;
+    --s-5: 16px;
+    --s-6: 24px;
+    --s-7: 32px;
+
+    /* -- Radius. Three steps, no pills. ---------------------------------- */
+    --r-sm: 4px;
+    /* badges, chips, inline code */
+    --r-md: 6px;
+    /* buttons, inputs, list rows */
+    --r-lg: 10px;
+    /* cards, panels, modals */
+
+    /* -- Elevation. Light mode only; the dark block replaces these with
+       borders, because a shadow on a near-black ground is grey haze that
+       carries no information. --------------------------------------------- */
+    --sh-1: 0 1px 2px rgba(16, 24, 40, .05);
+    --sh-2: 0 1px 3px rgba(16, 24, 40, .06), 0 4px 12px -4px rgba(16, 24, 40, .08);
+    --sh-3: 0 12px 32px -8px rgba(16, 24, 40, .16);
+
+    /* -- Surfaces (light). Five planes: page, card, nested, raised, rule. -- */
+    --canvas: #f5f6f7;
+    --surface-1: #ffffff;
+    --surface-2: #fafbfc;
+    --surface-3: #f1f3f5;
+
+    --hairline: #dfe1e5;
+    /* card borders, table outlines, chart gridlines */
+    --hairline-soft: #ebedf0;
+    /* in-card row dividers only */
+    --hairline-strong: #898f98;
+    /* control borders -- 3.26:1 on white, clears the 3:1 non-text floor */
+
+    /* -- Ink (light). Ratios are against --surface-1 / worst plane. ------- */
+    --ink: #16181d;
+    /* 17.76:1 */
+    --ink-muted: #565b64;
+    /* 6.83:1 -- secondary labels, table headers */
+    --ink-subtle: #646a76;
+    /* 5.43:1, 4.88:1 on --surface-3 -- units, timestamps, axes */
+    --ink-disabled: #9aa1ab;
+    /* 2.61:1 -- DISABLED AND PLACEHOLDER ONLY, never readable text */
+
+    /* -- Accent. Identity, never state. It appears on the wordmark, the active
+       nav rail, and at most one filled button per view. It is deliberately
+       absent from the chart palette: orange beside amber-warning is the worst
+       misread available to an observability UI. --------------------------- */
+    --accent: #ff5c35;
+    --accent-press: #e04b24;
+    --accent-text: #c2410c;
+    /* 5.18:1 -- orange as text or a link */
+    --accent-on-fill: #16181d;
+    /* 5.78:1 on --accent; white would be 3.07:1 and fails */
+    --accent-tint: rgba(255, 92, 53, .08);
+
+    --focus: #3b82f6;
+    /* 3.68:1 on white, 4.88:1 on dark -- one ring works in both themes */
+
+    /* -- Status. Five states, not three: Prometheus and Datadog both treat
+       unknown/no-data as first class, and a dashboard that cannot say "I don't
+       know" says "fine" instead. Each state has a fill, a text tone and a
+       tint. Critical is crimson rather than pure red so it separates from both
+       amber-warning and the vermilion chart series. ----------------------- */
+    --ok-fill: #1b855e;
+    --ok-text: #0a6b4a;
+    /* 6.53:1 */
+    --ok-tint: #e6f4ee;
+    --warn-fill: #ff9900;
+    --warn-text: #8f4b06;
+    /* 6.61:1 */
+    --warn-tint: #fff3e0;
+    --crit-fill: #d10e5c;
+    --crit-text: #b3054a;
+    /* 6.91:1 */
+    --crit-tint: #fdeaf1;
+    --info-fill: #1f62e0;
+    --info-text: #1a56c9;
+    /* 6.52:1 */
+    --info-tint: #e8effc;
+    --unknown-fill: #6b7280;
+    --unknown-text: #4b5563;
+    /* 7.56:1 */
+    --unknown-tint: #eef0f2;
+
+    /* -- Chart chrome. Never a series colour. ---------------------------- */
+    --grid-line: #e8eaed;
+    --axis-line: #dfe1e5;
+    --thr-line: #b3054a;
+    /* threshold lines drawn above the data */
+
+    /* -- Chart series. Ordered, from the Okabe-Ito colour-universal set,
+       retuned so each clears 3:1 as a 2px line on both grounds. 1-6 are the
+       palette; 7-8 are extension. Past six series, change representation --
+       a top-N table or a flame graph -- rather than adding a ninth colour.
+
+       No green in slots 1-3: teal sits where green would, so a chart can never
+       accidentally signal "healthy". Green belongs to status alone. -------- */
+    --series-1: #0b6bcb;
+    /* blue        4.88:1 */
+    --series-2: #b5341f;
+    /* vermilion   5.58:1 */
+    --series-3: #00857a;
+    /* teal        4.19:1 */
+    --series-4: #b2620a;
+    /* amber       4.18:1 */
+    --series-5: #8b3fa8;
+    /* red-violet  5.75:1 */
+    --series-6: #4d5560;
+    /* slate       6.97:1 */
+    --series-7: #5c7a1e;
+    /* olive-lime  4.56:1 */
+    --series-8: #b0367a;
+    /* pink        5.31:1 */
+}
+
+body.dark-theme {
+    /* Five planes again, ~1.07-1.13:1 apart. The steps are small on purpose:
+       large jumps read as separate windows rather than one instrument. */
+    --canvas: #0d0f13;
+    --surface-1: #14171d;
+    --surface-2: #1b1f27;
+    --surface-3: #242933;
+
+    --hairline: #2c323d;
+    /* adjusted up from the reference, which read 1.26:1 and vanished at 3am */
+    --hairline-soft: #1e232b;
+    --hairline-strong: #5d6675;
+    /* 3.10:1 -- a 1.57:1 border is an input the operator cannot find */
+
+    --ink: #f2f4f7;
+    /* 16.29:1 */
+    --ink-muted: #b3b9c4;
+    /* 9.11:1 -- replaces today's #9ca3af */
+    --ink-subtle: #8b929e;
+    /* 5.73:1, 4.65:1 on --surface-3 -- adjusted up; the reference's #888888
+       was 4.38:1 on the raised plane and failed */
+    --ink-disabled: #5d646f;
+    /* 3.01:1 -- disabled and decorative only */
+
+    --accent: #ff5c35;
+    --accent-press: #ff7a58;
+    --accent-text: #ff8560;
+    /* 7.50:1 */
+    --accent-on-fill: #16181d;
+    /* 5.78:1 -- still dark-on-orange */
+    --accent-tint: rgba(255, 92, 53, .14);
+
+    --focus: #3b82f6;
+    /* 4.88:1 */
+
+    --ok-fill: #1a7f4b;
+    --ok-text: #5ecf94;
+    /* 9.25:1 */
+    --ok-tint: #12241c;
+    --warn-fill: #b3620a;
+    --warn-text: #fbad37;
+    /* 9.52:1 */
+    --warn-tint: #2a1f0d;
+    --crit-fill: #a5063f;
+    --crit-text: #ff5286;
+    /* 5.81:1 -- 4.72:1 on --surface-3, so keep crit text off hovered rows */
+    --crit-tint: #2b0f1a;
+    --info-fill: #3d71d9;
+    --info-text: #6e9fff;
+    /* 6.89:1 */
+    --info-tint: #111a2e;
+    --unknown-fill: #4b5563;
+    --unknown-text: #98a0ac;
+    /* 6.80:1 */
+    --unknown-tint: #1e222a;
+
+    --grid-line: #22272f;
+    --axis-line: #2c323d;
+    --thr-line: #ff5286;
+
+    /* Same hues, lifted for the dark ground, so a series keeps its identity
+       when the operator flips theme mid-incident. */
+    --series-1: #5aa9f0;
+    --series-2: #f2775c;
+    --series-3: #2fb8a8;
+    --series-4: #e8a33d;
+    --series-5: #c78bea;
+    --series-6: #9aa2ae;
+    --series-7: #a8cc4f;
+    --series-8: #f07bb0;
+
+    /* Borders, not shadows. */
+    --sh-1: none;
+    --sh-2: 0 0 0 1px var(--hairline-strong), 0 8px 24px -8px rgba(0, 0, 0, .7);
+    --sh-3: 0 0 0 1px var(--hairline-strong), 0 16px 40px -12px rgba(0, 0, 0, .8);
+}
+
 .loader-container {
     display: flex;
     justify-content: center;
