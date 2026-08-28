@@ -357,3 +357,64 @@ func TestEmbeddedPayloadHasNoJunkFiles(t *testing.T) {
 			strings.Join(found, "\n  "))
 	}
 }
+
+// A CSS custom property that is never defined does not error -- the browser
+// drops the declaration and the element silently keeps its inherited value.
+// That is exactly how a footer shipped with var(--bg)/var(--dim2), names taken
+// from the design file rather than from this stylesheet, and rendered with a
+// transparent background and the wrong text tone while looking plausible.
+//
+// var(--x, fallback) is legitimate and exempt: the author has said what to do
+// when the token is absent.
+func TestStylesheetsDefineEveryTokenTheyUse(t *testing.T) {
+	comments := regexp.MustCompile(`(?s)/\*.*?\*/`)
+	defRe := regexp.MustCompile(`(--[\w-]+)\s*:`)
+	// Only var(--x) and var( --x ) -- a comma means a fallback was supplied.
+	useRe := regexp.MustCompile(`var\(\s*(--[\w-]+)\s*\)`)
+
+	// Only MoniGo's own stylesheet. Everything under static/css/core is
+	// vendored Bootstrap and template CSS: backend.css has a genuinely dead
+	// var(--fill-percentage) that no rule, script, or page ever sets, and
+	// rewriting 26k lines of third-party CSS is not this test's job.
+	const ours = "static/css/monigo-styles.css"
+
+	err := fs.WalkDir(staticFiles, "static", func(p string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() || p != ours {
+			return err
+		}
+		raw, err := staticFiles.ReadFile(p)
+		if err != nil {
+			return err
+		}
+		css := comments.ReplaceAllString(string(raw), "")
+
+		defined := map[string]bool{}
+		for _, m := range defRe.FindAllStringSubmatch(css, -1) {
+			defined[m[1]] = true
+		}
+
+		var missing []string
+		seen := map[string]bool{}
+		for _, m := range useRe.FindAllStringSubmatch(css, -1) {
+			if !defined[m[1]] && !seen[m[1]] {
+				seen[m[1]] = true
+				missing = append(missing, m[1])
+			}
+		}
+		sort.Strings(missing)
+		if len(missing) > 0 {
+			t.Errorf("%s uses custom properties it never defines: %s\n"+
+				"These resolve to nothing and the declaration is dropped silently. "+
+				"Either define them, use the name this stylesheet actually declares, "+
+				"or supply a fallback as var(%s, <value>).",
+				p, strings.Join(missing, ", "), missing[0])
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("walking embedded stylesheets: %v", err)
+	}
+	if _, err := staticFiles.ReadFile(ours); err != nil {
+		t.Fatalf("%s is gone, so this test silently checks nothing: %v", ours, err)
+	}
+}

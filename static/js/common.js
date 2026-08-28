@@ -84,24 +84,39 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // The redesigned Overview supplies its own toggle in the top bar rather than
+    // having one injected, so bind that when it is present. Both paths call the
+    // same setTheme(), so the two shells can never disagree about the theme.
+    const designToggle = document.getElementById('mg-theme-toggle');
+    if (designToggle) {
+        designToggle.addEventListener('click', () => {
+            const isDark = document.body.classList.contains('dark-theme');
+            setTheme(isDark ? 'light' : 'dark');
+        });
+    }
+
     function setTheme(theme) {
         if (theme === 'dark') {
             document.body.classList.add('dark-theme');
             localStorage.setItem('monigo-theme', 'dark');
-            const icon = document.querySelector('#theme-toggle-btn use');
-            if (icon) {
-                icon.setAttribute('href', '#i-sun');
-            }
+            setThemeIcon('#i-sun');
         } else {
             document.body.classList.remove('dark-theme');
             localStorage.setItem('monigo-theme', 'light');
-            const icon = document.querySelector('#theme-toggle-btn use');
-            if (icon) {
-                icon.setAttribute('href', '#i-moon');
-            }
+            setThemeIcon('#i-moon');
         }
         // Emit event to notify other scripts (like charts) to update colors
         document.dispatchEvent(new CustomEvent('monigoThemeChanged', { detail: { theme } }));
+    }
+
+    // Whichever toggle this page has -- injected or built into the design's top
+    // bar -- gets the same glyph.
+    function setThemeIcon(href) {
+        const icons = [
+            document.querySelector('#theme-toggle-btn use'),
+            document.getElementById('mg-theme-icon'),
+        ];
+        icons.forEach(icon => icon && icon.setAttribute('href', href));
     }
 
     // Apply saved theme preference immediately

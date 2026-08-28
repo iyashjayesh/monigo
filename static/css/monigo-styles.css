@@ -1292,3 +1292,488 @@ body {
     color: var(--ink-muted);
     font-variant-numeric: tabular-nums;
 }
+/* ══════════════════════════════════════════════════════════════════════════
+   MONIGO OVERVIEW  —  design_fixed.html lines 478-678
+   Tokens are the project's. Every px is verbatim from the design's inline
+   styles; where the design value equals a token the token is used instead.
+   --font-sans / --font-mono are already declared at monigo-styles.css:27-30.
+   DO NOT redeclare them.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── shared primitives ─────────────────────────────────────────────────── */
+
+/* Every panel in the overview is the same card: design repeats
+   background:var(--pan);border:1px solid var(--line);border-radius:12px
+   on all six panels. */
+.mg-card{
+  background:var(--surface-1);
+  border:1px solid var(--hairline);
+  border-radius:var(--r-lg);            /* 12px — exact token match */
+  min-width:0;
+}
+
+/* Uppercase mono eyebrow. Design uses 9.5px in FOUR places (SYSTEM HEALTH,
+   KPI eyebrows, NET SENT/PID readout labels, functions table header).
+   --t-micro is 10px; 9.5px is kept literal — see CONFLICT 3. */
+.mg-eyebrow{
+  font-family:var(--font-mono);
+  font-size:9.5px;
+  font-weight:500;
+  line-height:1;
+  color:var(--ink-subtle);
+  white-space:nowrap;
+}
+/* letter-spacing differs per element in the design; only the two "wide"
+   eyebrows (SYSTEM HEALTH, KPI) carry .11em. Readout labels carry NONE. */
+.mg-eyebrow--wide{ letter-spacing:.11em; }
+
+.mg-panel-title{
+  margin:0;
+  font-family:var(--font-sans);
+  font-size:var(--t-body);              /* 13px — design literal */
+  font-weight:600;                      /* overrides --t-body-w 400 */
+  line-height:1.2;
+  color:var(--ink);
+}
+
+.mg-num{ text-align:right; font-variant-numeric:tabular-nums; }
+.mg-hrule{ height:1px; background:var(--hairline); }
+.mg-vrule{ width:1px; align-self:stretch; background:var(--hairline); }
+
+/* Severity. ONE ladder for the whole page. The DOT palette and the TEXT
+   palette differ on purpose (design lines 1297-1298): a healthy dot is green,
+   a healthy numeral is plain ink — a table where every good row is green is
+   unreadable. */
+.mg-sev-ok   { color:var(--ink);        }
+.mg-sev-warn { color:var(--warn-text);  }
+.mg-sev-crit { color:var(--crit-text);  }
+.mg-dot.mg-sev-ok   { background:var(--ok-text);   }
+.mg-dot.mg-sev-warn { background:var(--warn-text); }
+.mg-dot.mg-sev-crit { background:var(--crit-text); }
+
+/* Shared sparkline. Used by the four KPI tiles. Geometry differs per host,
+   so only paint lives here. */
+.mg-spark{ display:block; }
+.mg-spark__area{ fill:color-mix(in srgb, var(--mg-series) 15%, transparent); stroke:none; }
+.mg-spark__line{ fill:none; stroke:var(--mg-series); stroke-width:1.6; }
+
+/* Icon buttons: 31x31 is deliberate — 1px border + 29px box centres a 15px
+   icon on whole pixels (design line 519). */
+.mg-iconbtn{
+  width:31px; height:31px; flex:none;
+  display:grid; place-items:center;
+  padding:0;
+  border:1px solid var(--hairline);
+  background:var(--surface-2);
+  border-radius:7px;                    /* off-scale: --r-sm 5, --r-md 8 */
+  cursor:pointer;
+  color:var(--ink-muted);
+  -webkit-appearance:none; appearance:none;
+}
+.mg-iconbtn:hover{ color:var(--ink); }
+.mg-icon{ width:15px; height:15px; display:block; fill:none; stroke:currentColor; stroke-width:1.4; }
+.mg-topbar button:focus-visible,
+.mg-hot__row:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+
+
+/* ═══ 1. TOP BAR  (design 483-521) ═════════════════════════════════════════ */
+
+.mg-topbar{
+  height:53px; flex:none;
+  border-bottom:1px solid var(--hairline);
+  background:var(--surface-1);
+  display:flex; align-items:center;
+  gap:14px; padding:0 18px;
+}
+
+.mg-topbar-heading{
+  display:flex;
+  align-items:baseline;                 /* BASELINE, not center */
+  flex-wrap:nowrap; white-space:nowrap;
+  gap:9px; min-width:0;
+}
+.mg-topbar-title{
+  margin:0; font-size:14px; font-weight:600; line-height:1;
+  color:var(--ink); white-space:nowrap;
+}
+.mg-topbar-subtitle{
+  font-family:var(--font-mono);
+  font-size:var(--t-meta);              /* 11.5px */
+  font-weight:400; line-height:1;
+  color:var(--ink-subtle);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+
+.mg-service-pill{
+  display:flex; align-items:center; gap:7px;
+  margin-left:8px;                      /* stacks on the 14px header gap → 22px */
+  padding:4px 9px 4px 7px;              /* asymmetric: 7px on the dot side */
+  border:1px solid var(--hairline);
+  border-radius:7px;
+  background:var(--surface-2);
+  color:var(--ink); min-width:0;
+}
+.mg-service-dot{ width:6px; height:6px; flex:none; border-radius:50%; background:var(--ok-text); }
+.mg-service-pill.is-unhealthy .mg-service-dot{ background:var(--crit-text); }
+.mg-service-pill.is-degraded  .mg-service-dot{ background:var(--warn-text); }
+.mg-service-name{
+  font-family:var(--font-mono); font-size:var(--t-meta); font-weight:500; line-height:1;
+  color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+
+.mg-topbar-actions{ margin-left:auto; display:flex; align-items:center; gap:9px; }
+
+.mg-range{
+  display:flex;
+  background:var(--surface-2);
+  border:1px solid var(--hairline);
+  border-radius:7px;
+  padding:var(--s-1); gap:var(--s-1);   /* 2px / 2px */
+}
+.mg-range-seg{
+  padding:4px 9px; border:0;
+  border-radius:var(--r-sm);            /* 5px — nests concentrically in the 7px track */
+  font-family:var(--font-mono);
+  font-size:11px;                       /* NOT --t-meta 11.5px */
+  font-weight:500; line-height:1;
+  cursor:pointer; background:transparent; color:var(--ink-muted);
+}
+/* Active = SOLID accent chip. Not an outline, not an underline. */
+.mg-range-seg.is-active{ background:var(--accent); color:var(--accent-on-fill); }
+.mg-range-seg:not(.is-active):hover{ color:var(--ink); }
+
+.mg-live{
+  display:flex; align-items:center; gap:7px;
+  padding:5px 10px; border-radius:7px; cursor:pointer;
+  border:1px solid var(--hairline);
+  background:var(--surface-2);
+  color:var(--ink-muted);
+  font:inherit;
+}
+.mg-live.is-live{
+  border-color:color-mix(in srgb, var(--ok-text) 34%, transparent);
+  background:color-mix(in srgb, var(--ok-text) 13%, transparent);
+  color:var(--ok-text);
+}
+/* currentColor is the trick: one class toggle recolours label AND dot. */
+.mg-live-dot{ width:6px; height:6px; flex:none; border-radius:50%; background:currentColor; }
+.mg-live.is-live .mg-live-dot{ animation:mg-pulse 1.6s infinite; }
+.mg-live-label{ font-family:var(--font-mono); font-size:var(--t-meta); font-weight:500; line-height:1; }
+@keyframes mg-pulse{ 0%,100%{opacity:1} 50%{opacity:.25} }
+@media (prefers-reduced-motion:reduce){ .mg-live.is-live .mg-live-dot{ animation:none; } }
+
+
+/* ═══ MAIN SCROLLER  (design 522, 527) ═════════════════════════════════════ */
+
+.mg-main{ flex:1; overflow-y:auto; padding:18px; background:var(--canvas); }
+.mg-screen{ display:flex; flex-direction:column; gap:14px; width:100%; min-height:100%; }
+
+
+/* ═══ 2. HEALTH STRIP  (design 529-572) ════════════════════════════════════ */
+
+.mg-health-strip{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(min(100%,560px), 1fr));
+  gap:14px;
+}
+.mg-health-card--service{ padding:var(--s-5); display:flex; gap:var(--s-5); align-items:center; }  /* 16px */
+.mg-health-card--system { padding:14px var(--s-5); display:flex; align-items:center; gap:22px; flex-wrap:wrap; }
+
+/* --- ring: 88x88, r=37, stroke 8. C = 2πr = 232.478; design hard-codes 232.5.
+       rotate(-90 44 44) starts the arc at 12 o'clock and sweeps clockwise.
+       The dasharray GAP is a full circumference, so any dash ≤232.5 draws one arc. */
+.mg-ring{ position:relative; width:88px; height:88px; flex:none; }
+.mg-ring__svg{ display:block; }
+.mg-ring__track{ stroke:var(--hairline); }
+.mg-ring__arc{ stroke:var(--ok-text); transition:stroke-dasharray .35s ease; }
+.mg-ring__arc.mg-sev-warn{ stroke:var(--warn-text); }
+.mg-ring__arc.mg-sev-crit{ stroke:var(--crit-text); }
+.mg-ring__center{ position:absolute; inset:0; display:flex; flex-direction:column;
+                  align-items:center; justify-content:center; }
+.mg-ring__value{ font:600 21px var(--font-mono); letter-spacing:-.02em; color:var(--ink); }
+.mg-ring__caption{ font:500 8.5px var(--font-mono); letter-spacing:.1em; color:var(--ink-subtle); }
+
+.mg-health-status{ min-width:0; display:flex; flex-direction:column; gap:6px; }
+.mg-health-status__state { font-weight:600; font-size:13.5px; }
+.mg-health-status__detail{ font-size:var(--t-meta); line-height:1.5; color:var(--ink-muted); }
+.mg-health-status__stamp { font:500 10.5px var(--font-mono); color:var(--ink-subtle); }
+
+.mg-sys-health__head{ display:flex; flex-direction:column; gap:5px; flex:none; }
+
+/* --- threshold bars: 5px track, 3px radius, overflow hidden, flat fill.
+       No marker is drawn in the strip — the threshold lives in the text. */
+.mg-bars{ flex:1 1 260px; display:flex; flex-direction:column; gap:9px; min-width:220px; }
+.mg-bar{ display:flex; flex-direction:column; gap:5px; }
+.mg-bar__row{ display:flex; justify-content:space-between; font:500 11px var(--font-mono); }
+.mg-bar__name { color:var(--ink-muted); }
+.mg-bar__value{ color:var(--ink); }
+.mg-bar__track{ height:5px; border-radius:3px; background:var(--surface-2); overflow:hidden; }
+.mg-bar__fill { height:100%; width:0; background:var(--accent); transition:width .3s ease; }
+.mg-bar__fill.mg-sev-ok  { background:var(--ok-text);   }
+.mg-bar__fill.mg-sev-warn{ background:var(--warn-text); }
+.mg-bar__fill.mg-sev-crit{ background:var(--crit-text); }
+
+
+/* ═══ READOUTS — shared, two size variants  (design 565-570 vs 652-657) ════ */
+/* The design genuinely uses two: the PID/GO/UPTIME/CORES block is gap 2px
+   with a 12px value; the NET/STACK/SWAP block is gap 3px with a 13px value.
+   Both are preserved. See CONFLICT 4. */
+.mg-readout{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+.mg-readout--sm{ gap:var(--s-1); }                      /* 2px */
+.mg-readout__label{
+  font-family:var(--font-mono); font-size:9.5px; font-weight:500;
+  line-height:var(--t-micro-lh); color:var(--ink-subtle); white-space:nowrap;
+}
+.mg-readout__value{
+  font-family:var(--font-mono); font-size:var(--t-body); font-weight:500;   /* 13px */
+  line-height:var(--t-body-lh); color:var(--ink);
+  white-space:nowrap; font-variant-numeric:tabular-nums;
+}
+.mg-readout--sm .mg-readout__value{ font-size:var(--t-code); }              /* 12px */
+
+.mg-readouts--proc{ display:grid; grid-template-columns:repeat(2,auto); gap:10px 22px; flex:none; }
+.mg-readouts--io  { display:grid; grid-template-columns:1fr 1fr; gap:var(--s-4); }  /* 12px */
+
+
+/* ═══ 3. KPI TILES  (design 573-607) ═══════════════════════════════════════ */
+
+.mg-kpi-row{ display:grid; grid-template-columns:repeat(auto-fit, minmax(210px,1fr)); gap:14px; }
+
+/* padding-bottom is ZERO: the sparkline is the last flex child and lands
+   flush on the inner bottom edge; overflow:hidden clips its bled edges to
+   the 12px radius. 15px horizontal padding is LOAD-BEARING — it must equal
+   the sparkline's negative margin or the full bleed breaks. */
+.mg-kpi-tile{
+  padding:14px 15px 0;
+  display:flex; flex-direction:column; gap:3px;
+  overflow:hidden;
+}
+.mg-kpi-figures{ display:flex; align-items:baseline; flex-wrap:nowrap; white-space:nowrap; gap:7px; }
+.mg-kpi-value{
+  font-family:var(--font-mono); font-size:26px; font-weight:600;   /* NOT --t-stat 24px */
+  letter-spacing:-.03em; color:var(--ink);
+}
+/* The unit sets NO font-family in the design — it inherits the SANS body face
+   beside a mono number. That contrast is what makes it read as a label. */
+.mg-kpi-unit{ font-family:var(--font-sans); font-size:var(--t-code); color:var(--ink-subtle); }
+.mg-kpi-secondary{
+  margin-left:auto;
+  font-family:var(--font-mono); font-size:11px; font-weight:500;
+  color:var(--ink-muted);
+}
+.mg-kpi-secondary.is-warn{ color:var(--warn-text); }
+
+/* bleed: 15px padding each side → -15px margins + width calc(100% + 30px).
+   height 44 against viewBox height 44 with preserveAspectRatio=none makes the
+   VERTICAL scale exactly 1:1, so the polyline sits in y 4..40 — a pixel-exact
+   4px inset. The horizontal stretch is why the stroke needs
+   vector-effect="non-scaling-stroke". */
+.mg-kpi-spark{ width:calc(100% + 30px); height:44px; margin:6px -15px 0; flex:none; }
+
+/* Series identity, NOT health. Each tile's hue ties it to its line in the
+   Runtime load chart below. Goroutines is amber because it is series-3. */
+.mg-kpi-tile--cpu       { --mg-series:var(--series-1); }   /* accent    */
+.mg-kpi-tile--heap      { --mg-series:var(--series-2); }   /* violet    */
+.mg-kpi-tile--goroutines{ --mg-series:var(--series-3); }   /* amber     */
+.mg-kpi-tile--gc        { --mg-series:var(--series-5); }   /* green     */
+
+
+/* ═══ 4. CHART ROW  (design 611-658) ═══════════════════════════════════════ */
+
+.mg-chart-row{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(min(100%,520px), 1fr));
+  gap:14px;
+}
+
+/* --- Runtime load --- */
+.mg-runtime-load{ padding:var(--s-5) 18px var(--s-4); display:flex; flex-direction:column; }
+.mg-panel-head{ display:flex; align-items:center; gap:var(--s-5); margin-bottom:14px; }
+
+.mg-legend{ margin:0 0 0 auto; padding:0; list-style:none; display:flex; gap:14px; }
+.mg-legend__item{
+  display:flex; align-items:center; gap:6px;
+  font-family:var(--font-mono); font-size:11px; font-weight:500; line-height:1;
+  color:var(--ink-muted); white-space:nowrap;
+}
+/* Solid bar even for the dashed goroutines series — do not dash the swatch. */
+.mg-legend__swatch{ display:block; width:9px; height:2.5px; border-radius:2px; flex:none; }
+.mg-legend__item--cpu  .mg-legend__swatch{ background:var(--series-1); }
+.mg-legend__item--heap .mg-legend__swatch{ background:var(--series-2); }
+.mg-legend__item--gor  .mg-legend__swatch{ background:var(--series-3); }
+
+.mg-plot{ position:relative; height:262px; }
+.mg-plot__canvas{ width:100%; height:262px; display:block; }
+/* Time labels are DOM, not an ECharts axis. space-between means the first
+   label is left-flush and the last right-flush — they are NOT centred on
+   their ticks. That is the design; do not "fix" it. */
+.mg-plot__axis{
+  position:absolute; left:0; right:0; bottom:-16px;
+  display:flex; justify-content:space-between;
+  font-family:var(--font-mono); font-size:var(--t-micro); font-weight:400; line-height:1;
+  color:var(--ink-subtle); pointer-events:none;
+}
+.mg-plot__gutter{ height:18px; flex:none; }
+.mg-plot__empty{
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:var(--s-3);
+  font-size:var(--t-meta); color:var(--ink-subtle); text-align:center; padding:0 var(--s-6);
+}
+.mg-plot__empty[hidden]{ display:none; }
+.mg-plot__empty .mg-icon{ width:20px; height:20px; color:var(--ink-subtle); }
+
+/* --- Heap composition --- */
+.mg-heap-comp{ padding:var(--s-5); display:flex; flex-direction:column; gap:13px; }
+
+.mg-heap-bar{
+  display:flex; height:9px;
+  border-radius:var(--r-sm);            /* 5px — exact token match */
+  overflow:hidden; gap:var(--s-1);      /* 2px */
+}
+.mg-heap-bar__seg{ height:100%; flex:0 0 auto; min-width:0; }
+.mg-heap-bar__seg--inuse{ background:var(--series-2); }   /* violet */
+.mg-heap-bar__seg--alloc{ background:var(--series-1); }   /* accent */
+.mg-heap-bar__seg--idle { background:var(--surface-2); }
+
+.mg-heap-legend{
+  list-style:none; margin:0; padding:0;
+  display:flex; flex-direction:column; gap:9px;
+  font-family:var(--font-mono); font-size:var(--t-meta); font-weight:500;
+  line-height:var(--t-meta-lh); color:var(--ink);
+}
+.mg-heap-legend__row{ display:flex; align-items:center; gap:var(--s-3); min-width:0; }  /* 8px */
+.mg-heap-swatch{ display:block; flex:0 0 auto; width:7px; height:7px; border-radius:2px; }
+.mg-heap-swatch--inuse   { background:var(--series-2);  }
+.mg-heap-swatch--alloc   { background:var(--series-1);  }
+.mg-heap-swatch--idle    { background:var(--surface-2); }
+.mg-heap-swatch--released{ background:var(--hairline);  }
+/* CONTRAST FIX (not in the design): --surface-2 and --hairline swatches sit
+   at ~1.05:1 / 1.2:1 on a white card in light theme — effectively invisible.
+   A 1px inset ring restores the edge without repainting the segment. */
+.mg-heap-swatch--idle,
+.mg-heap-swatch--released{ box-shadow:inset 0 0 0 1px var(--hairline-strong); }
+.mg-heap-legend__label{ color:var(--ink-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mg-heap-legend__value{ margin-left:auto; color:var(--ink); white-space:nowrap;
+                        font-variant-numeric:tabular-nums; }
+
+
+/* ═══ 5. HOTTEST TRACED FUNCTIONS  (design 663-676) ════════════════════════ */
+
+.mg-hot{ overflow:hidden; }
+.mg-hot__head{
+  display:flex; align-items:center;
+  padding:14px 18px; border-bottom:1px solid var(--hairline);
+}
+.mg-hot__all{
+  margin-left:auto;
+  font-family:var(--font-mono); font-size:var(--t-meta); font-weight:500; line-height:1;
+  color:var(--accent-text); text-decoration:none; cursor:pointer;
+}
+
+/* Design track list is `1fr 92px 92px 92px 76px` (name/calls/p95/mem/spark).
+   CALLS and TREND have no data (§4), so their tracks are removed and the
+   remaining three widened to 110px. Row padding and gap are unchanged, so
+   the 43px row height (11 + 21 + 11) is preserved. */
+.mg-hot__row{
+  display:grid;
+  grid-template-columns:1fr 110px 110px 110px;
+  align-items:center; gap:14px;
+  padding:11px 18px;
+  border-bottom:1px solid var(--hairline);
+  cursor:pointer; width:100%;
+  background:transparent; border-top:0; border-left:0; border-right:0;
+  text-align:left; color:inherit; font:inherit;
+}
+.mg-hot__row:last-child{ border-bottom:0; }   /* card is overflow:hidden + 12px radius */
+.mg-hot__row:hover{ background:var(--surface-2); }
+
+.mg-hot__namecell{ display:flex; align-items:center; gap:9px; min-width:0; }
+.mg-fn-dot{ width:5px; height:5px; border-radius:50%; flex:none; }
+.mg-fn-name{
+  font:500 var(--t-code)/1 var(--font-mono); color:var(--ink);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.mg-fn-pkg{ font:400 var(--t-micro)/1 var(--font-mono); color:var(--ink-subtle); flex:none; }
+
+.mg-hot__exec{ font:500 var(--t-code)/1 var(--font-mono); color:var(--ink); }
+.mg-hot__mem { font:500 var(--t-code)/1 var(--font-mono); color:var(--ink-muted); }
+.mg-hot__last{ font:400 11px/1 var(--font-mono); color:var(--ink-subtle); }
+
+.mg-empty{ display:flex; flex-direction:column; gap:6px; padding:var(--s-6) 18px; }
+.mg-empty[hidden]{ display:none; }
+.mg-empty__title{ font-size:var(--t-body); font-weight:600; color:var(--ink); }
+.mg-empty__body { font-size:var(--t-meta); line-height:1.5; color:var(--ink-muted); }
+.mg-empty__body code{ font-family:var(--font-mono); color:var(--ink); }
+
+
+/* ═══ NARROW VIEWPORT — invented; the design is one fixed-width canvas ═════ */
+.mg-topbar-menu{ display:none; }
+@media (max-width:900px){
+  .mg-topbar-menu{ display:grid; }
+  .mg-topbar-subtitle{ display:none; }
+}
+@media (max-width:700px){ .mg-service-pill{ display:none; } }
+@media (max-width:640px){ .mg-health-card--system .mg-vrule{ display:none; } }
+
+/* --- Shell layout: clear the fixed sidebar ---------------------------------
+
+   The template positioned .content-page with its own offset. The design's
+   header and main replace it, so they carry the offset instead. One token, so
+   the sidebar width is stated once.
+   -------------------------------------------------------------------------- */
+
+:root {
+    --mg-sidebar-w: 226px;
+}
+
+.mg-topbar,
+.mg-main {
+    margin-left: var(--mg-sidebar-w);
+}
+
+/* The template collapses the sidebar below 1300px; the content reclaims the
+   space rather than leaving a 226px gutter. */
+@media (max-width: 1299px) {
+
+    .mg-topbar,
+    .mg-main {
+        margin-left: 0;
+    }
+}
+
+/* --- Footer ----------------------------------------------------------------
+
+   Replaces .iq-footer, which set an unthemed white background that showed
+   through as a border around the card in dark mode.
+   -------------------------------------------------------------------------- */
+
+.mg-footer {
+    margin-left: var(--mg-sidebar-w);
+    padding: 20px 24px 28px;
+    background: var(--canvas);
+    /*
+     * --ink-subtle is tuned against --surface-1 (4.60:1 light). The footer sits
+     * on --canvas, which is darker, and the same tone measures 4.22:1 there --
+     * under the 4.5 floor. --ink-muted clears it on both grounds.
+     */
+    color: var(--ink-muted);
+    font-size: 12px;
+    text-align: center;
+}
+
+.mg-footer a {
+    color: var(--ink-muted);
+    text-decoration: none;
+}
+
+.mg-footer a:hover,
+.mg-footer a:focus-visible {
+    color: var(--accent);
+    text-decoration: underline;
+}
+
+@media (max-width: 1299px) {
+    .mg-footer {
+        margin-left: 0;
+    }
+}
