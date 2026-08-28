@@ -365,7 +365,7 @@ body.dark-theme {
 /* Global Premium Styling Overrides */
 .card {
     border-radius: 12px !important;
-    border: 1px solid #e5e7eb !important;
+    border: 1px solid var(--hairline) !important;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
     transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease !important;
 }
@@ -474,9 +474,9 @@ body.dark-theme .iq-sidebar-menu ul li a:hover svg {
 }
 
 body.dark-theme .card {
-    background-color: #111827 !important;
-    border: 1px solid #1f2937 !important;
-    color: #f3f4f6 !important;
+    background-color: var(--surface-1) !important;
+    border: 1px solid var(--hairline) !important;
+    color: var(--ink) !important;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2) !important;
 }
 
@@ -487,9 +487,9 @@ body.dark-theme .card:hover {
 
 body.dark-theme .card-header,
 body.dark-theme .card-footer {
-    background-color: #1f2937 !important;
-    border-bottom: 1px solid #374151 !important;
-    color: #f3f4f6 !important;
+    background-color: var(--surface-2) !important;
+    border-bottom: 1px solid var(--hairline) !important;
+    color: var(--ink) !important;
 }
 
 body.dark-theme .iq-top-navbar {
@@ -508,24 +508,25 @@ body.dark-theme .navbar-list {
 
 body.dark-theme .text-muted,
 body.dark-theme .dropdown-label {
-    color: #9ca3af !important;
+    color: var(--ink-muted) !important;
 }
 
 body.dark-theme .table {
-    color: #f3f4f6 !important;
+    color: var(--ink) !important;
 }
 
 body.dark-theme .table th {
-    border-color: #1f2937 !important;
-    background-color: #1f2937 !important;
+    border-color: var(--hairline) !important;
+    background-color: var(--surface-3) !important;
 }
 
 body.dark-theme .table td {
-    border-color: #1f2937 !important;
+    /* A quieter rule than the table's own edge, so rows read as rows. */
+    border-color: var(--hairline-soft) !important;
 }
 
 body.dark-theme .table tbody tr:hover {
-    background-color: #1f2937 !important;
+    background-color: var(--surface-3) !important;
 }
 
 body.dark-theme .modal-content {

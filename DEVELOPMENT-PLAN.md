@@ -224,7 +224,7 @@ ROADMAP.md Track 2 and the design research behind it.
 | PR | Branch | Scope | Visual diff | Effort |
 | --- | --- | --- | --- | --- |
 | **C1** | `feat/design-tokens` | Add `:root` + `body.dark-theme` token blocks at the top of `monigo-styles.css`. Change nothing else. | **None** | S |
-| **C2** | `refactor/tokenize-cards-tables` | Replace hex literals with tokens for cards and tables. Delete each `!important` the token now wins without. | None | M |
+| **C2** | `refactor/tokenize-cards-tables` | Replace hex literals with tokens for cards and tables. | **Small** (see note) | M |
 | **C3** | `refactor/tokenize-chrome` | Same for sidebar, navbar, buttons, leak panel. | None | M |
 | **C4** | `refactor/collapse-dark-overrides` | Delete each `body.dark-theme` override as its light counterpart becomes tokenized. ~400 of ~440 lines go. | None | M |
 | **C5** | `refactor/borders-not-shadows` | Dark mode uses borders. Drop hover shadows and the `translateY(-2px)` card lift. | Small | S |
@@ -235,6 +235,22 @@ ROADMAP.md Track 2 and the design research behind it.
 
 ### Notes that change how these are reviewed
 
+- **C2 does not have zero visual diff, and cannot delete `!important` yet.** Both
+  claims in the original plan were wrong, and testing found it. The tokens are a
+  *corrected* palette, not a restatement of the current literals: 6 of the 8
+  dominant values shift. The moves are small -- most under 20 on a 0-441 scale --
+  and every affected text pair gains contrast (dark muted text 5.78:1 -> 8.38:1),
+  but "None" was the wrong expectation to set for a reviewer. On `!important`:
+  removing all 64 flags from the card and table rules changes nothing in light
+  theme, but 7 elements in dark depend on one of them
+  (`body.dark-theme .card { color }`), where the vendored `.bg-success` rule wins
+  otherwise. Removing them safely needs per-declaration verification, and is
+  better done in C4 once the vendored dark overrides are gone.
+- **Measuring a CSS change needs a settle delay after any theme toggle.** An
+  earlier C2 measurement reported 21 changed elements; the fingerprint had been
+  captured mid-transition, and the "change" was the theme finishing. With a
+  1s settle it reproduces as 0. Any before/after comparison in C3-C9 needs the
+  same care, or it will invent regressions.
 - **C1 is the safest PR in this plan and the highest leverage.** Zero visual
   diff — it only adds declarations. Merge it early even if C2 stalls.
 - **C4 is where the `!important` count should collapse.** Quote before/after counts

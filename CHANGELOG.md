@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Cards, tables and muted text now read their colours from the design tokens rather than hardcoded hex literals. Colours shift slightly onto the corrected palette and every affected text pair gains contrast -- dark muted text goes from 5.78:1 to 8.38:1, dark card text from 13.34:1 to 14.98:1
+
 ### Added
 - Design token layer in `static/css/monigo-styles.css`: 122 custom properties covering type, spacing, radius, elevation, five surface planes, four ink tones, five semantic states and an eight-colour chart series palette, in matched light and dark sets. Purely additive -- nothing consumes them yet, and removing both rules from the live stylesheet changes the computed style of zero of 713 sampled elements. Every documented contrast ratio is verified: text pairs clear 4.5:1, control borders and the focus ring clear 3:1
 
