@@ -22,9 +22,14 @@ JS lint:   none
 ```
 
 Every UI defect in ROADMAP.md Track 1 is the kind CI could have caught and
-didn't — a missing `main.js`, a CDN URL, 7.6 MB of unreferenced PNGs, a
-`timeRange`/`timeframe` typo. And every UI change made so far was verified by a
-human in a browser, which does not survive into CI.
+didn't — a broken favicon path on all four pages, a CDN URL, 7.6 MB of
+unreferenced PNGs, a `timeRange`/`timeframe` typo. And every UI change made so
+far was verified by a human in a browser, which does not survive into CI.
+
+B1 proved the point twice over on its first run: it found two defects the
+six-agent audit missed (the favicon, and `.DS_Store` embedded into every
+binary), and it disproved one the audit had reported (`js/core/main.js`, whose
+three references are all inside HTML comments and therefore fetch nothing).
 
 Tracks 2 and 3 are a **nine-step CSS/JS migration**. Doing that with no automated
 verification is the largest risk in this plan. So **B1 lands first** and adds
@@ -89,17 +94,23 @@ any order or in parallel.
   `static/index.html`, `static/function-metrics.html`
 - **Scope** Four checks, all pure Go against the existing `staticFiles embed.FS`:
   1. **Every referenced asset exists.** Parse `src=` / `href=` out of each
-     embedded `.html`, resolve relative paths, `fs.Stat` each one. Fails today on
-     `js/core/main.js` — that failure is the point.
+     embedded `.html`, strip commented-out regions first, resolve relative paths,
+     `fs.Stat` each one. Found the broken favicon on all four pages — that is the
+     point. Stripping comments matters: without it, three commented-out
+     `js/core/main.js` tags read as live references and produce a false positive.
   2. **No external URLs in embedded assets.** Reject `http://` and `https://` in
      `src`/`href`/CSS `url()` across `static/`, with an explicit allowlist that
      starts empty. Locks in the offline guarantee once B3 removes the CDN.
   3. **Payload budget.** Sum the embedded tree; fail over a constant. Set to the
-     current size in this PR, tightened by B2. Stops 7.6 MB creeping back.
+     current size in this PR, tightened by B2. Stops 7.6 MB creeping back. Note
+     the real embedded figure is **17.1 MB** summed from file sizes; `du -sk`
+     reports 16.5 MB because it counts disk blocks.
+  5. **No junk files.** `.DS_Store` and friends compiled into users' binaries.
   4. **JS parses.** A CI step running `node --check` over `static/js/*.js`
      excluding the vendored `echarts.min.js` and `backend-bundle.min.js`. Node is
      already on the GitHub runner; no `package.json`, no npm install.
-- **Also** Delete the `js/core/main.js` references so check 1 passes.
+- **Also** Fix the favicon path on all four pages and delete the embedded
+  `.DS_Store` files, so checks 1 and 5 pass.
 - **Tests** The PR *is* tests. Include a deliberately-failing fixture in review
   notes so a reviewer can confirm each check actually fires.
 - **Acceptance** `go test ./... -race` green; temporarily reintroducing a CDN URL,

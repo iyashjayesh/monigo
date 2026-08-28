@@ -126,11 +126,21 @@ embedded. Replaces the CDN CSS, the never-loaded Line Awesome and Remix Icon
 references, and the missing font files in one change. Vendor `html2canvas` or drop
 the screenshot feature.
 
-### 1.4 A 404 on every dashboard load
+### 1.4 A 404 on every dashboard load: the favicon
 
-`static/index.html` and `static/function-metrics.html` both reference
-`./js/core/main.js`. `static/js/core/` contains only `app.js` and
-`backend-bundle.min.js`. Delete the reference.
+All four pages carry `<link rel="shortcut icon" href="../assets/favicon.ico">`.
+The pages are served from the root, so `../assets/` resolves *above* the served
+tree and 404s on every load. The file does exist, at
+`static/assets/favicon.ico` — the path just needs to be `./assets/favicon.ico`.
+
+**Correction.** An earlier revision of this document claimed the 404 was
+`js/core/main.js`, referenced by two pages and absent from disk. That was wrong:
+all three references to it are inside HTML comments
+(`<!-- <script src="./js/core/main.js" defer></script> -->`), so they fetch
+nothing. The audit agent reported it and I confirmed only that the file was
+absent and the string was present, without checking whether the reference was
+live. The favicon above is the real instance of this defect class, and it was
+found by the guardrail test in B1 rather than by the audit.
 
 ### 1.5 Reports "7d" throws a ReferenceError
 

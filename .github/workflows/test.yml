@@ -10,6 +10,19 @@ jobs:
       with:
         go-version: '1.24'
     - run: go vet ./...
+    # The dashboard JS has no build step, bundler or test runner, so a syntax
+    # error would otherwise only surface in a browser. node is preinstalled on
+    # the runner; this needs no package.json and installs nothing.
+    - name: Check dashboard JavaScript parses
+      run: |
+        status=0
+        for f in static/js/*.js; do
+          case "$(basename "$f")" in
+            echarts.min.js|backend-bundle.min.js) continue ;;  # vendored
+          esac
+          node --check "$f" || status=1
+        done
+        exit $status
     - run: go test -v -race -cover -coverprofile=coverage.out -timeout 300s ./...
     - name: Upload coverage
       if: always()
