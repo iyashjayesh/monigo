@@ -72,6 +72,11 @@ func GetServiceStats(_ context.Context) models.ServiceStats {
 
 	stats.Health = GetServiceHealth(&stats)
 
+	// Leak detection runs here rather than in the API handler so that growth
+	// snapshots are evenly spaced and detection does not depend on anyone
+	// having the dashboard open.
+	stats.GoroutineLeakReport = AnalyzeGoroutineLeaks()
+
 	return stats
 }
 

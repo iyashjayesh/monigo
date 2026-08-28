@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/iyashjayesh/monigo/internal/logger"
 )
@@ -110,6 +111,16 @@ func (b *MonigoBuilder) WithAlertWebhook(url string) *MonigoBuilder {
 	return b
 }
 
+// WithStaleGoroutineThreshold sets how long a goroutine must stay blocked
+// before leak detection reports it as stale. Defaults to 24h when unset.
+//
+// The Go runtime reports block duration in whole minutes, so a threshold below
+// one minute cannot be represented and is rejected by Build().
+func (b *MonigoBuilder) WithStaleGoroutineThreshold(d time.Duration) *MonigoBuilder {
+	b.config.StaleGoroutineThreshold = d
+	return b
+}
+
 // WithHeadless sets whether the dashboard should be started
 func (b *MonigoBuilder) WithHeadless(headless bool) *MonigoBuilder {
 	b.config.Headless = headless
@@ -168,6 +179,12 @@ func (b *MonigoBuilder) Build() *Monigo {
 	}
 	if b.config.MaxGoRoutines < 0 {
 		panic("[MoniGo] Build() failed: MaxGoRoutines must be >= 0")
+	}
+	if b.config.StaleGoroutineThreshold < 0 {
+		panic("[MoniGo] Build() failed: StaleGoroutineThreshold must be >= 0")
+	}
+	if b.config.StaleGoroutineThreshold > 0 && b.config.StaleGoroutineThreshold < time.Minute {
+		panic("[MoniGo] Build() failed: StaleGoroutineThreshold must be at least 1m (the runtime reports block duration in whole minutes)")
 	}
 	return b.config
 }

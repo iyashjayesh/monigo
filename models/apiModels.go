@@ -34,6 +34,10 @@ type ServiceStats struct {
 
 	// Health
 	Health ServiceHealth `json:"health"`
+
+	// GoroutineLeakReport is the verdict of the most recent leak-detection
+	// pass. Nil when no pass has run.
+	GoroutineLeakReport *GoroutineLeakReport `json:"goroutine_leak_report,omitempty"`
 }
 
 // CoreStatistics represents the core statistics of the service.
@@ -129,6 +133,51 @@ type Record struct {
 type GoRoutinesStatistic struct {
 	NumberOfGoroutines int      `json:"number_of_goroutines"`
 	StackView          []string `json:"stack_view"`
+	// LeakReport is nil when leak detection has not produced a verdict yet.
+	LeakReport *GoroutineLeakReport `json:"leak_report,omitempty"`
+}
+
+// GoroutineGroup describes a set of goroutines sharing an identical call stack.
+type GoroutineGroup struct {
+	// Signature identifies the shared call stack. It is a short hash, stable
+	// for as long as the call stack is byte-identical.
+	Signature string `json:"signature"`
+	// State is the runtime wait reason, e.g. "chan receive" or "select".
+	State string `json:"state"`
+	// Count is how many goroutines currently share this call stack.
+	Count int `json:"count"`
+	// BlockedMinutes is the longest time any goroutine in the group has been
+	// blocked, as reported by the runtime. Zero means under a minute, or a
+	// state the runtime does not timestamp.
+	BlockedMinutes int `json:"blocked_minutes"`
+	// Growth is the change in Count across the retained snapshot window.
+	Growth int `json:"growth"`
+	// Stale marks a group blocked at or beyond the configured threshold.
+	Stale bool `json:"stale"`
+	// Growing marks a group whose Count rose in every retained snapshot.
+	Growing bool `json:"growing"`
+	// CallStack is the shared stack, excluding the per-goroutine header line.
+	CallStack string `json:"call_stack"`
+}
+
+// GoroutineLeakReport is the verdict of a single leak-detection pass.
+type GoroutineLeakReport struct {
+	TotalGoroutines int `json:"total_goroutines"`
+	// StaleGoroutines counts goroutines blocked at or beyond the threshold.
+	StaleGoroutines int `json:"stale_goroutines"`
+	// GrowingGroups counts distinct call stacks growing monotonically.
+	GrowingGroups int `json:"growing_groups"`
+	// LeakSuspected is true when anything stale or growing was found.
+	LeakSuspected bool   `json:"leak_suspected"`
+	Message       string `json:"message"`
+	// StaleThresholdMinutes is the threshold this pass was evaluated against.
+	StaleThresholdMinutes int `json:"stale_threshold_minutes"`
+	// SnapshotsRetained is how many periodic snapshots growth was computed
+	// over. Growth is only reported once the window is full.
+	SnapshotsRetained int `json:"snapshots_retained"`
+	SnapshotsRequired int `json:"snapshots_required"`
+	// SuspiciousGroups holds the offending groups, worst first.
+	SuspiciousGroups []GoroutineGroup `json:"suspicious_groups,omitempty"`
 }
 
 // FunctionTraceDetails represents the function trace details.

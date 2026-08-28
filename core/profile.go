@@ -6,6 +6,7 @@ import (
 	"runtime/pprof"
 	"strings"
 
+	"github.com/iyashjayesh/monigo/internal/logger"
 	"github.com/iyashjayesh/monigo/models"
 )
 
@@ -38,13 +39,48 @@ func WriteHeapProfile(filename string) error {
 	return pprof.WriteHeapProfile(f)
 }
 
+// maxStackBufferSize caps the buffer used to capture all goroutine stacks. An
+// application with tens of thousands of goroutines produces a very large dump;
+// beyond this we accept truncation rather than allocating without bound.
+const maxStackBufferSize = 64 << 20
+
+// initialStackBufferSize is the first buffer tried before any doubling.
+const initialStackBufferSize = 1 << 20
+
+// captureAllStacks returns the full stack trace for every goroutine.
+//
+// runtime.Stack truncates silently when the destination buffer is too small and
+// reports only how many bytes it wrote, so a single fixed-size call cannot tell
+// a complete dump from a clipped one. It is retried with a larger buffer while
+// the result exactly fills the buffer -- the only observable signal of
+// truncation -- which matters most for an application leaking goroutines, where
+// a clipped trace would undercount precisely when the data is needed.
+func captureAllStacks() string {
+	return captureStacks(runtime.Stack, initialStackBufferSize, maxStackBufferSize)
+}
+
+// captureStacks holds the retry logic, with the dump function injected so the
+// grow-and-retry path can be tested without needing a process that genuinely
+// has a multi-megabyte stack dump.
+func captureStacks(dump func(buf []byte, all bool) int, initialSize, maxSize int) string {
+	size := initialSize
+	for {
+		buf := make([]byte, size)
+		n := dump(buf, true)
+		if n < len(buf) {
+			return string(buf[:n])
+		}
+		if size >= maxSize {
+			logger.Log.Warn("goroutine stack dump truncated", "buffer_bytes", size)
+			return string(buf[:n])
+		}
+		size *= 2
+	}
+}
+
 // CollectGoRoutinesInfo returns the number of running Go routines and their stack traces split into separate goroutine blocks.
 func CollectGoRoutinesInfo() models.GoRoutinesStatistic {
-	// Creating a buffer to hold the stack trace
-	stackBuffer := make([]byte, 1<<20)
-	stackSize := runtime.Stack(stackBuffer, true)
-
-	stackTrace := string(stackBuffer[:stackSize]) // converting the stack trace to a single string
+	stackTrace := captureAllStacks()
 
 	goroutineBlocks := SplitGoroutines(stackTrace)           // splitting the stack trace into separate goroutine blocks
 	totalNumberOfRunningGoRoutines := runtime.NumGoroutine() // getting the total number of running goroutines
@@ -52,6 +88,7 @@ func CollectGoRoutinesInfo() models.GoRoutinesStatistic {
 	return models.GoRoutinesStatistic{
 		NumberOfGoroutines: totalNumberOfRunningGoRoutines,
 		StackView:          goroutineBlocks,
+		LeakReport:         leakReportFor(goroutineBlocks),
 	}
 }
 

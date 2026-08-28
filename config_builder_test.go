@@ -2,6 +2,7 @@ package monigo
 
 import (
 	"testing"
+	"time"
 )
 
 func TestBuilderValidBuild(t *testing.T) {
@@ -156,6 +157,39 @@ func TestBuilderAlertWebhookValidation(t *testing.T) {
 			m := NewBuilder().WithServiceName("test").WithAlertWebhook(tt.url).Build()
 			if m.AlertWebhookURL != tt.url {
 				t.Errorf("AlertWebhookURL = %q, want %q", m.AlertWebhookURL, tt.url)
+			}
+		})
+	}
+}
+
+func TestBuilderStaleGoroutineThresholdValidation(t *testing.T) {
+	tests := []struct {
+		name      string
+		threshold time.Duration
+		wantPanic bool
+	}{
+		{"unset uses default", 0, false},
+		{"24h", 24 * time.Hour, false},
+		{"exactly 1m", time.Minute, false},
+		{"below 1m is not representable", 30 * time.Second, true},
+		{"negative", -time.Hour, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				r := recover()
+				if tt.wantPanic && r == nil {
+					t.Errorf("expected Build() to panic for %v", tt.threshold)
+				}
+				if !tt.wantPanic && r != nil {
+					t.Errorf("expected Build() to accept %v, panicked with: %v", tt.threshold, r)
+				}
+			}()
+
+			m := NewBuilder().WithServiceName("test").WithStaleGoroutineThreshold(tt.threshold).Build()
+			if m.StaleGoroutineThreshold != tt.threshold {
+				t.Errorf("StaleGoroutineThreshold = %v, want %v", m.StaleGoroutineThreshold, tt.threshold)
 			}
 		})
 	}

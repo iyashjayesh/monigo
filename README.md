@@ -97,6 +97,7 @@ m := monigo.NewBuilder().
     WithMaxMemoryUsage(90).                 // Health threshold (default: 95%)
     WithMaxGoRoutines(500).                 // Health threshold (default: 100)
     WithAlertWebhook("https://...").        // Health breach webhook (default: off)
+    WithStaleGoroutineThreshold(24*time.Hour). // Stale goroutine cutoff (default: 24h)
     WithHeadless(false).                    // true = no dashboard (default: false)
     WithTimeZone("UTC").                    // Timezone (default: "Local")
     WithLogLevel(slog.LevelInfo).           // Log level
@@ -137,6 +138,74 @@ minimum of 5 minutes separates deliveries so a flapping service cannot emit an a
 on every tick. Delivery failures are logged and otherwise ignored.
 
 `Build()` rejects a webhook URL that is not `http://` or `https://`.
+
+### Goroutine Leak Detection
+
+Every metrics collection cycle captures all goroutine stacks and evaluates them for
+two independent leak signals. The verdict appears on the Go Routines Stats page and
+in the `go-routines-stats` API response, and raises the alert webhook if one is
+configured.
+
+**Stale goroutines.** The Go runtime stamps a block duration into each goroutine's
+stack header once it has been parked for over a minute:
+
+```
+goroutine 21 [chan receive, 47 minutes]:
+```
+
+Any goroutine blocked at or beyond the threshold is reported as stale. The default
+is 24h; `WithStaleGoroutineThreshold` takes any duration of 1m or more (below that
+is not representable, since the runtime reports whole minutes only).
+
+**Growing call stacks.** Goroutines are grouped by identical call stack, and the
+per-group counts are retained across the last 5 collection cycles. A group is
+flagged only if its count rose in *every* retained cycle. That rule is deliberately
+strict: a worker pool scaling up briefly, plateauing, or oscillating is not a leak,
+and a group absent from the oldest snapshot is treated as new rather than growing.
+Nothing is reported until the window is full, so a freshly started service cannot
+raise a false alarm from two data points.
+
+```go
+m := monigo.NewBuilder().
+    WithServiceName("order-service").
+    WithStaleGoroutineThreshold(6 * time.Hour).
+    WithAlertWebhook("https://hooks.slack.com/services/...").
+    Build()
+```
+
+The report is carried on the goroutine stats response:
+
+```json
+{
+  "number_of_goroutines": 456,
+  "leak_report": {
+    "total_goroutines": 456,
+    "stale_goroutines": 443,
+    "growing_groups": 1,
+    "leak_suspected": true,
+    "snapshots_retained": 5,
+    "snapshots_required": 5,
+    "stale_threshold_minutes": 360,
+    "message": "Possible goroutine leak: 443 goroutine(s) blocked for at least 6h; 1 call stack(s) growing across the last 5 snapshots (total goroutines: 456).",
+    "suspicious_groups": [
+      {
+        "signature": "a3f19c2d4e5b",
+        "state": "chan receive",
+        "count": 440,
+        "blocked_minutes": 421,
+        "growth": 100,
+        "stale": true,
+        "growing": true,
+        "call_stack": "main.worker()\n\t/app/main.go:31 +0x24\n..."
+      }
+    ]
+  }
+}
+```
+
+Detection is driven by the metrics collection cycle rather than by dashboard
+polling, so growth snapshots stay evenly spaced and a leak is caught whether or not
+anyone has a browser tab open.
 
 ## Function Tracing
 

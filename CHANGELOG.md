@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `BasicAuthMiddleware` now sends a `WWW-Authenticate` challenge when a request carries no credentials at all
 
 ### Fixed
+- **Silently truncated goroutine dumps**: `CollectGoRoutinesInfo` used a fixed 1 MB buffer with a single `runtime.Stack` call. `runtime.Stack` truncates without reporting it, so an application with thousands of goroutines got a clipped trace and undercounted -- precisely the situation goroutine leak detection needs to be accurate in. It now grows the buffer and retries, capped at 64 MB
 - **Inverted health score**: `calculateServiceHealth` clamped the score to `100` -- the best possible value -- when usage exceeded every threshold, so a fully degraded service reported as healthy. It now returns `0`, matching `calculateSystemHealth`
 - **Unbounded memory growth**: `InMemoryStorage.InsertRows` ignored the retention period and never evicted, so `WithStorageType("memory")` grew for the life of the process
 - **`WithStorageType` had no effect**: the storage singleton was initialised by `SetDataPointsSyncFrequency` before `SetStorageType` was applied, so `"memory"` silently fell through to disk
@@ -26,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `registry.GetAll()` documented a snapshot copy but shared the `Labels` map with the live registry
 
 ### Added
+- Goroutine leak detection: every collection cycle evaluates all goroutine stacks for stale goroutines (blocked past a threshold, default 24h, configurable via `WithStaleGoroutineThreshold`) and for call stacks growing monotonically across the last 5 cycles. The verdict is carried on `GoRoutinesStatistic.LeakReport` and `ServiceStats.GoroutineLeakReport`, surfaced as a warning panel on the Go Routines Stats page, and raises the alert webhook when configured
+- `core.AnalyzeGoroutineLeaks()`, `core.SetStaleGoroutineThreshold()`, `core.GetStaleGoroutineThreshold()`, and `core.ResetLeakDetectionState()`
 - Health breach webhook alerts via `WithAlertWebhook(url)` -- an opt-in `POST` fired when the system or service health score drops below 70. Dispatch is off the collection path, requests time out after 10 seconds, and deliveries are rate limited to one per 5 minutes across both alert types. `Build()` rejects a URL that is not `http://` or `https://`
 - `common.GetServiceName()` -- accessor for the configured service name
 - `core.GetThresholds()` -- thread-safe accessor for the configured health thresholds

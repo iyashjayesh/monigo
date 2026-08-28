@@ -169,6 +169,81 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
+    // Renders the goroutine leak verdict above the stack view. The panel is
+    // hidden entirely when nothing is suspected, so a healthy service shows no
+    // scary empty box.
+    function renderLeakReport(report) {
+        const panel = document.getElementById('goroutine-leak-panel');
+        if (!panel) {
+            return;
+        }
+        if (!report) {
+            panel.innerHTML = '';
+            panel.style.display = 'none';
+            return;
+        }
+
+        if (!report.leak_suspected) {
+            panel.style.display = 'block';
+            const warming = report.snapshots_retained < report.snapshots_required;
+            panel.innerHTML = `
+                <div class="leak-status leak-status-ok">
+                    <i class="fa fa-check-circle" aria-hidden="true"></i>
+                    <span><strong>No leak detected.</strong> ${escapeHtml(report.message)}</span>
+                    ${warming ? `<span class="leak-meta">growth tracking ${report.snapshots_retained}/${report.snapshots_required}</span>` : ''}
+                </div>`;
+            return;
+        }
+
+        const groups = (report.suspicious_groups || []).map(g => {
+            const reasons = [];
+            if (g.stale) {
+                reasons.push(`blocked ${formatMinutes(g.blocked_minutes)}`);
+            }
+            if (g.growing) {
+                reasons.push(`grew by ${g.growth} over ${report.snapshots_required} snapshots`);
+            }
+            return `
+                <div class="leak-group">
+                    <div class="leak-group-head">
+                        <span class="leak-badge">${g.count}&times;</span>
+                        <code>${escapeHtml(g.state)}</code>
+                        <span class="leak-reasons">${escapeHtml(reasons.join(' \u00b7 '))}</span>
+                    </div>
+                    <pre class="leak-stack">${escapeHtml(g.call_stack)}</pre>
+                </div>`;
+        }).join('');
+
+        panel.style.display = 'block';
+        panel.innerHTML = `
+            <div class="leak-status leak-status-warn">
+                <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+                <span><strong>Leak warning.</strong> ${escapeHtml(report.message)}</span>
+            </div>
+            <div class="leak-groups">${groups}</div>`;
+    }
+
+    function formatMinutes(minutes) {
+        if (minutes >= 1440) {
+            return `${Math.floor(minutes / 1440)}d`;
+        }
+        if (minutes >= 60) {
+            return `${Math.floor(minutes / 60)}h`;
+        }
+        return `${minutes}m`;
+    }
+
+    // Stack traces come from the monitored process, so they are escaped before
+    // ever touching innerHTML.
+    function escapeHtml(value) {
+        return String(value === undefined || value === null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     function fetchGoRoutines() {
         authenticatedFetch(`/monigo/api/v1/go-routines-stats`)
             .then(response => response.json())
@@ -207,6 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 countElement.textContent = goroutines.length;
+                renderLeakReport(data.leak_report);
                 container.innerHTML = '';
 
                 // Group identical stack traces (ignoring the specific goroutine ID / state line)

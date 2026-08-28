@@ -71,6 +71,9 @@ type Monigo struct {
 	SamplingRate            int       `json:"sampling_rate"`
 	StorageType             string    `json:"storage_type"`
 	AlertWebhookURL         string    `json:"alert_webhook_url,omitempty"`
+	// StaleGoroutineThreshold is how long a goroutine must stay blocked before
+	// leak detection reports it as stale. Zero means the 24h default.
+	StaleGoroutineThreshold time.Duration `json:"stale_goroutine_threshold,omitempty"`
 
 	// OpenTelemetry Configuration
 	OTelEndpoint string            `json:"otel_endpoint,omitempty"`
@@ -164,6 +167,8 @@ func (m *Monigo) initCommon() {
 	if m.AlertWebhookURL != "" {
 		alerting.SetWebhookURL(m.AlertWebhookURL)
 	}
+
+	core.SetStaleGoroutineThreshold(m.StaleGoroutineThreshold)
 
 	m.ServiceStartTime = time.Now().In(location)
 }
