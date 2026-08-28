@@ -58,7 +58,10 @@ var knownExternalResources = map[string]string{}
 //
 // Tighten this whenever the payload legitimately shrinks. Do not raise it
 // without a note in the PR saying what was added and why it earns its size.
-const maxEmbeddedBytes = 17_500_000
+//
+// Headroom over the current payload is deliberately small (~5%), so that
+// anything substantial being added has to be an explicit decision.
+const maxEmbeddedBytes = 8_300_000
 
 // htmlFiles returns every embedded .html file.
 func htmlFiles(t *testing.T) []string {

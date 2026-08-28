@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **The embedded dashboard shrank from 17.1 MB to 7.9 MB (-54%), and from 71 files to 46.** Everything under `static/` is compiled into the consuming service's binary by `//go:embed static/*` and downloaded by every `go get`, so this is weight every user carried whether or not they ever opened the dashboard. Removed: `assets/ss/d1-d10.png` (7.6 MB), Product Hunt marketing images, an unused animated logo and dropdown arrow, and a favicon variant set -- 28 files, none referenced by any page, stylesheet, script or document. Note this does not shrink existing clones, since the blobs remain in git history; the module zip is what `go get` downloads
+
 ### Fixed
 - **The dashboard no longer requires internet access.** Font Awesome 4.7.0 and html2canvas were loaded from `cdnjs`, and the vendored template CSS pulled a Lato webfont from Google Fonts, so on an airgapped host -- where a lot of production Go services run -- icons were blank boxes and the screenshot feature was dead. All three fetches are gone: icons are an inline SVG sprite, html2canvas is vendored, and the font imports are removed
 - **Mobile navigation was impossible in every network condition.** The sidebar and navbar menu buttons were `<i>` elements carrying `las la-bars` and `ri-menu-*` classes -- Line Awesome and Remix Icon -- and neither font was ever loaded: `font-family: remixicon` appeared in the vendored CSS with no `@font-face` rule and no font file anywhere in `static/`. They rendered as zero-size empty elements, so the sidebar could not be opened below 1300px and the navbar below 992px. Both are now real 22px controls
