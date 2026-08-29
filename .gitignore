@@ -1,0 +1,10 @@
+# This is an orphan assets branch: it holds only the media the README links to.
+#
+# Without this, a `git add -A` run while the main working tree is checked out
+# sweeps every untracked file into the branch -- which is exactly what happened
+# on its first push. Ignore everything, then allow the assets explicitly.
+*
+!.gitignore
+!*.webp
+!*.gif
+!*.png
